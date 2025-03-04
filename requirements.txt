@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+sqlalchemy
+openai
+psycopg2-binary
+sqlalchemy-utils
+apscheduler
+requests
+pydantic
