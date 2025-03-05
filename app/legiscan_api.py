@@ -391,7 +391,7 @@ class LegiScanAPI:
                 # Map the status numeric ID to BillStatusEnum
                 new_status = self._map_bill_status(bill_data.get("status"))
 
-                # Build the upsert attributes
+                # Build the upsert attributes with proper enum instance
                 attrs = {
                     "external_id": external_id,
                     "data_source": DataSourceEnum.LEGISCAN,
