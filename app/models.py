@@ -35,7 +35,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.event import listen
 from sqlalchemy_utils import TSVectorType
 from sqlalchemy.types import TypeDecorator
-
+from sqlalchemy import event
 # Configure logging for this module
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -1393,30 +1393,18 @@ class SyncError(BaseModel):
 
 
 # Configure PostgreSQL to use BYTEA for binary data and enable full-text search
-def setup_postgres_extensions(conn, **kw):
-    """Set up PostgreSQL extensions like pgcrypto if needed."""
-    # Check if conn is a SQLAlchemy connection or raw psycopg2 connection
-    if hasattr(conn, 'dialect'):
-        # SQLAlchemy connection
-        if conn.dialect.name == 'postgresql':
-            conn.execute(text('CREATE EXTENSION IF NOT EXISTS pgcrypto'))
-            conn.execute(text('CREATE EXTENSION IF NOT EXISTS pg_trgm'))
-            conn.execute(text('CREATE EXTENSION IF NOT EXISTS unaccent'))
-    else:
-        # Raw psycopg2 connection
-        try:
-            with conn.cursor() as cur:
-                cur.execute('CREATE EXTENSION IF NOT EXISTS pgcrypto')
-                cur.execute('CREATE EXTENSION IF NOT EXISTS pg_trgm')
-                cur.execute('CREATE EXTENSION IF NOT EXISTS unaccent')
-            conn.commit()
-        except Exception as e:
-            logger.warning(f"Failed to create PostgreSQL extension: {e}")
-
+def setup_postgres_extensions(dbapi_connection, connection_record):
+    """Set up PostgreSQL extensions (pgcrypto, pg_trgm, unaccent) on the raw DBAPI connection."""
+    try:
+        with dbapi_connection.cursor() as cursor:
+            cursor.execute('CREATE EXTENSION IF NOT EXISTS pgcrypto')
+            cursor.execute('CREATE EXTENSION IF NOT EXISTS pg_trgm')
+            cursor.execute('CREATE EXTENSION IF NOT EXISTS unaccent')
+        dbapi_connection.commit()
+    except Exception as e:
+        logger.warning(f"Failed to create PostgreSQL extension: {e}")
 
 # Register the event listener properly
-from sqlalchemy import event
-
 event.listen(Engine, "connect", setup_postgres_extensions)
 
 
