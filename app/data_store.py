@@ -648,7 +648,11 @@ class DataStore:
             ValidationError: If email format is invalid
         """
         try:
+            # Verify connection is active
             self.db_session.execute(text("SELECT 1"))
+            
+            # Get the user by email
+            user = self.db_session.query(User).filter_by(email=email).first()
             if not user:
                 return []
                 
