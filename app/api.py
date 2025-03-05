@@ -26,7 +26,7 @@ Run:
 import os
 import logging
 import traceback
-from typing import Optional, List, Dict, Any, Type, Union, Callable, TypeVar, cast
+from typing import Optional, List, Dict, Any, Type, Union, Callable, TypeVar, cast, AsyncGenerator
 from datetime import datetime, timedelta, timezone
 from contextlib import contextmanager
 from functools import wraps
@@ -60,6 +60,48 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+# -----------------------------------------------------------------------------
+# Application Lifecycle Handler
+# -----------------------------------------------------------------------------
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    """
+    Lifecycle event handler for setup and teardown of application resources.
+    """
+    global data_store, ai_analyzer, legiscan_api
+
+    # Startup: Initialize resources
+    try:
+        data_store = DataStore(max_retries=3)
+        # Ensure db_session is available before initializing other services
+        if not data_store.db_session:
+            raise ValueError("Database session is not initialized")
+
+        ai_analyzer = AIAnalysis(db_session=data_store.db_session)
+        legiscan_api = LegiScanAPI(db_session=data_store.db_session, api_key=os.getenv("LEGISCAN_API_KEY"))
+        logger.info("Services initialized on startup.")
+    except Exception as e:
+        logger.critical(f"Failed to initialize services: {e}", exc_info=True)
+        raise
+
+    # Yield control back to FastAPI - make sure this is awaitable
+    yield
+
+    # Shutdown: Clean up resources
+    if data_store:
+        try:
+            data_store.close()
+            logger.info("DataStore closed on shutdown.")
+        except Exception as e:
+            logger.error(f"Error closing DataStore: {e}", exc_info=True)
+
+    # Set global variables to None
+    data_store = None
+    ai_analyzer = None
+    legiscan_api = None
+    
 # 3) Prepare the FastAPI application
 app = FastAPI(
     title="PolicyPulse API",
@@ -67,7 +109,8 @@ app = FastAPI(
     version="2.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    openapi_url="/openapi.json"
+    openapi_url="/openapi.json",
+    lifespan=lifespan
 )
 
 # 4) Allow requests from a React dev server or your domain
@@ -86,9 +129,6 @@ legiscan_api: Optional[LegiScanAPI] = None
 
 # Initialize data store
 bill_store = BillStore()
-
-# Initialize LegiScan API
-legiscan_api = LegiScanAPI(db_session=data_store.db_session, api_key=os.getenv("LEGISCAN_API_KEY"))
 
 # Models
 class BillSummary(BaseModel):
@@ -173,57 +213,6 @@ async def general_exception_handler(request: Request, exc: Exception):
         }
     )
 
-
-# -----------------------------------------------------------------------------
-# Application Lifecycle Handler
-# -----------------------------------------------------------------------------
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """
-    Lifecycle event handler for setup and teardown of application resources.
-    Replaces the deprecated @app.on_event("startup") and @app.on_event("shutdown").
-    """
-    global data_store, ai_analyzer, legiscan_api
-
-    # Startup: Initialize resources
-    try:
-        data_store = DataStore(max_retries=3)
-
-        # Ensure db_session is available before initializing other services
-        if not data_store.db_session:
-            raise ValueError("Database session is not initialized")
-
-        ai_analyzer = AIAnalysis(db_session=data_store.db_session)
-        legiscan_api = LegiScanAPI(db_session=data_store.db_session)
-        logger.info("DataStore, AIAnalysis, and LegiScanAPI initialized on startup.")
-    except Exception as e:
-        logger.critical(f"Failed to initialize application services: {e}", exc_info=True)
-        # Re-raise the exception to prevent the application from starting in an inconsistent state
-        raise
-
-    # Yield control back to FastAPI
-    yield
-
-    # Shutdown: Clean up resources
-    # Close the data store connection if it exists
-    if data_store:
-        try:
-            data_store.close()
-            logger.info("DataStore closed on shutdown.")
-        except Exception as e:
-            logger.error(f"Error closing DataStore: {e}", exc_info=True)
-
-    # Set global variables to None
-    data_store = None
-    ai_analyzer = None
-    legiscan_api = None
-
-# Assign the lifespan to the app
-app.lifespan = lifespan
-
-
 # -----------------------------------------------------------------------------
 # Utility Functions and Decorators
 # -----------------------------------------------------------------------------
@@ -238,16 +227,19 @@ def log_api_call(func: Callable):
         Wrapped function with logging
     """
     @wraps(func)
-    async def wrapper(*args, request: Request = None, **kwargs):
-        # Get the request object
+    async def wrapper(*args, **kwargs):  # Removed request: Request = None
+        request = kwargs.get('request')  # Retrieve request from kwargs
         if request is None:
             for arg in args:
                 if isinstance(arg, Request):
                     request = arg
                     break
 
+        if request is None:
+            raise ValueError("Request object must be provided to the `wrapper` function.")
+
         # Get client IP and method+path
-        client_ip = request.client.host if request and hasattr(request, 'client') else 'unknown'
+        client_ip = request.client.host if request and hasattr(request, 'client') and request.client is not None else 'unknown'
         endpoint = f"{request.method} {request.url.path}" if request else func.__name__
 
         # Log the request
@@ -272,7 +264,7 @@ def log_api_call(func: Callable):
 
 
 @contextmanager
-def error_handler(operation_name: str, error_map: Dict[Type[Exception], int] = None):
+def error_handler(operation_name: str, error_map: Optional[Dict[Type[Exception], int]] = None):
     """
     Context manager for consistent error handling in API endpoints.
 
@@ -521,7 +513,7 @@ class BillSearchFilters(BaseModel):
 class BillSearchQuery(BaseModel):
     """Advanced search parameters."""
     query: str = Field("", description="Search query string")
-    filters: BillSearchFilters = Field(default_factory=BillSearchFilters, description="Search filters")
+    filters: BillSearchFilters = Field(default_factory=lambda: BillSearchFilters(), description="Search filters")
     sort_by: str = Field("relevance", description="Field to sort results by")
     sort_dir: str = Field("desc", description="Sort direction (asc or desc)")
     limit: int = Field(50, description="Maximum number of results to return", ge=1, le=100)

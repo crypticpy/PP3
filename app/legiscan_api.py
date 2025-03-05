@@ -25,7 +25,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_, func
+from sqlalchemy import and_, or_, func, update
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.models import (
@@ -479,33 +479,41 @@ class LegiScanAPI:
         """
         Calculate relevance scores for Texas public health and local government.
         Updates or creates a LegislationPriority record.
-        
+
         Args:
             bill_obj: Legislation database object
         """
+        # First check if LegislationPriority is available
+        if not HAS_PRIORITY_MODEL:
+            logger.warning("Cannot calculate bill relevance: LegislationPriority model not available")
+            return
+
         combined_text = f"{bill_obj.title} {bill_obj.description}"
-        
+
         # Calculate health relevance score
         health_score = 0
         for keyword in self.health_keywords:
             if keyword.lower() in combined_text.lower():
                 health_score += 10
-        
+
         # Calculate local government relevance score        
         local_govt_score = 0
         for keyword in self.local_govt_keywords:
             if keyword.lower() in combined_text.lower():
                 local_govt_score += 10
-        
+
         # Cap scores at 100
         health_score = min(100, health_score)
         local_govt_score = min(100, local_govt_score)
-        
+
         # Calculate overall priority as average of the two
         overall_score = (health_score + local_govt_score) // 2
-        
+
+        # Now that we've checked HAS_PRIORITY_MODEL, we can safely import the model
+        from app.models import LegislationPriority
+
         # Set priority scores
-        if bill_obj.priority:
+        if hasattr(bill_obj, 'priority') and bill_obj.priority:
             bill_obj.priority.public_health_relevance = health_score
             bill_obj.priority.local_govt_relevance = local_govt_score
             bill_obj.priority.overall_priority = overall_score
@@ -664,16 +672,16 @@ class LegiScanAPI:
     def _track_amendments(self, bill: Legislation, amendments: List[Dict[str, Any]]) -> int:
         """
         Track amendments back to their parent bills.
-        
+
         Args:
             bill: Parent legislation object
             amendments: List of amendment data from LegiScan
-            
+
         Returns:
             Number of amendments processed
         """
         processed_count = 0
-        
+
         # Start a nested transaction for amendment processing
         with self.db_session.begin_nested():
             # Process each amendment
@@ -681,37 +689,42 @@ class LegiScanAPI:
                 amendment_id = amend_data.get("amendment_id")
                 if not amendment_id:
                     continue
-                
+
                 # If Amendment model is available, use it
                 if HAS_AMENDMENT_MODEL:
+                    # Import models within the conditional block to ensure they exist
+                    from app.models import Amendment, AmendmentStatusEnum
+
                     # Check if amendment already exists
                     existing = self.db_session.query(Amendment).filter_by(
                         amendment_id=str(amendment_id),
                         legislation_id=bill.id
                     ).first()
-                    
+
                     # Parse amendment date
                     amend_date = None
-                    if amend_data.get("date"):
+                    date_str = amend_data.get("date")
+                    if date_str and isinstance(date_str, str):
                         try:
-                            amend_date = datetime.strptime(amend_data.get("date"), "%Y-%m-%d")
+                            amend_date = datetime.strptime(date_str, "%Y-%m-%d")
                         except ValueError:
-                            logger.warning(f"Invalid amendment date format: {amend_data.get('date')}")
-                    
+                            logger.warning(f"Invalid amendment date format: {date_str}")
+
                     # Convert adopted flag to boolean
                     is_adopted = bool(amend_data.get("adopted", 0))
-                    
+
                     # Determine status enum value
                     status_value = AmendmentStatusEnum.ADOPTED if is_adopted else AmendmentStatusEnum.PROPOSED
-                    
+
                     if existing:
-                        # Update existing record
-                        existing.adopted = is_adopted
-                        existing.status = status_value
-                        existing.amendment_date = amend_date
-                        existing.title = amend_data.get("title", "")
-                        existing.description = amend_data.get("description", "")
-                        existing.amendment_hash = amend_data.get("amendment_hash", "")
+                        # Update existing record - use setattr to avoid type checking issues
+                        # with SQLAlchemy Column attributes
+                        setattr(existing, 'adopted', is_adopted)
+                        setattr(existing, 'status', status_value)
+                        setattr(existing, 'amendment_date', amend_date)
+                        setattr(existing, 'title', amend_data.get("title", ""))
+                        setattr(existing, 'description', amend_data.get("description", ""))
+                        setattr(existing, 'amendment_hash', amend_data.get("amendment_hash", ""))
                     else:
                         # Create new record
                         new_amendment = Amendment(
@@ -727,19 +740,46 @@ class LegiScanAPI:
                         )
                         self.db_session.add(new_amendment)
                 else:
-                    # Store amendments in raw_api_response if Amendment model not available
-                    raw_data = bill.raw_api_response or {}
-                    if "amendments" not in raw_data:
-                        raw_data["amendments"] = []
-                    
-                    # Check if this amendment is already tracked
-                    existing_ids = [a.get("amendment_id") for a in raw_data["amendments"]]
-                    if amendment_id not in existing_ids:
-                        raw_data["amendments"].append(amend_data)
-                        bill.raw_api_response = raw_data
-                
-                processed_count += 1
-        
+                # Store amendments in raw_api_response if Amendment model not available
+                    try:
+                        # Get the current raw_api_response, defaulting to empty dict
+                        raw_data = {}
+                        if bill.raw_api_response is not None:
+                            # Try to convert to dict if it's JSON data
+                            if hasattr(bill.raw_api_response, 'items'):  # Check if dict-like
+                                raw_data = dict(bill.raw_api_response)
+                            elif isinstance(bill.raw_api_response, str):
+                                import json
+                                raw_data = json.loads(bill.raw_api_response)
+                            else:
+                                # Convert other types to dict if possible
+                                raw_data = dict(bill.raw_api_response) if hasattr(bill.raw_api_response, '__iter__') else {}
+    
+                        # Ensure amendments is a list
+                        if "amendments" not in raw_data:
+                            raw_data["amendments"] = []
+                        elif not isinstance(raw_data["amendments"], list):
+                            raw_data["amendments"] = []
+    
+                        # Check if this amendment is already tracked
+                        amendments_list = raw_data["amendments"]
+                        existing_ids = []
+                        for a in amendments_list:
+                            if isinstance(a, dict) and "amendment_id" in a:
+                                existing_ids.append(a.get("amendment_id"))
+    
+                        # Add the new amendment if not already tracked
+                        if amendment_id not in existing_ids:
+                            amendments_list.append(amend_data)
+    
+                            # Use setattr to update the raw_api_response
+                            setattr(bill, "raw_api_response", raw_data)
+    
+                    except Exception as e:
+                        logger.warning(f"Error storing amendment in raw_api_response: {e}")
+    
+                    processed_count += 1
+
         return processed_count
     
     # ------------------------------------------------------------------------
@@ -840,7 +880,7 @@ class LegiScanAPI:
             # Update sync metadata
             sync_meta.bills_updated = summary["bills_updated"]
             sync_meta.new_bills = summary["new_bills"]
-            sync_meta.last_successful_sync = datetime.utcnow()
+            sync_meta.last_successful_sync = datetime.now(timezone.utc)
             
             if summary["errors"]:
                 sync_meta.status = SyncStatusEnum.PARTIAL
