@@ -887,7 +887,7 @@ class LegiScanAPI:
                 setattr(sync_meta, 'status', SyncStatusEnum.PARTIAL)
                 setattr(sync_meta, 'errors', {"count": len(summary["errors"]), "samples": summary["errors"][:5]})
             else:
-            setattr(sync_meta, "status", SyncStatusEnum.COMPLETED)
+                setattr(sync_meta, "status", SyncStatusEnum.COMPLETED)
 
             summary["status"] = sync_meta.status.value
             summary["end_time"] = datetime.utcnow()
