@@ -1018,7 +1018,7 @@ def search_legislation(
 def list_texas_health_legislation(
     limit: int = 50,
     offset: int = 0,
-    status: Optional[str] = None,
+    bill_status: Optional[str] = None,  # Changed from 'status' to 'bill_status'
     impact_level: Optional[str] = None,
     introduced_after: Optional[str] = None,
     keywords: Optional[str] = None,
@@ -1032,7 +1032,7 @@ def list_texas_health_legislation(
     Args:
         limit: Maximum number of results to return
         offset: Number of results to skip
-        status: Filter by bill status
+        bill_status: Filter by bill status
         impact_level: Filter by impact level
         introduced_after: Filter by bills introduced after date (YYYY-MM-DD)
         keywords: Comma-separated list of keywords
@@ -1048,6 +1048,7 @@ def list_texas_health_legislation(
     with error_handler("List Texas health legislation", {
         ValidationError: status.HTTP_400_BAD_REQUEST,
         DatabaseOperationError: status.HTTP_500_INTERNAL_SERVER_ERROR,
+        Exception: status.HTTP_500_INTERNAL_SERVER_ERROR
     }):
         # Validate pagination parameters
         if limit < 1 or limit > 100:
@@ -1056,8 +1057,8 @@ def list_texas_health_legislation(
             raise ValidationError("Offset cannot be negative")
 
         # Validate optional parameters
-        if status and status not in [s.value for s in BillStatusEnum]:
-            raise ValidationError(f"Invalid status: {status}")
+        if bill_status and bill_status not in [s.value for s in BillStatusEnum]:
+            raise ValidationError(f"Invalid bill_status: {bill_status}")
 
         if impact_level and impact_level not in [il.value for il in ImpactLevelEnum]:
             raise ValidationError(f"Invalid impact_level: {impact_level}")
@@ -1074,8 +1075,8 @@ def list_texas_health_legislation(
         # Build filters
         filters = {}
 
-        if status:
-            filters["status"] = status
+        if bill_status:
+            filters["status"] = bill_status
         if impact_level:
             filters["impact_level"] = impact_level
         if introduced_after:
@@ -1097,7 +1098,7 @@ def list_texas_health_legislation(
 def list_texas_local_govt_legislation(
     limit: int = 50,
     offset: int = 0,
-    status: Optional[str] = None,
+    bill_status: Optional[str] = None,  # Changed from 'status' to 'bill_status'
     impact_level: Optional[str] = None,
     introduced_after: Optional[str] = None,
     keywords: Optional[str] = None,
@@ -1112,7 +1113,7 @@ def list_texas_local_govt_legislation(
     Args:
         limit: Maximum number of results to return
         offset: Number of results to skip
-        status: Filter by bill status
+        bill_status: Filter by bill status
         impact_level: Filter by impact level
         introduced_after: Filter by bills introduced after date (YYYY-MM-DD)
         keywords: Comma-separated list of keywords
@@ -1128,7 +1129,8 @@ def list_texas_local_govt_legislation(
     """
     with error_handler("List Texas local government legislation", {
         ValidationError: status.HTTP_400_BAD_REQUEST,
-        DatabaseOperationError: status.HTTP_500_INTERNAL_SERVER_ERROR
+        DatabaseOperationError: status.HTTP_500_INTERNAL_SERVER_ERROR,
+        Exception: status.HTTP_500_INTERNAL_SERVER_ERROR
     }):
         # Validate pagination parameters
         if limit < 1 or limit > 100:
@@ -1137,8 +1139,8 @@ def list_texas_local_govt_legislation(
             raise ValidationError("Offset cannot be negative")
 
         # Validate optional parameters
-        if status and status not in [s.value for s in BillStatusEnum]:
-            raise ValidationError(f"Invalid status: {status}")
+        if bill_status and bill_status not in [s.value for s in BillStatusEnum]:
+            raise ValidationError(f"Invalid bill_status: {bill_status}")
 
         if impact_level and impact_level not in [il.value for il in ImpactLevelEnum]:
             raise ValidationError(f"Invalid impact_level: {impact_level}")
@@ -1158,8 +1160,8 @@ def list_texas_local_govt_legislation(
         # Build filters
         filters = {"focus": "local_govt"}  # Set focus to local government
 
-        if status:
-            filters["status"] = status
+        if bill_status:
+            filters["status"] = bill_status
         if impact_level:
             filters["impact_level"] = impact_level
         if introduced_after:
@@ -1176,7 +1178,6 @@ def list_texas_local_govt_legislation(
 
         # Format as LegislationListResponse
         return {"count": len(legislation), "items": legislation}
-
 
 # -----------------------------------------------------------------------------
 # Dashboard Analytics
@@ -1370,8 +1371,15 @@ def analyze_legislation_ai(
         if leg_id <= 0:
             raise ValidationError("Legislation ID must be a positive integer")
 
+        # Check if db_session is available and retrieve the legislation
+        if store.db_session is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE, 
+                detail="Database session is not initialized. Please try again later."
+            )
+
         # Check if legislation exists
-        leg_obj = store.db_session.query(Legislation).filter_by(id=leg_id).first() if store.db_session else None
+        leg_obj = store.db_session.query(Legislation).filter_by(id=leg_id).first()
         if not leg_obj:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, 
@@ -1380,7 +1388,7 @@ def analyze_legislation_ai(
 
         # Set default options if none provided
         if options is None:
-            options = AnalysisOptions(deep_analysis=False, texas_focus=True, focus_areas=None)
+            options = AnalysisOptions(deep_analysis=False, texas_focus=True, focus_areas=None, model_name=None)
 
         # Asynchronous processing if requested and background_tasks available
         if background_tasks and options.deep_analysis:
@@ -1403,7 +1411,7 @@ def analyze_legislation_ai(
         try:
             # Set model parameters if needed
             if hasattr(options, "model_name") and options.model_name:
-                analyzer.model_name = options.model_name
+                analyzer.model_name = options.get("model_name", "default_model") if isinstance(options, dict) else "default_model"  # type: ignore
 
             # Run analysis
             analysis_obj = analyzer.analyze_legislation(legislation_id=leg_id)
@@ -1452,7 +1460,7 @@ def get_legislation_analysis_history(
             raise ValidationError("Legislation ID must be a positive integer")
 
         # Check if legislation exists
-        leg = store.db_session.query(Legislation).filter_by(id=leg_id).first()
+        leg = store.db_session.query(Legislation).filter_by(id=leg_id).first() if store.db_session else None
         if not leg:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -1516,7 +1524,7 @@ def update_priority(
 
         try:
             # Check if legislation exists
-            leg = store.db_session.query(Legislation).filter_by(id=leg_id).first()
+            leg = store.db_session.query(Legislation).filter_by(id=leg_id).first() if store.db_session else None
             if not leg:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -1535,7 +1543,7 @@ def update_priority(
                 )
 
             # Use the DataStore method to update priority
-            update_data = payload.dict(exclude_unset=True)
+            update_data = payload.model_dump(exclude_unset=True)
             updated_priority = store.update_legislation_priority(leg_id, update_data)
 
             if not updated_priority:
@@ -1603,7 +1611,7 @@ def get_sync_status(
 @log_api_call
 def trigger_sync(
     force: bool = False,
-    background_tasks: BackgroundTasks = None,
+    background_tasks: Optional[BackgroundTasks] = None,
     api: LegiScanAPI = Depends(get_legiscan_api)
 ):
     """
@@ -1720,7 +1728,7 @@ async def get_bill_analysis(bill_id: int):
         if not bill.get("text"):
             # Try to fetch text from LegiScan if not available
             try:
-                bill_text = legiscan_api.get_bill_text(bill_id)
+                bill_text = legiscan_api.get_bill_text(bill_id) if legiscan_api else None
                 if bill_text:
                     # Update the bill in the store with the text
                     bill["text"] = bill_text
@@ -1799,8 +1807,8 @@ async def analyze_legislation_ai_async(
         if leg_id <= 0:
             raise ValidationError("Legislation ID must be a positive integer")
 
-        # Check if legislation exists
-        leg_obj = store.db_session.query(Legislation).filter_by(id=leg_id).first()
+        # Query the legislation object
+        leg_obj = store.db_session.query(Legislation).filter_by(id=leg_id).first() if store.db_session else None
         if not leg_obj:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, 
@@ -1809,12 +1817,16 @@ async def analyze_legislation_ai_async(
 
         # Set default options if none provided
         if options is None:
-            options = AnalysisOptions()
+            options = AnalysisOptions(
+                deep_analysis=False,
+                texas_focus=True,
+                focus_areas=None,
+                model_name=None
+            )
 
         try:
-            # Set model parameters if needed
             if hasattr(options, "model_name") and options.model_name:
-                analyzer.model_name = options.model_name
+                analyzer.model_name = options.get("model_name", "default_model") if isinstance(options, dict) else "default_model"  # type: ignore
 
             # Run analysis asynchronously
             analysis_obj = await analyzer.analyze_legislation_async(legislation_id=leg_id)

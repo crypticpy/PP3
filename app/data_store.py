@@ -430,28 +430,28 @@ class DataStore:
         self._validate_email(email)
         
         try:
-            user = self.db_session.query(User).filter_by(email=email).first()
+            user = self.db_session.query(User).filter_by(email=email).first() if self.db_session else None
             if not user:
                 # Start a transaction to create the user
                 with self.transaction():
                     user = User(email=email)
-                    self.db_session.add(user)
+                    self.db_session.add(user) if self.db_session else None
                     # Explicitly flush to get the ID and check for database errors
-                    self.db_session.flush()
+                    self.db_session.flush() if self.db_session else None
                 logger.info(f"Created new user with email: {email}")
             return user
         except IntegrityError as e:
             # Could happen if another process created the user simultaneously
-            self.db_session.rollback()
+            if self.db_session: self.db_session.rollback()
             logger.warning(f"Integrity error while creating user {email}, attempting to retrieve: {e}")
             # Try to retrieve again in case it was created by another process
-            user = self.db_session.query(User).filter_by(email=email).first()
+            user = self.db_session.query(User).filter_by(email=email).first() if self.db_session else None
             if user:
                 return user
             # If still not found, raise error
             raise DatabaseOperationError(f"Failed to create or retrieve user {email}: {e}")
         except SQLAlchemyError as e:
-            self.db_session.rollback()
+            if self.db_session: self.db_session.rollback()
             error_msg = f"Database error retrieving/creating user {email}: {e}"
             logger.error(error_msg)
             raise DatabaseOperationError(error_msg)
@@ -517,19 +517,20 @@ class DataStore:
                         if field in new_prefs:
                             pref_data[field] = new_prefs.get(field, [])
                     user_pref = UserPreference(**pref_data)
-                    self.db_session.add(user_pref)
+                    if self.db_session:
+                        self.db_session.add(user_pref)
                     # Flush to catch any database errors
-                    self.db_session.flush()
+                    self.db_session.flush() if self.db_session else None
                     
             logger.info(f"Preferences saved for user: {email}")
             return True
         except SQLAlchemyError as e:
-            self.db_session.rollback()
+            if self.db_session: self.db_session.rollback()
             error_msg = f"Database error saving preferences for {email}: {e}"
             logger.error(error_msg)
             raise DatabaseOperationError(error_msg)
         except Exception as e:
-            self.db_session.rollback()
+            if self.db_session: self.db_session.rollback()
             error_msg = f"Unexpected error saving preferences for {email}: {e}"
             logger.error(error_msg)
             raise DatabaseOperationError(error_msg)
@@ -550,7 +551,7 @@ class DataStore:
             ValidationError: If email format is invalid
         """
         try:
-            user = self.db_session.query(User).filter_by(email=email).first()
+            user = self.db_session.query(User).filter_by(email=email).first() if self.db_session else None
             if user and user.preferences:
                 prefs = {"keywords": user.preferences.keywords or []}
                 for field in ['health_focus', 'local_govt_focus', 'regions']:
@@ -610,21 +611,23 @@ class DataStore:
                     user_id=user.id,
                     query=query_string,
                     results=results_data,
-                    created_at=datetime.utcnow()
+                    created_at=datetime.now(datetime.timezone.utc)
                 )
-                self.db_session.add(new_search)
+                self.db_session.add(new_search) if self.db_session else None
                 # Flush to catch any database errors early
-                self.db_session.flush()
+                self.db_session.flush() if self.db_session else None
                 
             logger.info(f"Search history added for user: {email}")
             return True
         except SQLAlchemyError as e:
-            self.db_session.rollback()
+            if self.db_session: 
+                self.db_session.rollback()
             error_msg = f"Database error adding search history for {email}: {e}"
             logger.error(error_msg)
             raise DatabaseOperationError(error_msg)
         except Exception as e:
-            self.db_session.rollback()
+            if self.db_session: 
+                self.db_session.rollback()
             error_msg = f"Unexpected error adding search history for {email}: {e}"
             logger.error(error_msg)
             raise DatabaseOperationError(error_msg)
@@ -645,7 +648,7 @@ class DataStore:
             ValidationError: If email format is invalid
         """
         try:
-            user = self.db_session.query(User).filter_by(email=email).first()
+            self.db_session.execute(text("SELECT 1"))
             if not user:
                 return []
                 
