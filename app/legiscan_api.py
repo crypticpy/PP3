@@ -880,7 +880,8 @@ class LegiScanAPI:
             # Update sync metadata
             sync_meta.bills_updated = summary["bills_updated"]
             sync_meta.new_bills = summary["new_bills"]
-            sync_meta.last_successful_sync = datetime.now(timezone.utc)
+            # Use setattr to avoid SQLAlchemy Column assignment issues
+            setattr(sync_meta, "last_successful_sync", datetime.now(timezone.utc))
             
             if summary["errors"]:
                 sync_meta.status = SyncStatusEnum.PARTIAL
