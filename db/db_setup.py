@@ -83,6 +83,16 @@ def main():
             return True
         else:
             logger.error("Database setup failed")
+            # Check if the admin role was the issue
+            try:
+                with conn.cursor() as cur:
+                    # Test if we can create a table with current user
+                    cur.execute("CREATE TABLE IF NOT EXISTS setup_test (id SERIAL PRIMARY KEY)")
+                    # Drop the test table
+                    cur.execute("DROP TABLE IF EXISTS setup_test")
+                logger.info("Database connection works with current user permissions")
+            except Exception as inner_e:
+                logger.error(f"Permission test failed: {inner_e}")
             return False
 
     except Exception as e:

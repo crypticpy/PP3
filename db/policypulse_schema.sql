@@ -345,9 +345,9 @@ CREATE TRIGGER update_alert_history_modtime BEFORE UPDATE ON alert_history FOR E
 CREATE TRIGGER update_sync_metadata_modtime BEFORE UPDATE ON sync_metadata FOR EACH ROW EXECUTE FUNCTION update_modified_column();
 CREATE TRIGGER update_sync_errors_modtime BEFORE UPDATE ON sync_errors FOR EACH ROW EXECUTE FUNCTION update_modified_column();
 
--- Grant privileges
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO admin;
-GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO admin;
+-- Grant privileges (adjusted for Replit database)
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO current_user;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO current_user;
 
 -- Create initial admin user
 INSERT INTO users (email, name, role, created_at, updated_at)
