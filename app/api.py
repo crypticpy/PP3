@@ -120,11 +120,11 @@ class AnalysisResult(BaseModel):
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """
     Custom handler for validation errors to provide more user-friendly error messages.
-    
+
     Args:
         request: The request that caused the validation error
         exc: The validation error
-        
+
     Returns:
         JSONResponse with detailed error information
     """
@@ -136,7 +136,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             "message": error["msg"],
             "type": error["type"]
         })
-        
+
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
@@ -151,18 +151,18 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 async def general_exception_handler(request: Request, exc: Exception):
     """
     Generic exception handler to provide consistent error responses.
-    
+
     Args:
         request: The request that caused the exception
         exc: The exception that was raised
-        
+
     Returns:
         JSONResponse with error details
     """
     # Log the error with traceback
     logger.error(f"Unhandled exception processing {request.method} {request.url}: {exc}")
     logger.error(traceback.format_exc())
-    
+
     # Return a standard error response
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -186,10 +186,15 @@ async def lifespan(app: FastAPI):
     Replaces the deprecated @app.on_event("startup") and @app.on_event("shutdown").
     """
     global data_store, ai_analyzer, legiscan_api
-    
+
     # Startup: Initialize resources
     try:
         data_store = DataStore(max_retries=3)
+
+        # Ensure db_session is available before initializing other services
+        if not data_store.db_session:
+            raise ValueError("Database session is not initialized")
+
         ai_analyzer = AIAnalysis(db_session=data_store.db_session)
         legiscan_api = LegiScanAPI(db_session=data_store.db_session)
         logger.info("DataStore, AIAnalysis, and LegiScanAPI initialized on startup.")
@@ -197,10 +202,10 @@ async def lifespan(app: FastAPI):
         logger.critical(f"Failed to initialize application services: {e}", exc_info=True)
         # Re-raise the exception to prevent the application from starting in an inconsistent state
         raise
-    
+
     # Yield control back to FastAPI
     yield
-    
+
     # Shutdown: Clean up resources
     # Close the data store connection if it exists
     if data_store:
@@ -209,7 +214,7 @@ async def lifespan(app: FastAPI):
             logger.info("DataStore closed on shutdown.")
         except Exception as e:
             logger.error(f"Error closing DataStore: {e}", exc_info=True)
-    
+
     # Set global variables to None
     data_store = None
     ai_analyzer = None
@@ -225,10 +230,10 @@ app.lifespan = lifespan
 def log_api_call(func: Callable):
     """
     Decorator to log API calls with timing information.
-    
+
     Args:
         func: The API endpoint function to wrap
-        
+
     Returns:
         Wrapped function with logging
     """
@@ -240,14 +245,14 @@ def log_api_call(func: Callable):
                 if isinstance(arg, Request):
                     request = arg
                     break
-        
+
         # Get client IP and method+path
         client_ip = request.client.host if request and hasattr(request, 'client') else 'unknown'
         endpoint = f"{request.method} {request.url.path}" if request else func.__name__
-        
+
         # Log the request
         logger.info(f"API call from {client_ip}: {endpoint}")
-        
+
         # Track timing
         start_time = datetime.now()
         try:
@@ -262,7 +267,7 @@ def log_api_call(func: Callable):
             elapsed = (datetime.now() - start_time).total_seconds() * 1000
             logger.error(f"API call failed: {endpoint} ({elapsed:.2f}ms) - {str(e)}")
             raise
-    
+
     return wrapper
 
 
@@ -270,14 +275,14 @@ def log_api_call(func: Callable):
 def error_handler(operation_name: str, error_map: Dict[Type[Exception], int] = None):
     """
     Context manager for consistent error handling in API endpoints.
-    
+
     Args:
         operation_name: Name of the operation for logging
         error_map: Mapping of exception types to HTTP status codes
-        
+
     Yields:
         Control to the wrapped code block
-        
+
     Raises:
         HTTPException: With the appropriate status code and detail message
     """
@@ -289,26 +294,26 @@ def error_handler(operation_name: str, error_map: Dict[Type[Exception], int] = N
             DatabaseOperationError: status.HTTP_500_INTERNAL_SERVER_ERROR,
             Exception: status.HTTP_500_INTERNAL_SERVER_ERROR
         }
-    
+
     try:
         yield
     except tuple(error_map.keys()) as e:
         # Get the exception type
         exc_type = type(e)
-        
+
         # Find the most specific matching exception type in the error map
         matching_types = [t for t in error_map.keys() if issubclass(exc_type, t)]
         most_specific_type = min(matching_types, key=lambda t: len(t.__mro__))
-        
+
         # Get the status code for this exception type
         status_code = error_map[most_specific_type]
-        
+
         # Log the error with appropriate severity
         if status_code >= 500:
             logger.error(f"Error in {operation_name}: {e}", exc_info=True)
         else:
             logger.warning(f"Error in {operation_name}: {e}")
-            
+
         # Raise HTTPException with appropriate status code and detail
         raise HTTPException(
             status_code=status_code,
@@ -319,10 +324,10 @@ def error_handler(operation_name: str, error_map: Dict[Type[Exception], int] = N
 def run_in_background(func):
     """
     Decorator to run a function in a background task with proper error handling.
-    
+
     Args:
         func: The function to run in the background
-        
+
     Returns:
         Wrapped function that executes in a background task
     """
@@ -334,16 +339,16 @@ def run_in_background(func):
                 func(*args, **kwargs)
             except Exception as e:
                 logger.error(f"Error in background task {func.__name__}: {e}", exc_info=True)
-                
+
         # Add the task to the background tasks list
         background_tasks.add_task(background_wrapper)
-        
+
         # Return a simple status message
         return {
             "status": "processing",
             "message": f"Task {func.__name__} started in the background"
         }
-        
+
     return wrapper
 
 
@@ -356,14 +361,14 @@ class UserPrefsPayload(BaseModel):
     health_focus: List[str] = Field(default_factory=list, description="Health department focus areas")
     local_govt_focus: List[str] = Field(default_factory=list, description="Local government focus areas")
     regions: List[str] = Field(default_factory=list, description="Texas regions of interest")
-    
+
     @field_validator('keywords', 'health_focus', 'local_govt_focus', 'regions')
     def validate_string_lists(cls, v):
         """Validate that list items are non-empty strings."""
         if not all(isinstance(item, str) and item.strip() for item in v):
             raise ValueError("All list items must be non-empty strings")
         return [item.strip() for item in v]
-    
+
     class Config:
         schema_extra = {
             "example": {
@@ -379,7 +384,7 @@ class UserSearchPayload(BaseModel):
     """Request/response model for search history."""
     query: str = Field(..., min_length=1, description="Search query string")
     results: Dict[str, Any] = Field(default_factory=dict, description="Search result metadata")
-    
+
     class Config:
         schema_extra = {
             "example": {
@@ -394,7 +399,7 @@ class AIAnalysisPayload(BaseModel):
     model_name: Optional[str] = Field(None, description="Name of the AI model to use for analysis")
     focus_areas: Optional[List[str]] = Field(None, description="Specific areas to focus the analysis on")
     force_refresh: bool = Field(False, description="Whether to force a refresh of existing analysis")
-    
+
     @field_validator('model_name')
     def validate_model_name(cls, v):
         """Validate that the model name is a recognized model."""
@@ -403,7 +408,7 @@ class AIAnalysisPayload(BaseModel):
             if v not in valid_models and not v.startswith(tuple(valid_models)):
                 raise ValueError(f"Model name '{v}' is not a recognized model. Valid options include: {', '.join(valid_models)}")
         return v
-    
+
     class Config:
         schema_extra = {
             "example": {
@@ -419,7 +424,7 @@ class AnalysisOptions(BaseModel):
     deep_analysis: bool = Field(False, description="Whether to perform a more thorough analysis")
     texas_focus: bool = Field(True, description="Whether to focus analysis on Texas impacts")
     focus_areas: Optional[List[str]] = Field(None, description="Specific areas to focus the analysis on")
-    
+
     @field_validator('focus_areas')
     def validate_focus_areas(cls, v):
         """Validate that focus areas are valid."""
@@ -430,7 +435,7 @@ class AnalysisOptions(BaseModel):
                 if area.lower() not in valid_areas:
                     raise ValueError(f"'{area}' is not a recognized focus area")
         return v
-    
+
     class Config:
         schema_extra = {
             "example": {
@@ -445,14 +450,14 @@ class DateRange(BaseModel):
     """Model representing a date range for filtering."""
     start_date: str = Field(..., pattern="^\\d{4}-\\d{2}-\\d{2}$", description="Start date in YYYY-MM-DD format")
     end_date: str = Field(..., pattern="^\\d{4}-\\d{2}-\\d{2}$", description="End date in YYYY-MM-DD format")
-    
+
     @field_validator('end_date')
     def end_date_must_be_after_start_date(cls, v, values):
         """Validate that end date is after start date."""
         if 'start_date' in values and v < values['start_date']:
             raise ValueError('end_date must be after start_date')
         return v
-    
+
     @field_validator('start_date', 'end_date')
     def validate_date_format(cls, v):
         """Validate that dates are in a valid format."""
@@ -471,7 +476,7 @@ class BillSearchFilters(BaseModel):
     govt_type: Optional[List[str]] = Field(None, description="Filter by government type")
     date_range: Optional[DateRange] = Field(None, description="Filter by date range")
     reviewed_only: Optional[bool] = Field(None, description="Filter to only include reviewed legislation")
-    
+
     @field_validator('bill_status')
     def validate_bill_status(cls, v):
         """Validate bill status values."""
@@ -481,7 +486,7 @@ class BillSearchFilters(BaseModel):
                 if status not in valid_statuses:
                     raise ValueError(f"Invalid bill_status: {status}. Valid values: {', '.join(valid_statuses)}")
         return v
-    
+
     @field_validator('impact_category')
     def validate_impact_category(cls, v):
         """Validate impact category values."""
@@ -491,7 +496,7 @@ class BillSearchFilters(BaseModel):
                 if category not in valid_categories:
                     raise ValueError(f"Invalid impact_category: {category}. Valid values: {', '.join(valid_categories)}")
         return v
-    
+
     @field_validator('impact_level')
     def validate_impact_level(cls, v):
         """Validate impact level values."""
@@ -501,7 +506,7 @@ class BillSearchFilters(BaseModel):
                 if level not in valid_levels:
                     raise ValueError(f"Invalid impact_level: {level}. Valid values: {', '.join(valid_levels)}")
         return v
-    
+
     @field_validator('govt_type')
     def validate_govt_type(cls, v):
         """Validate government type values."""
@@ -521,7 +526,7 @@ class BillSearchQuery(BaseModel):
     sort_dir: str = Field("desc", description="Sort direction (asc or desc)")
     limit: int = Field(50, description="Maximum number of results to return", ge=1, le=100)
     offset: int = Field(0, description="Number of results to skip", ge=0)
-    
+
     @field_validator('sort_by')
     def validate_sort_by(cls, v):
         """Validate sort field is supported."""
@@ -529,14 +534,14 @@ class BillSearchQuery(BaseModel):
         if v not in valid_sort_fields:
             raise ValueError(f"sort_by must be one of: {', '.join(valid_sort_fields)}")
         return v
-    
+
     @field_validator('sort_dir')
     def validate_sort_dir(cls, v):
         """Ensure sort direction is valid."""
         if v not in ['asc', 'desc']:
             raise ValueError('sort_dir must be either "asc" or "desc"')
         return v
-    
+
     class Config:
         schema_extra = {
             "example": {
@@ -572,14 +577,14 @@ class SetPriorityPayload(BaseModel):
         None, description="Overall priority score (0-100)", ge=0, le=100
     )
     notes: Optional[str] = Field(None, description="Reviewer notes")
-    
+
     @model_validator(mode='after')
     def check_at_least_one_field(self):
         """Ensure at least one field is provided."""
         if not any(getattr(self, field) is not None for field in ['public_health_relevance', 'local_govt_relevance', 'overall_priority', 'notes']):
             raise ValueError('At least one field must be provided')
         return self
-    
+
     class Config:
         schema_extra = {
             "example": {
@@ -655,10 +660,10 @@ class SyncStatusResponse(BaseModel):
 def get_data_store() -> DataStore:
     """
     Dependency that yields the global data_store.
-    
+
     Returns:
         DataStore instance
-        
+
     Raises:
         HTTPException: If DataStore is not initialized
     """
@@ -674,10 +679,10 @@ def get_data_store() -> DataStore:
 def get_ai_analyzer() -> AIAnalysis:
     """
     Dependency that yields the global ai_analyzer.
-    
+
     Returns:
         AIAnalysis instance
-        
+
     Raises:
         HTTPException: If AIAnalysis is not initialized
     """
@@ -693,10 +698,10 @@ def get_ai_analyzer() -> AIAnalysis:
 def get_legiscan_api() -> LegiScanAPI:
     """
     Dependency that yields the global legiscan_api.
-    
+
     Returns:
         LegiScanAPI instance
-        
+
     Raises:
         HTTPException: If LegiScanAPI is not initialized
     """
@@ -717,7 +722,7 @@ def get_legiscan_api() -> LegiScanAPI:
 def health_check():
     """
     Basic health endpoint to verify the API is alive.
-    
+
     Returns:
         Health status information
     """
@@ -742,15 +747,15 @@ def update_user_preferences(
     Update or create user preferences for the given email.
     This includes keywords, health focus areas, local government focus areas,
     and regions of interest.
-    
+
     Args:
         email: User's email address
         prefs: Preference data
         store: DataStore instance
-        
+
     Returns:
         Status message
-        
+
     Raises:
         HTTPException: If email is invalid or preferences cannot be saved
     """
@@ -761,16 +766,16 @@ def update_user_preferences(
     }):
         # Convert payload to dict for storage
         prefs_dict = prefs.dict(exclude_unset=True)
-        
+
         # Save preferences
         success = store.save_user_preferences(email, prefs_dict)
-        
+
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to update preferences."
             )
-            
+
         return {
             "status": "success", 
             "message": f"Preferences updated for {email}"
@@ -786,14 +791,14 @@ def get_user_preferences(
     """
     Retrieve user preferences for the given email, including focus areas
     and regions of interest.
-    
+
     Args:
         email: User's email address
         store: DataStore instance
-        
+
     Returns:
         User preferences
-        
+
     Raises:
         HTTPException: If email is invalid
     """
@@ -816,15 +821,15 @@ def add_search_history(
 ):
     """
     Add search history item for a user.
-    
+
     Args:
         email: User email address
         payload: Search query and results
         store: DataStore instance
-        
+
     Returns:
         Status message
-        
+
     Raises:
         HTTPException: If email is invalid or search history cannot be saved
     """
@@ -833,13 +838,13 @@ def add_search_history(
         DatabaseOperationError: status.HTTP_500_INTERNAL_SERVER_ERROR
     }):
         ok = store.add_search_history(email, payload.query, payload.results)
-        
+
         if not ok:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to add search history."
             )
-            
+
         return {
             "status": "success", 
             "message": f"Search recorded for {email}"
@@ -854,14 +859,14 @@ def get_search_history(
 ):
     """
     Retrieve search history for a user.
-    
+
     Args:
         email: User email address
         store: DataStore instance
-        
+
     Returns:
         Search history items
-        
+
     Raises:
         HTTPException: If email is invalid
     """
@@ -884,15 +889,15 @@ def list_legislation(
 ):
     """
     Returns a paginated list of legislation records.
-    
+
     Args:
         limit: Maximum number of results to return
         offset: Number of results to skip
         store: DataStore instance
-        
+
     Returns:
         Paginated legislation list
-        
+
     Raises:
         HTTPException: If pagination parameters are invalid
     """
@@ -905,7 +910,7 @@ def list_legislation(
             raise ValidationError("Limit must be between 1 and 100")
         if offset < 0:
             raise ValidationError("Offset cannot be negative")
-            
+
         result = store.list_legislation(limit=limit, offset=offset)
         return {
             "count": result["total_count"], 
@@ -923,14 +928,14 @@ def get_legislation_detail(
     """
     Retrieve a single legislation record with detail, including
     latest text and analysis if present.
-    
+
     Args:
         leg_id: Legislation ID
         store: DataStore instance
-        
+
     Returns:
         Detailed legislation information
-        
+
     Raises:
         HTTPException: If legislation is not found or ID is invalid
     """
@@ -941,14 +946,14 @@ def get_legislation_detail(
         # Validate legislation ID
         if leg_id <= 0:
             raise ValidationError("Legislation ID must be a positive integer")
-            
+
         details = store.get_legislation_details(leg_id)
         if not details:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Legislation with ID {leg_id} not found"
             )
-            
+
         return details
 
 
@@ -961,14 +966,14 @@ def search_legislation(
     """
     Search for legislation whose title or description contains the given keywords (comma-separated).
     Example: /legislation/search?keywords=health,education
-    
+
     Args:
         keywords: Comma-separated list of keywords
         store: DataStore instance
-        
+
     Returns:
         Legislation items matching the keywords
-        
+
     Raises:
         HTTPException: If keywords are invalid
     """
@@ -978,12 +983,12 @@ def search_legislation(
     }):
         if not keywords or not keywords.strip():
             raise ValidationError("Keywords parameter cannot be empty")
-            
+
         # Parse keywords
         kws = [kw.strip() for kw in keywords.split(",") if kw.strip()]
         if not kws:
             return {"count": 0, "items": [], "page_info": {}}
-        
+
         # Using the advanced_search method with keyword query
         search_results = store.advanced_search(
             query="",  # No text query
@@ -993,7 +998,7 @@ def search_legislation(
             limit=50,
             offset=0
         )
-        
+
         return {
             "count": search_results["count"], 
             "items": search_results["items"],
@@ -1020,7 +1025,7 @@ def list_texas_health_legislation(
     """
     Returns legislation relevant to Texas public health departments,
     with filtering options.
-    
+
     Args:
         limit: Maximum number of results to return
         offset: Number of results to skip
@@ -1030,10 +1035,10 @@ def list_texas_health_legislation(
         keywords: Comma-separated list of keywords
         relevance_threshold: Minimum relevance score (0-100)
         store: DataStore instance
-        
+
     Returns:
         Filtered legislation list
-        
+
     Raises:
         HTTPException: If filter parameters are invalid
     """
@@ -1046,26 +1051,26 @@ def list_texas_health_legislation(
             raise ValidationError("Limit must be between 1 and 100")
         if offset < 0:
             raise ValidationError("Offset cannot be negative")
-            
+
         # Validate optional parameters
         if status and status not in [s.value for s in BillStatusEnum]:
             raise ValidationError(f"Invalid status: {status}")
-            
+
         if impact_level and impact_level not in [il.value for il in ImpactLevelEnum]:
             raise ValidationError(f"Invalid impact_level: {impact_level}")
-            
+
         if introduced_after:
             try:
                 datetime.fromisoformat(introduced_after)
             except ValueError:
                 raise ValidationError(f"Invalid introduced_after date: {introduced_after}. Format should be YYYY-MM-DD")
-                
+
         if relevance_threshold is not None and (relevance_threshold < 0 or relevance_threshold > 100):
             raise ValidationError("Relevance threshold must be between 0 and 100")
-        
+
         # Build filters
         filters = {}
-        
+
         if status:
             filters["status"] = status
         if impact_level:
@@ -1076,10 +1081,10 @@ def list_texas_health_legislation(
             filters["keywords"] = [k.strip() for k in keywords.split(",") if k.strip()]
         if relevance_threshold is not None:
             filters["relevance_threshold"] = relevance_threshold
-        
+
         # Get legislation
         legislation = store.get_texas_health_legislation(limit=limit, offset=offset, filters=filters)
-        
+
         # Format as LegislationListResponse
         return {"count": len(legislation), "items": legislation}
 
@@ -1100,7 +1105,7 @@ def list_texas_local_govt_legislation(
     """
     Returns legislation relevant to Texas local governments,
     with filtering options including municipality type.
-    
+
     Args:
         limit: Maximum number of results to return
         offset: Number of results to skip
@@ -1111,10 +1116,10 @@ def list_texas_local_govt_legislation(
         municipality_type: Type of municipality (city, county, school, special)
         relevance_threshold: Minimum relevance score (0-100)
         store: DataStore instance
-        
+
     Returns:
         Filtered legislation list
-        
+
     Raises:
         HTTPException: If filter parameters are invalid
     """
@@ -1127,29 +1132,29 @@ def list_texas_local_govt_legislation(
             raise ValidationError("Limit must be between 1 and 100")
         if offset < 0:
             raise ValidationError("Offset cannot be negative")
-            
+
         # Validate optional parameters
         if status and status not in [s.value for s in BillStatusEnum]:
             raise ValidationError(f"Invalid status: {status}")
-            
+
         if impact_level and impact_level not in [il.value for il in ImpactLevelEnum]:
             raise ValidationError(f"Invalid impact_level: {impact_level}")
-            
+
         if introduced_after:
             try:
                 datetime.fromisoformat(introduced_after)
             except ValueError:
                 raise ValidationError(f"Invalid introduced_after date: {introduced_after}. Format should be YYYY-MM-DD")
-                
+
         if municipality_type and municipality_type not in ["city", "county", "school", "special"]:
             raise ValidationError(f"Invalid municipality_type: {municipality_type}. Must be one of: city, county, school, special")
-                
+
         if relevance_threshold is not None and (relevance_threshold < 0 or relevance_threshold > 100):
             raise ValidationError("Relevance threshold must be between 0 and 100")
-        
+
         # Build filters
         filters = {"focus": "local_govt"}  # Set focus to local government
-        
+
         if status:
             filters["status"] = status
         if impact_level:
@@ -1162,10 +1167,10 @@ def list_texas_local_govt_legislation(
             filters["municipality_type"] = municipality_type
         if relevance_threshold is not None:
             filters["relevance_threshold"] = relevance_threshold
-        
+
         # Get legislation
         legislation = store.get_texas_health_legislation(limit=limit, offset=offset, filters=filters)
-        
+
         # Format as LegislationListResponse
         return {"count": len(legislation), "items": legislation}
 
@@ -1182,15 +1187,15 @@ def get_impact_summary(
 ):
     """
     Returns summary statistics on legislation impacts for dashboard display.
-    
+
     Args:
         impact_type: Type of impact to summarize (public_health, local_gov, economic)
         time_period: Time period to cover (current, past_month, past_year, all)
         store: DataStore instance
-        
+
     Returns:
         Impact summary statistics
-        
+
     Raises:
         HTTPException: If parameters are invalid
     """
@@ -1202,11 +1207,11 @@ def get_impact_summary(
         valid_impact_types = ["public_health", "local_gov", "economic", "environmental", "education"]
         if impact_type not in valid_impact_types:
             raise ValidationError(f"Invalid impact_type: {impact_type}. Must be one of: {', '.join(valid_impact_types)}")
-            
+
         valid_time_periods = ["current", "past_month", "past_year", "all"]
         if time_period not in valid_time_periods:
             raise ValidationError(f"Invalid time_period: {time_period}. Must be one of: {', '.join(valid_time_periods)}")
-        
+
         # Get summary data
         return store.get_impact_summary(impact_type=impact_type, time_period=time_period)
 
@@ -1220,15 +1225,15 @@ def get_recent_activity(
 ):
     """
     Returns recent legislative activity for dashboard display.
-    
+
     Args:
         days: Number of days to look back
         limit: Maximum number of results to return
         store: DataStore instance
-        
+
     Returns:
         Recent legislative activity
-        
+
     Raises:
         HTTPException: If parameters are invalid
     """
@@ -1242,16 +1247,16 @@ def get_recent_activity(
             raise ValidationError("Days must be between 1 and 365")
         if limit < 1 or limit > 100:
             raise ValidationError("Limit must be between 1 and 100")
-            
+
         # Calculate cutoff date
         cutoff_date = datetime.now() - timedelta(days=days)
-        
+
         try:
             # Query for recently updated legislation
             recent_legs = store.db_session.query(Legislation).filter(
                 Legislation.updated_at >= cutoff_date
             ).order_by(Legislation.updated_at.desc()).limit(limit).all()
-            
+
             # Format response
             activity = []
             for leg in recent_legs:
@@ -1263,7 +1268,7 @@ def get_recent_activity(
                     "updated_at": leg.updated_at.isoformat() if leg.updated_at else None,
                     "govt_type": leg.govt_type.value if leg.govt_type else None
                 })
-            
+
             return {"recent_legislation": activity, "time_period_days": days}
         except Exception as e:
             logger.error(f"Error getting recent activity: {e}", exc_info=True)
@@ -1281,14 +1286,14 @@ def advanced_search(
 ):
     """
     Performs advanced search with filtering, sorting and faceted results.
-    
+
     Args:
         search_params: Search parameters and filters
         store: DataStore instance
-        
+
     Returns:
         Search results with facets
-        
+
     Raises:
         HTTPException: If search parameters are invalid
     """
@@ -1298,7 +1303,7 @@ def advanced_search(
     }):
         # Convert filters to dict, excluding None values
         filters_dict = search_params.filters.dict(exclude_none=True)
-        
+
         # Execute search
         result = store.advanced_search(
             query=search_params.query,
@@ -1308,7 +1313,7 @@ def advanced_search(
             limit=search_params.limit,
             offset=search_params.offset
         )
-        
+
         return {
             "count": result["count"], 
             "items": result["items"],
@@ -1331,17 +1336,17 @@ def analyze_legislation_ai(
 ):
     """
     Trigger an AI-based structured analysis for the specified Legislation ID.
-    
+
     Args:
         leg_id: Legislation ID to analyze
         options: Optional analysis parameters
         background_tasks: FastAPI background tasks for async processing
         analyzer: AIAnalysis instance
         store: DataStore instance
-        
+
     Returns:
         Analysis status and results
-        
+
     Raises:
         HTTPException: If legislation is not found or analysis fails
     """
@@ -1353,7 +1358,7 @@ def analyze_legislation_ai(
         # Validate legislation ID
         if leg_id <= 0:
             raise ValidationError("Legislation ID must be a positive integer")
-            
+
         # Check if legislation exists
         leg_obj = store.db_session.query(Legislation).filter_by(id=leg_id).first()
         if not leg_obj:
@@ -1361,11 +1366,11 @@ def analyze_legislation_ai(
                 status_code=status.HTTP_404_NOT_FOUND, 
                 detail=f"Legislation with ID {leg_id} not found"
             )
-        
+
         # Set default options if none provided
         if options is None:
             options = AnalysisOptions()
-            
+
         # Asynchronous processing if requested and background_tasks available
         if background_tasks and options.deep_analysis:
             async def run_analysis_task():
@@ -1373,25 +1378,25 @@ def analyze_legislation_ai(
                     analyzer.analyze_legislation(legislation_id=leg_id)
                 except Exception as e:
                     logger.error(f"Error in background analysis task for legislation ID={leg_id}: {e}", exc_info=True)
-                    
+
             # Add task to background tasks
             background_tasks.add_task(run_analysis_task)
-            
+
             return {
                 "status": "processing", 
                 "message": "Analysis started in the background. Check back later.",
                 "legislation_id": leg_id
             }
-        
+
         # Synchronous processing
         try:
             # Set model parameters if needed
             if hasattr(options, "model_name") and options.model_name:
                 analyzer.model_name = options.model_name
-            
+
             # Run analysis
             analysis_obj = analyzer.analyze_legislation(legislation_id=leg_id)
-            
+
             return {
                 "status": "completed",
                 "legislation_id": leg_id,
@@ -1415,14 +1420,14 @@ def get_legislation_analysis_history(
     """
     Returns the history of analyses for a legislation, showing how assessments
     have changed over time.
-    
+
     Args:
         leg_id: Legislation ID
         store: DataStore instance
-        
+
     Returns:
         Analysis history
-        
+
     Raises:
         HTTPException: If legislation is not found or analysis history cannot be retrieved
     """
@@ -1434,7 +1439,7 @@ def get_legislation_analysis_history(
         # Validate legislation ID
         if leg_id <= 0:
             raise ValidationError("Legislation ID must be a positive integer")
-            
+
         # Check if legislation exists
         leg = store.db_session.query(Legislation).filter_by(id=leg_id).first()
         if not leg:
@@ -1442,11 +1447,11 @@ def get_legislation_analysis_history(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Legislation with ID {leg_id} not found"
             )
-        
+
         # Get and format analyses
         analyses = []
         sorted_analyses = sorted(leg.analyses, key=lambda a: a.analysis_version)
-        
+
         for analysis in sorted_analyses:
             analyses.append({
                 "id": analysis.id,
@@ -1457,7 +1462,7 @@ def get_legislation_analysis_history(
                 "impact_level": analysis.impact.value if hasattr(analysis, 'impact') and analysis.impact else None,
                 "model_version": analysis.model_version
             })
-            
+
         return {
             "legislation_id": leg_id,
             "analysis_count": len(analyses),
@@ -1477,15 +1482,15 @@ def update_priority(
 ):
     """
     Update the priority scores for a specific legislation.
-    
+
     Args:
         leg_id: Legislation ID
         payload: Priority data to update
         store: DataStore instance
-        
+
     Returns:
         Updated priority data
-        
+
     Raises:
         HTTPException: If legislation is not found or priority cannot be updated
     """
@@ -1497,7 +1502,7 @@ def update_priority(
         # Validate legislation ID
         if leg_id <= 0:
             raise ValidationError("Legislation ID must be a positive integer")
-            
+
         try:
             # Check if legislation exists
             leg = store.db_session.query(Legislation).filter_by(id=leg_id).first()
@@ -1506,7 +1511,7 @@ def update_priority(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Legislation with ID {leg_id} not found"
                 )
-                
+
             # Check if LegislationPriority model is available
             try:
                 from models import LegislationPriority
@@ -1517,23 +1522,23 @@ def update_priority(
                     status_code=status.HTTP_501_NOT_IMPLEMENTED,
                     detail="Priority updates not supported: LegislationPriority model not available"
                 )
-                
+
             # Use the DataStore method to update priority
             update_data = payload.dict(exclude_unset=True)
             updated_priority = store.update_legislation_priority(leg_id, update_data)
-            
+
             if not updated_priority:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Failed to update priority"
                 )
-                
+
             return {
                 "status": "success",
                 "message": f"Priority updated for legislation ID {leg_id}",
                 "priority": updated_priority
             }
-                
+
         except HTTPException:
             # Re-raise HTTP exceptions
             raise
@@ -1552,13 +1557,13 @@ def get_sync_status(
 ):
     """
     Retrieve the history of sync operations.
-    
+
     Args:
         store: DataStore instance
-        
+
     Returns:
         Sync history records
-        
+
     Raises:
         HTTPException: If sync history cannot be retrieved
     """
@@ -1570,7 +1575,7 @@ def get_sync_status(
         try:
             # Get sync history from data store
             sync_history = store.get_sync_history(limit=10)
-            
+
             return {
                 "sync_history": sync_history,
                 "count": len(sync_history)
@@ -1592,15 +1597,15 @@ def trigger_sync(
 ):
     """
     Manually trigger a synchronization with LegiScan.
-    
+
     Args:
         force: Whether to force a sync even if one was recently run
         background_tasks: FastAPI background tasks for async processing
         api: LegiScanAPI instance
-        
+
     Returns:
         Status of the sync operation
-        
+
     Raises:
         HTTPException: If sync fails or API is unavailable
     """
@@ -1615,20 +1620,20 @@ def trigger_sync(
                     api.run_sync(sync_type="manual")
                 except Exception as e:
                     logger.error(f"Error in background sync task: {e}", exc_info=True)
-                    
+
             # Add task to background tasks
             background_tasks.add_task(run_sync_task)
-            
+
             return {
                 "status": "processing",
                 "message": "Sync operation started in the background"
             }
-            
+
         # Run sync synchronously
         try:
             # Run a sync operation
             result = api.run_sync(sync_type="manual")
-            
+
             return {
                 "status": "success",
                 "message": "Sync operation completed successfully",
@@ -1699,7 +1704,7 @@ async def get_bill_analysis(bill_id: int):
         bill = bill_store.get_bill(bill_id)
         if not bill:
             raise HTTPException(status_code=404, detail=f"Bill with ID {bill_id} not found")
-        
+
         # Check if bill has text
         if not bill.get("text"):
             # Try to fetch text from LegiScan if not available
@@ -1714,14 +1719,14 @@ async def get_bill_analysis(bill_id: int):
             except Exception as e:
                 logger.error(f"Error fetching bill text from LegiScan: {str(e)}")
                 raise HTTPException(status_code=404, detail="Bill text not available")
-        
+
         # Analyze the bill
         analysis = analyze_bill(
             bill_text=bill["text"],
             bill_title=bill.get("title"),
             state=bill.get("state")
         )
-        
+
         return analysis
     except HTTPException:
         raise
