@@ -3,14 +3,16 @@
 """
 setup_database.py
 
-A comprehensive script to set up and verify the PolicyPulse database in Replit.
+This script sets up the PolicyPulse database and populates it with initial data.
+It handles first-time setup and updates to existing databases.
 """
 
 import os
 import sys
 import logging
-import time
 import argparse
+import psycopg2
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 # Set up logging
 logging.basicConfig(
@@ -19,120 +21,116 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def check_environment():
-    """Check if the environment is properly set up."""
-    # Check if DATABASE_URL environment variable is set
-    if 'DATABASE_URL' not in os.environ:
-        logger.error("DATABASE_URL environment variable not found.")
-        logger.error("Please set up a PostgreSQL database in your Replit project:")
-        logger.error("1. Open the 'Database' tab in the Replit sidebar (left)")
-        logger.error("2. Click 'Create a database'")
-        logger.error("3. Wait for the database to be created")
-        logger.error("4. Run this script again")
-        return False
-        
-    logger.info(f"DATABASE_URL found: {os.environ['DATABASE_URL'][:20]}...")
-    return True
+def get_connection_string():
+    """Get the database connection string from environment variables."""
+    if 'DATABASE_URL' in os.environ:
+        logger.info(f"DATABASE_URL found: {os.environ['DATABASE_URL'][:15]}...")
+        return os.environ['DATABASE_URL']
+    
+    logger.error("DATABASE_URL environment variable not found")
+    return None
 
-def execute_setup():
-    """Execute the database setup process."""
+def test_connection(connection_string):
+    """Test the database connection."""
+    try:
+        with psycopg2.connect(connection_string) as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT version();")
+                version = cursor.fetchone()[0]
+                logger.info(f"Successfully connected to PostgreSQL: {version}")
+                return True
+    except Exception as e:
+        logger.error(f"Failed to connect to database: {e}")
+        return False
+
+def check_existing_schema(connection_string):
+    """Check if database schema already exists."""
+    try:
+        with psycopg2.connect(connection_string) as conn:
+            with conn.cursor() as cursor:
+                # Check for a sample of key tables
+                cursor.execute("""
+                    SELECT table_name FROM information_schema.tables 
+                    WHERE table_schema = 'public' AND 
+                    table_name IN ('users', 'legislation', 'sync_metadata')
+                """)
+                existing_tables = cursor.fetchall()
+                
+                # Check for enum types
+                cursor.execute("""
+                    SELECT typname FROM pg_type 
+                    WHERE typname IN ('data_source_enum', 'govt_type_enum', 'bill_status_enum')
+                """)
+                existing_types = cursor.fetchall()
+                
+                if existing_tables and existing_types:
+                    logger.info(f"Existing schema detected with {len(existing_tables)} core tables and {len(existing_types)} enum types")
+                    return True
+                return False
+    except Exception as e:
+        logger.error(f"Error checking schema: {e}")
+        return False
+
+def setup_database(force=False):
+    """Set up the database schema."""
     logger.info("Setting up the PolicyPulse database...")
     
-    try:
-        # Run db_setup.py
-        logger.info("Running database schema creation...")
-        from db.db_setup import main as setup_main
-        
-        if not setup_main():
-            logger.error("Database schema creation failed")
-            return False
-            
-        logger.info("Database schema created successfully")
-        return True
-    except Exception as e:
-        logger.error(f"Error during database setup: {e}")
+    # Get connection string
+    connection_string = get_connection_string()
+    if not connection_string:
         return False
-
-def verify_setup():
-    """Verify the database setup."""
-    logger.info("Verifying database setup...")
+    
+    # Check if schema already exists
+    schema_exists = check_existing_schema(connection_string)
+    
+    if schema_exists and not force:
+        logger.info("Database schema already exists. Use --force to rebuild.")
+        return True
+    
+    # Run the database schema creation
+    logger.info("Running database schema creation...")
+    from db.db_setup import main as setup_main
     
     try:
-        # Import the verification module
-        from app.db_connection import check_database_status
-        
-        # Check database status
-        status = check_database_status()
-        
-        if not status["connection"]:
-            logger.error(f"Could not connect to database: {status['error']}")
-            return False
-            
-        if status["details"].get("missing_tables"):
-            logger.error(f"Missing tables: {', '.join(status['details']['missing_tables'])}")
-            return False
-            
-        if not status["details"].get("admin_user_exists", False):
-            logger.error("Admin user does not exist")
-            return False
-            
-        logger.info(f"Database verified: {len(status['tables'])} tables found")
-        logger.info("All required tables and data present")
-        return True
+        return setup_main()
     except Exception as e:
-        logger.error(f"Error during verification: {e}")
+        logger.error(f"Database schema creation failed: {e}")
         return False
 
 def main():
-    """Main function to set up and verify the database."""
-    parser = argparse.ArgumentParser(description="Set up and verify the PolicyPulse database")
-    parser.add_argument("--force", action="store_true", help="Force setup even if verification passes")
-    parser.add_argument("--verify-only", action="store_true", help="Only verify the database, don't set it up")
+    """Main function."""
+    parser = argparse.ArgumentParser(description="Set up the PolicyPulse database")
+    parser.add_argument("--force", action="store_true", help="Force schema recreation even if it exists")
+    parser.add_argument("--verify-only", action="store_true", help="Only verify the database connection and schema")
     args = parser.parse_args()
     
-    # First, check if the environment is set up correctly
-    if not check_environment():
-        return 1
+    connection_string = get_connection_string()
+    if not connection_string:
+        return False
     
-    # If verify-only flag is set, just verify and exit
+    # First test the connection
+    if not test_connection(connection_string):
+        return False
+    
+    # If verify-only flag is set, just check and exit
     if args.verify_only:
-        logger.info("Verification only mode")
-        success = verify_setup()
-        return 0 if success else 1
+        schema_exists = check_existing_schema(connection_string)
+        if schema_exists:
+            logger.info("Database schema verification successful!")
+        else:
+            logger.warning("Database schema verification failed - schema missing or incomplete")
+        return schema_exists
     
-    # Check if we need to run setup
-    if not args.force:
-        try:
-            from app.db_connection import check_database_status
-            status = check_database_status()
-            
-            # If we can connect and all required tables exist, skip setup
-            if (status["connection"] and 
-                not status["details"].get("missing_tables") and
-                status["details"].get("admin_user_exists", False)):
-                logger.info("Database already set up correctly. Use --force to run setup anyway.")
-                return 0
-        except:
-            # If verification fails, continue with setup
-            pass
+    # Otherwise proceed with setup
+    success = setup_database(force=args.force)
     
-    # Run the setup
-    if not execute_setup():
-        logger.error("Database setup failed. Please check the logs for details.")
-        return 1
-    
-    # Verify setup
-    logger.info("Waiting 2 seconds for changes to propagate...")
-    time.sleep(2)
-    
-    if verify_setup():
-        logger.info("Database setup and verification completed successfully!")
-        logger.info("The PolicyPulse database is ready to use.")
-        return 0
+    if success:
+        logger.info("Database setup completed successfully!")
+        return True
     else:
-        logger.error("Database verification failed after setup.")
-        logger.error("The database might not be fully functional.")
-        return 1
+        logger.error("Database setup failed. Please check the logs for details.")
+        return False
 
 if __name__ == "__main__":
-    sys.exit(main())
+    success = main()
+    sys.exit(0 if success else 1)

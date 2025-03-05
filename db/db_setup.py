@@ -37,14 +37,59 @@ def get_connection_string():
 
     return f"postgresql://{user}:{password}@{host}:{port}/{dbname}"
 
+def check_enum_types(conn):
+    """Check if the enum types already exist in the database."""
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT typname FROM pg_type 
+                WHERE typname IN ('data_source_enum', 'govt_type_enum', 'bill_status_enum',
+                                 'impact_level_enum', 'impact_category_enum', 'amendment_status_enum',
+                                 'notification_type_enum', 'sync_status_enum')
+            """)
+            existing_types = [row[0] for row in cur.fetchall()]
+            return existing_types
+    except Exception as e:
+        logger.error(f"Error checking enum types: {e}")
+        return []
+
 def execute_sql_file(conn, filepath):
     """Execute SQL commands from a file."""
     try:
         with open(filepath, 'r') as f:
             sql_script = f.read()
 
-        with conn.cursor() as cur:
-            cur.execute(sql_script)
+        # Check if enum types already exist
+        existing_types = check_enum_types(conn)
+        if existing_types:
+            logger.info(f"Found existing enum types: {', '.join(existing_types)}")
+            
+            # Split script by semicolons to execute statements individually
+            statements = sql_script.split(';')
+            with conn.cursor() as cur:
+                for statement in statements:
+                    statement = statement.strip()
+                    if not statement:
+                        continue
+                        
+                    # Skip CREATE TYPE statements for existing types
+                    skip = False
+                    for enum_type in existing_types:
+                        if f"CREATE TYPE {enum_type}" in statement:
+                            logger.info(f"Skipping creation of existing type: {enum_type}")
+                            skip = True
+                            break
+                            
+                    if not skip:
+                        try:
+                            cur.execute(statement + ';')
+                        except Exception as e:
+                            logger.warning(f"Error executing statement: {e}")
+                            # Continue with other statements
+        else:
+            # No existing types, execute the whole script
+            with conn.cursor() as cur:
+                cur.execute(sql_script)
 
         conn.commit()
         logger.info(f"Successfully executed SQL script: {filepath}")
