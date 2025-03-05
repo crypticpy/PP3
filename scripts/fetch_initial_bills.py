@@ -14,13 +14,13 @@ import os
 import sys
 import logging
 import argparse
-import app.models
 from datetime import datetime
 from sqlalchemy.orm import Session
 
 # Add the parent directory to the path so we can import our modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# Now we can import from app
 from app.models import init_db, Legislation
 from app.legiscan_api import LegiScanAPI
 from app.ai_analysis import AIAnalysis
