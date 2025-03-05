@@ -9,7 +9,7 @@ It handles connection pooling, retries, and error handling.
 import os
 import time
 import logging
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict, Any, List
 
 import psycopg2
 from psycopg2 import pool
@@ -31,11 +31,7 @@ def get_connection_string() -> str:
     """
     # For Replit PostgreSQL integration
     if 'DATABASE_URL' in os.environ:
-        db_url = os.environ['DATABASE_URL']
-        # Optional: Use connection pooler if available
-        if '-pooler' not in db_url and '.neon.tech' in db_url:
-            db_url = db_url.replace('.neon.tech', '-pooler.neon.tech')
-        return db_url
+        return os.environ['DATABASE_URL']
     
     # For local development or explicit configuration
     host = os.environ.get('DB_HOST', 'localhost')
@@ -214,3 +210,62 @@ def close_connection_pool():
             logger.error(f"Error closing connection pool: {e}")
         finally:
             connection_pool = None
+
+def check_database_status() -> Dict[str, Any]:
+    """
+    Check the status of the database connection and return details.
+    
+    Returns:
+        Dict containing status information
+    """
+    status = {
+        "connection": False,
+        "database_url_exists": 'DATABASE_URL' in os.environ,
+        "error": None,
+        "tables": [],
+        "details": {}
+    }
+    
+    if not status["database_url_exists"]:
+        status["error"] = "DATABASE_URL environment variable not found"
+        return status
+    
+    try:
+        conn = psycopg2.connect(get_connection_string())
+        status["connection"] = True
+        
+        # Get database details
+        with conn.cursor() as cursor:
+            # PostgreSQL version
+            cursor.execute("SELECT version()")
+            status["details"]["version"] = cursor.fetchone()[0]
+            
+            # List tables
+            cursor.execute("""
+                SELECT table_name 
+                FROM information_schema.tables 
+                WHERE table_schema = 'public'
+                ORDER BY table_name
+            """)
+            status["tables"] = [row[0] for row in cursor.fetchall()]
+            
+            # Check for required tables
+            required_tables = [
+                'users', 'legislation', 'legislation_analysis', 
+                'legislation_priorities', 'sync_metadata'
+            ]
+            status["details"]["missing_tables"] = [
+                table for table in required_tables 
+                if table not in status["tables"]
+            ]
+            
+            # Check if admin user exists
+            if 'users' in status["tables"]:
+                cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'admin'")
+                status["details"]["admin_user_exists"] = cursor.fetchone()[0] > 0
+        
+        conn.close()
+    except Exception as e:
+        status["error"] = str(e)
+    
+    return status
