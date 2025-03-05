@@ -357,13 +357,15 @@ class AIAnalysis:
             ).all()
 
             if existing_analyses:
-                prev = max(
-                    existing_analyses,
-                    key=lambda x: (
-                        x.analysis_version if isinstance(x.analysis_version, int) else -1
-                    ),
-                    default=None
-                )
+                if existing_analyses:
+                    prev = max(
+                        existing_analyses,
+                        key=lambda x: (
+                            x.analysis_version if isinstance(x.analysis_version, int) else -1
+                        )
+                    )
+                else:
+                    prev = None
                 new_version = (
                     (prev.analysis_version or 0) + 1
                 )
