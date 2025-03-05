@@ -464,82 +464,82 @@ def merge_analyses(base: Dict[str, Any], new: Dict[str, Any]) -> Dict[str, Any]:
     return merged
 
 
-    def create_chunk_prompt(
-        chunk: str, 
-        chunk_index: int, 
-        total_chunks: int,
-        prev_summaries: List[str],
-        legislation_metadata: Dict[str, str],
-        is_structured: bool
-    ) -> str:
-        """
-        Create a prompt for analyzing a chunk of legislation with context preservation.
+def create_chunk_prompt(
+    chunk: str, 
+    chunk_index: int, 
+    total_chunks: int,
+    prev_summaries: List[str],
+    legislation_metadata: Dict[str, str],
+    is_structured: bool
+) -> str:
+    """
+    Create a prompt for analyzing a chunk of legislation with context preservation.
 
-        Args:
-            chunk: Text chunk to analyze
-            chunk_index: Index of this chunk (0-based)
-            total_chunks: Total number of chunks
-            prev_summaries: Summaries from previous chunks
-            legislation_metadata: Bill metadata for context
-            is_structured: Whether the document has structured sections
+    Args:
+        chunk: Text chunk to analyze
+        chunk_index: Index of this chunk (0-based)
+        total_chunks: Total number of chunks
+        prev_summaries: Summaries from previous chunks
+        legislation_metadata: Bill metadata for context
+        is_structured: Whether the document has structured sections
 
-        Returns:
-            Customized prompt for this chunk
-        """
-        # Prepare context section
-        context_sections = [
-            f"Bill Number: {legislation_metadata['bill_number']}",
-            f"Title: {legislation_metadata['title']}",
-            f"Description: {legislation_metadata['description']}",
-            f"Government Type: {legislation_metadata['govt_type']}",
-            f"Source: {legislation_metadata['govt_source']}",
-            f"Status: {legislation_metadata['status']}"
-        ]
+    Returns:
+        Customized prompt for this chunk
+    """
+    # Prepare context section
+    context_sections = [
+        f"Bill Number: {legislation_metadata['bill_number']}",
+        f"Title: {legislation_metadata['title']}",
+        f"Description: {legislation_metadata['description']}",
+        f"Government Type: {legislation_metadata['govt_type']}",
+        f"Source: {legislation_metadata['govt_source']}",
+        f"Status: {legislation_metadata['status']}"
+    ]
 
-        # Add summaries from previous chunks if available
-        if prev_summaries:
-            context_sections.append("\nSUMMARIES FROM PREVIOUS SECTIONS:")
-            context_sections.extend(prev_summaries)
+    # Add summaries from previous chunks if available
+    if prev_summaries:
+        context_sections.append("\nSUMMARIES FROM PREVIOUS SECTIONS:")
+        context_sections.extend(prev_summaries)
 
-        context_text = "\n".join(context_sections)
+    context_text = "\n".join(context_sections)
 
-        # Create appropriate instructions based on which chunk we're processing
-        if chunk_index == 0:
-            # First chunk
-            instructions = (
-                f"You are analyzing PART 1 OF {total_chunks} of a large legislative bill. "
-                f"Focus on the sections provided while considering the bill's overall context."
-            )
-        elif chunk_index == total_chunks - 1:
-            # Last chunk
-            instructions = (
-                f"You are analyzing THE FINAL PART ({chunk_index+1} OF {total_chunks}) of a large legislative bill. "
-                f"Use the summaries of previous sections to inform your analysis and provide a comprehensive conclusion."
-            )
-        else:
-            # Middle chunk
-            instructions = (
-                f"You are analyzing PART {chunk_index+1} OF {total_chunks} of a large legislative bill. "
-                f"Consider the context from previous parts while focusing on the new content in this section."
-            )
-
-        # Additional guidance for structured vs. unstructured documents
-        if is_structured:
-            instructions += (
-                " This document has structured sections. Pay attention to section headers and "
-                "how they relate to previous parts of the bill."
-            )
-        else:
-            instructions += (
-                " This document was split by content size rather than by natural sections. "
-                "Be aware that some concepts might span across chunks."
-            )
-
-        # Full prompt assembly
-        full_prompt = (
-            f"{instructions}\n\n"
-            f"BILL CONTEXT:\n{context_text}\n\n"
-            f"CURRENT SECTION TEXT TO ANALYZE:\n{chunk}"
+    # Create appropriate instructions based on which chunk we're processing
+    if chunk_index == 0:
+        # First chunk
+        instructions = (
+            f"You are analyzing PART 1 OF {total_chunks} of a large legislative bill. "
+            f"Focus on the sections provided while considering the bill's overall context."
+        )
+    elif chunk_index == total_chunks - 1:
+        # Last chunk
+        instructions = (
+            f"You are analyzing THE FINAL PART ({chunk_index+1} OF {total_chunks}) of a large legislative bill. "
+            f"Use the summaries of previous sections to inform your analysis and provide a comprehensive conclusion."
+        )
+    else:
+        # Middle chunk
+        instructions = (
+            f"You are analyzing PART {chunk_index+1} OF {total_chunks} of a large legislative bill. "
+            f"Consider the context from previous parts while focusing on the new content in this section."
         )
 
-        return full_prompt
+    # Additional guidance for structured vs. unstructured documents
+    if is_structured:
+        instructions += (
+            " This document has structured sections. Pay attention to section headers and "
+            "how they relate to previous parts of the bill."
+        )
+    else:
+        instructions += (
+            " This document was split by content size rather than by natural sections. "
+            "Be aware that some concepts might span across chunks."
+        )
+
+    # Full prompt assembly
+    full_prompt = (
+        f"{instructions}\n\n"
+        f"BILL CONTEXT:\n{context_text}\n\n"
+        f"CURRENT SECTION TEXT TO ANALYZE:\n{chunk}"
+    )
+
+    return full_prompt

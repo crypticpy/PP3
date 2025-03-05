@@ -4,7 +4,7 @@ Configuration settings for the AI Analysis module.
 
 import os
 import logging
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, field_validator
 from typing import Optional
 
 
@@ -24,41 +24,56 @@ class AIAnalysisConfig(BaseModel):
     cache_ttl_minutes: int = 30
     log_level: str = "INFO"
 
-    @model_validator(mode='after')
-    def validate_configuration(self) -> 'AIAnalysisConfig':
-        """Validate all configuration settings."""
-        # Validate max_context_tokens
-        if self.max_context_tokens < 1000:
+    @field_validator('max_context_tokens')
+    @classmethod
+    def validate_max_context_tokens(cls, v):
+        if v < 1000:
             raise ValueError("max_context_tokens must be at least 1000")
-        if self.max_context_tokens > 1_000_000:
+        if v > 1_000_000:
             raise ValueError("max_context_tokens seems unreasonably high")
+        return v
 
-        # Validate safety_buffer
-        if self.safety_buffer < 0:
+    @field_validator('safety_buffer')
+    @classmethod
+    def validate_safety_buffer(cls, v):
+        if v < 0:
             raise ValueError("safety_buffer cannot be negative")
+        return v
 
-        # Validate max_retries
-        if self.max_retries < 0:
+    @field_validator('max_retries')
+    @classmethod
+    def validate_max_retries(cls, v):
+        if v < 0:
             raise ValueError("max_retries cannot be negative")
-        if self.max_retries > 10:
+        if v > 10:
             raise ValueError("max_retries seems unreasonably high")
+        return v
 
-        # Validate retry_base_delay
-        if self.retry_base_delay <= 0:
+    @field_validator('retry_base_delay')
+    @classmethod
+    def validate_retry_base_delay(cls, v):
+        if v <= 0:
             raise ValueError("retry_base_delay must be positive")
-        if self.retry_base_delay > 10:
+        if v > 10:
             raise ValueError("retry_base_delay seems unreasonably high")
+        return v
 
-        # Validate log_level
+    @field_validator('log_level')
+    @classmethod
+    def validate_log_level(cls, v):
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-        if self.log_level not in valid_levels:
+        if v not in valid_levels:
             raise ValueError(f"log_level must be one of: {', '.join(valid_levels)}")
+        return v
 
-        # Check API key
-        if not self.openai_api_key and not os.environ.get("OPENAI_API_KEY"):
+    @field_validator('openai_api_key')
+    @classmethod
+    def validate_api_key(cls, v, info):
+        # This validator needs to check the environment variable if v is None
+        if v is None and not os.environ.get("OPENAI_API_KEY"):
             raise ValueError("OpenAI API key must be provided or set in OPENAI_API_KEY environment variable")
+        return v
 
-        return self
 
 # Set up logger level based on environment
 def configure_logging(level_name="INFO"):

@@ -6,7 +6,7 @@ import logging
 import re
 import asyncio
 from datetime import datetime, timezone
-from typing import List, Dict, Any, Optional, Literal, Tuple
+from typing import List, Dict, Any, Optional, Literal, Tuple, cast, Union, Callable, Awaitable
 from contextlib import contextmanager, asynccontextmanager
 from threading import Lock
 
@@ -32,6 +32,7 @@ from app.ai_analysis.utils import (
 from app.models import (
     Legislation,
     LegislationAnalysis,
+    LegislationPriority,
     ImpactCategoryEnum,
     ImpactLevelEnum
 )
@@ -50,7 +51,9 @@ class AIAnalysis:
     The AIAnalysis class orchestrates generating a structured legislative analysis
     from OpenAI's language models and storing it in the database with version control.
     """
-
+    # _call_structured_analysis_async: Callable[[str, bool, Any], Awaitable[Dict[str, Any]]]
+    # _analyze_in_chunks_async: Callable[[List[str], bool, Union[Legislation, Any], Any], Awaitable[Dict[str, Any]]]
+    
     def __init__(
         self,
         db_session: Session,
@@ -157,7 +160,7 @@ class AIAnalysis:
 
         # Attempt to get full text from the latest_text or fallback to description
         text_rec = leg_obj.latest_text
-        if text_rec and text_rec.text_content:
+        if text_rec is not None and text_rec.text_content is not None:
             is_binary = getattr(text_rec, 'is_binary', False)
             if is_binary:
                 logger.warning(
@@ -167,7 +170,7 @@ class AIAnalysis:
             else:
                 full_text = self._ensure_plain_string(text_rec.text_content)
         else:
-            full_text = self._ensure_plain_string(leg_obj.description or "")
+            full_text = self._ensure_plain_string(leg_obj.description if leg_obj.description is not None else "")
 
         token_count = self.token_counter.count_tokens(full_text)
         if token_count > self.config.max_context_tokens:
@@ -243,21 +246,21 @@ class AIAnalysis:
         self, 
         chunks: List[str], 
         structured: bool, 
-        leg_obj: Legislation
+        leg_obj: Union[Legislation, Any]
     ) -> Dict[str, Any]:
         """
         Breaks the text into chunks and analyzes them sequentially. Merges partial analyses.
         """
-        description_text = self._ensure_plain_string(leg_obj.description or "")
-        govt_type_value = str(getattr(leg_obj.govt_type, 'value', 'unknown'))
-        status_value = str(getattr(leg_obj.bill_status, 'value', 'unknown'))
+        description_text = self._ensure_plain_string(getattr(leg_obj, 'description', '') or "")
+        govt_type_value = str(getattr(getattr(leg_obj, 'govt_type', None), 'value', 'unknown'))
+        status_value = str(getattr(getattr(leg_obj, 'bill_status', None), 'value', 'unknown'))
 
         context = {
-            "bill_number": leg_obj.bill_number,
-            "title": leg_obj.title,
+            "bill_number": getattr(leg_obj, 'bill_number', 'N/A'),
+            "title": getattr(leg_obj, 'title', 'Untitled'),
             "description": description_text,
             "govt_type": govt_type_value,
-            "govt_source": leg_obj.govt_source,
+            "govt_source": getattr(leg_obj, 'govt_source', 'External'),
             "status": status_value
         }
 
@@ -266,7 +269,7 @@ class AIAnalysis:
 
         for i, chunk in enumerate(chunks):
             logger.info(
-                f"Processing chunk {i+1}/{len(chunks)} for legislation {leg_obj.id}"
+                f"Processing chunk {i+1}/{len(chunks)} for legislation {getattr(leg_obj, 'id', 'EXTERNAL')}"
             )
             try:
                 chunk_prompt = create_chunk_prompt(
@@ -300,18 +303,18 @@ class AIAnalysis:
                 logger.error(f"API error analyzing chunk {i+1}: {e}")
                 if i == 0:
                     raise AIAnalysisError(
-                        f"Failed to analyze legislation {leg_obj.id} - first chunk"
+                        f"Failed to analyze legislation {getattr(leg_obj, 'id', 'EXTERNAL')} - first chunk"
                     ) from e
             except Exception as e:
                 logger.error(f"Error analyzing chunk {i+1}: {e}", exc_info=True)
                 if i == 0:
                     raise AIAnalysisError(
-                        f"Failed to analyze legislation {leg_obj.id} - first chunk"
+                        f"Failed to analyze legislation {getattr(leg_obj, 'id', 'EXTERNAL')} - first chunk"
                     ) from e
 
         if not cumulative_analysis or "summary" not in cumulative_analysis:
             raise AIAnalysisError(
-                f"Failed to generate complete analysis for legislation {leg_obj.id} "
+                f"Failed to generate complete analysis for legislation {getattr(leg_obj, 'id', 'EXTERNAL')} "
                 "after processing all chunks"
             )
 
@@ -357,22 +360,21 @@ class AIAnalysis:
             ).all()
 
             if existing_analyses:
-                if existing_analyses:
-                    prev = max(
-                        existing_analyses,
-                        key=lambda x: (
-                            x.analysis_version if isinstance(x.analysis_version, int) else -1
-                        )
-                    )
-                else:
-                    prev = None
-                new_version = (
-                    (prev.analysis_version or 0) + 1
-                )
-                prev_id = prev.id if prev else None
+                # Build a list of integer versions, defaulting to 0 if analysis_version is None.
+                versions = [
+                    cast(int, x.analysis_version) if x.analysis_version is not None else 0
+                    for x in existing_analyses
+                ]
+                max_version = max(versions, default=0)
+                new_version = max_version + 1
+
+                # Optionally, retrieve the record with the max version.
+                prev = next((x for x in existing_analyses if cast(int, x.analysis_version) == max_version), None)
+                prev_id = prev.id if prev is not None else None
             else:
                 new_version = 1
                 prev_id = None
+
 
             impact_summary = analysis_dict.get("impact_summary", {})
             impact_category_str = impact_summary.get("primary_category")
@@ -447,7 +449,6 @@ class AIAnalysis:
         with self._db_transaction():
             try:
                 # Calculate priority data from the analysis
-                # if your function expects two parameters, pass them
                 priority_data = calculate_priority_scores(analysis_dict, legislation_id)
 
                 priority = self.db_session.query(LegislationPriority).filter_by(
@@ -456,27 +457,38 @@ class AIAnalysis:
 
                 if priority:
                     # Only update if it hasn't been manually reviewed
-                    if not bool(priority.manually_reviewed):
-                        priority.public_health_relevance = priority_data.get(
-                            "public_health_relevance"
-                        )
-                        priority.local_govt_relevance = priority_data.get(
-                            "local_govt_relevance"
-                        )
-                        priority.overall_priority = priority_data.get("overall_priority")
-                        priority.auto_categorized = True
-                        # Typically a dict
-                        priority.auto_categories = priority_data.get(
-                            "auto_categories",
-                            {}
-                        )
+                    if not bool(priority.manually_reviewed):  # Convert to bool
+                        # Use setattr for type safety or explicit type conversion
+                        health_relevance = int(priority_data.get("public_health_relevance") or 0)
+                        local_relevance = int(priority_data.get("local_govt_relevance") or 0)
+                        overall = int(priority_data.get("overall_priority") or 0)
+
+                        # Option 1: Use setattr
+                        setattr(priority, "public_health_relevance", health_relevance)
+                        setattr(priority, "local_govt_relevance", local_relevance)
+                        setattr(priority, "overall_priority", overall)
+                        setattr(priority, "auto_categorized", True)
+                        setattr(priority, "auto_categories", priority_data.get("auto_categories", {}))
+
+                        # Option 2: Alternative approach with explicit casts
+                        # from sqlalchemy import Integer, Boolean, JSON
+                        # from sqlalchemy.sql.expression import cast as sql_cast
+                        # 
+                        # priority.public_health_relevance = sql_cast(health_relevance, Integer)
+                        # priority.local_govt_relevance = sql_cast(local_relevance, Integer)
+                        # priority.overall_priority = sql_cast(overall, Integer)
+                        # priority.auto_categorized = sql_cast(True, Boolean)
+                        # if hasattr(priority, "auto_categories"):
+                        #     priority.auto_categories = priority_data.get("auto_categories", {})
                 else:
+                    # New priority creation
+                    # This part might still need type fixing depending on the model
                     new_priority = LegislationPriority(
                         legislation_id=legislation_id,
-                        public_health_relevance=priority_data.get("public_health_relevance"),
-                        local_govt_relevance=priority_data.get("local_govt_relevance", 0),
-                        overall_priority=priority_data.get("overall_priority", 0),
-                        auto_categorized=priority_data.get("auto_categorized", False),
+                        public_health_relevance=int(priority_data.get("public_health_relevance") or 0),
+                        local_govt_relevance=int(priority_data.get("local_govt_relevance") or 0),
+                        overall_priority=int(priority_data.get("overall_priority") or 0),
+                        auto_categorized=bool(priority_data.get("auto_categorized", False)),
                         auto_categories=priority_data.get("auto_categories", {})
                     )
                     self.db_session.add(new_priority)
@@ -697,15 +709,22 @@ class AIAnalysis:
                 if len(chunks) == 1:
                     text_for_analysis = chunks[0]
                     analysis_data = await self._call_structured_analysis_async(
-                        text_for_analysis, transaction_ctx=transaction
+                        text_for_analysis,
+                        is_chunk=False,  # Add this parameter
+                        transaction_ctx=transaction
                     )
                 else:
                     analysis_data = await self._analyze_in_chunks_async(
-                        chunks, has_structure, leg_obj, transaction_ctx=transaction
+                        chunks,
+                        has_structure,  # Make sure this matches the parameter name
+                        leg_obj,
+                        transaction_ctx=transaction
                     )
             else:
                 analysis_data = await self._call_structured_analysis_async(
-                    full_text, transaction_ctx=transaction
+                    full_text,
+                    is_chunk=False,  # Add this parameter
+                    transaction_ctx=transaction
                 )
 
             if not analysis_data:
@@ -763,37 +782,37 @@ class AIAnalysis:
         except Exception as e:
             logger.error(f"Error in async structured analysis: {e}")
             raise
-
+    
     async def _analyze_in_chunks_async(
         self, 
         chunks: List[str], 
         structured: bool, 
-        leg_obj: Legislation,
+        leg_obj: Union[Legislation, Any],
         transaction_ctx: Any = None
     ) -> Dict[str, Any]:
         """
         Asynchronous version of the _analyze_in_chunks method, chunking the text
         and merging partial results.
         """
-        description_text = self._ensure_plain_string(leg_obj.description if leg_obj.description is not None else "")
-        govt_type_value = str(getattr(leg_obj.govt_type, 'value', 'unknown'))
-        status_value = str(getattr(leg_obj.bill_status, 'value', 'unknown'))
-
+        description_text = self._ensure_plain_string(getattr(leg_obj, 'description', '') or "")
+        govt_type_value = str(getattr(getattr(leg_obj, 'govt_type', None), 'value', 'unknown'))
+        status_value = str(getattr(getattr(leg_obj, 'bill_status', None), 'value', 'unknown'))
+    
         context = {
-            "bill_number": leg_obj.bill_number,
-            "title": leg_obj.title,
+            "bill_number": getattr(leg_obj, 'bill_number', 'N/A'),
+            "title": getattr(leg_obj, 'title', 'Untitled'),
             "description": description_text,
             "govt_type": govt_type_value,
-            "govt_source": leg_obj.govt_source,
+            "govt_source": getattr(leg_obj, 'govt_source', 'External'),
             "status": status_value
         }
-
+    
         cumulative_analysis: Dict[str, Any] = {}
         chunk_summaries: List[str] = []
-
+    
         for i, chunk in enumerate(chunks):
             logger.info(
-                f"Processing chunk {i+1}/{len(chunks)} for legislation {leg_obj.id}"
+                f"Processing chunk {i+1}/{len(chunks)} for legislation {getattr(leg_obj, 'id', 'EXTERNAL')}"
             )
             try:
                 chunk_prompt = create_chunk_prompt(
@@ -824,33 +843,33 @@ class AIAnalysis:
                     cumulative_analysis = merge_analyses(
                         cumulative_analysis, chunk_result
                     )
-
+    
             except APIError as e:
                 logger.error(f"API error analyzing chunk {i+1}: {e}")
                 if i == 0:
                     raise AIAnalysisError(
-                        f"Failed to analyze legislation {leg_obj.id} - first chunk"
+                        f"Failed to analyze legislation {getattr(leg_obj, 'id', 'EXTERNAL')} - first chunk"
                     ) from e
             except Exception as e:
                 logger.error(f"Error analyzing chunk {i+1}: {e}", exc_info=True)
                 if i == 0:
                     raise AIAnalysisError(
-                        f"Failed to analyze legislation {leg_obj.id} - first chunk"
+                        f"Failed to analyze legislation {getattr(leg_obj, 'id', 'EXTERNAL')} - first chunk"
                     ) from e
-
+    
         if not cumulative_analysis or "summary" not in cumulative_analysis:
             raise AIAnalysisError(
-                f"Failed to generate complete analysis for legislation {leg_obj.id} "
+                f"Failed to generate complete analysis for legislation {getattr(leg_obj, 'id', 'EXTERNAL')} "
                 "after processing all chunks"
             )
-
+    
         if "summary" in cumulative_analysis and len(chunks) > 1:
             cumulative_analysis["summary"] = self._post_process_summary(
                 cumulative_analysis["summary"],
                 len(chunks)
             )
         return cumulative_analysis
-
+    
     async def batch_analyze_async(
         self, 
         legislation_ids: List[int], 
@@ -868,7 +887,7 @@ class AIAnalysis:
             "errors": {}
         }
         semaphore = asyncio.Semaphore(max_concurrent)
-
+    
         async def process_legislation(leg_id: int) -> Dict[str, Any]:
             async with semaphore:
                 try:
@@ -891,10 +910,10 @@ class AIAnalysis:
                         "status": "error", 
                         "error": str(exc)
                     }
-
+    
         tasks = [process_legislation(leg_id) for leg_id in legislation_ids]
         task_results = await asyncio.gather(*tasks)
-
+    
         for result in task_results:
             leg_id = result["leg_id"]
             if result["status"] == "cached":
@@ -914,9 +933,9 @@ class AIAnalysis:
             else:
                 results["failed"] += 1
                 results["errors"][leg_id] = result["error"]
-
+    
         return results
-
+    
     def analyze_bill(
         self, 
         bill_text: str, 
@@ -930,7 +949,7 @@ class AIAnalysis:
         safe_bill_text = self._ensure_plain_string(bill_text)
         token_count = self.token_counter.count_tokens(safe_bill_text)
         safe_limit = self.config.max_context_tokens - self.config.safety_buffer
-
+    
         if token_count > safe_limit:
             logger.info(
                 f"Bill exceeds token limit ({token_count} tokens), using chunking"
@@ -960,7 +979,7 @@ class AIAnalysis:
                 return self._analyze_in_chunks(chunks, has_structure, mock_leg)
         else:
             return self._call_structured_analysis(safe_bill_text)
-
+    
     async def analyze_bill_async(
         self, 
         bill_text: str, 
@@ -974,7 +993,7 @@ class AIAnalysis:
         safe_bill_text = self._ensure_plain_string(bill_text)
         token_count = self.token_counter.count_tokens(safe_bill_text)
         safe_limit = self.config.max_context_tokens - self.config.safety_buffer
-
+    
         if token_count > safe_limit:
             logger.info(
                 f"Bill exceeds token limit ({token_count} tokens), chunking"

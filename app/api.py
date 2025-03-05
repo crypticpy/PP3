@@ -87,7 +87,7 @@ legiscan_api: Optional[LegiScanAPI] = None
 bill_store = BillStore()
 
 # Initialize LegiScan API
-legiscan_api = LegiScanAPI(api_key=os.getenv("LEGISCAN_API_KEY"))
+legiscan_api = LegiScanAPI(db_session=data_store.db_session, api_key=os.getenv("LEGISCAN_API_KEY"))
 
 # Models
 class BillSummary(BaseModel):
