@@ -875,7 +875,7 @@ class LegiScanAPI:
                                 error_message=error_msg
                             )
                             self.db_session.add(sync_error)
-                            self.db_session.commit()
+                            self.commit()
 
             # Update sync metadata
             sync_meta.bills_updated = summary["bills_updated"]
@@ -1085,10 +1085,12 @@ class LegiScanAPI:
                 logger.warning("Cannot get relevant Texas legislation: LegislationPriority model not available")
                 return []
 
+            # Import LegislationPriority here since we already checked HAS_PRIORITY_MODEL
+            from app.models import LegislationPriority
+
             # Build the query based on relevance type
             query = self.db_session.query(Legislation).join(
-                LegislationPriority,
-                Legislation.id == LegislationPriority.legislation_id
+                LegislationPriority, Legislation.id == LegislationPriority.legislation_id
             )
 
             # Filter by Texas
