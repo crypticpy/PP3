@@ -176,7 +176,7 @@ class DataSourceEnum(enum.Enum):
         CONGRESS_GOV: Data from the Congress.gov website
         OTHER: Data from other sources
     """
-    LEGISCAN = "legiscan"
+    legiscan = "legiscan"
     CONGRESS_GOV = "congress_gov"
     OTHER = "other"
 
@@ -191,10 +191,10 @@ class GovtTypeEnum(enum.Enum):
         COUNTY: County government
         CITY: Municipal/city government
     """
-    FEDERAL = "federal"
-    STATE = "state"
-    COUNTY = "county"
-    CITY = "city"
+    federal = "federal"
+    state = "state"
+    county = "county"
+    city = "city"
 
 
 class BillStatusEnum(enum.Enum):
@@ -605,7 +605,12 @@ class Legislation(BaseModel):
     bill_type = Column(String(50), nullable=True)
     title = Column(Text, nullable=False)
     description = Column(Text, nullable=True)
-    bill_status = Column(SQLEnum(BillStatusEnum), default=BillStatusEnum.NEW)
+    bill_status = Column(
+        SQLEnum(BillStatusEnum, 
+               values_callable=lambda enum_cls: [e.value for e in enum_cls],
+               native_enum=True),
+        default=BillStatusEnum.NEW
+    )
     url = Column(Text, nullable=True)
     state_link = Column(Text, nullable=True)
 
@@ -613,7 +618,7 @@ class Legislation(BaseModel):
     bill_introduced_date = Column(DateTime, nullable=True)
     bill_last_action_date = Column(DateTime, nullable=True)
     bill_status_date = Column(DateTime, nullable=True)
-    last_api_check = Column(DateTime, default=datetime.utcnow, nullable=True)
+    last_api_check = Column(DateTime, default=datetime.now, nullable=True)
 
     # API metadata
     change_hash = Column(String(50), nullable=True)

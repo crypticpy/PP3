@@ -26,10 +26,10 @@ def get_relevant_texas_legislation(self, relevance_type: str = "health", min_sco
             query = query.filter(
                 or_(
                     and_(
-                        Legislation.govt_type == GovtTypeEnum.STATE,
+                        Legislation.govt_type == GovtTypeEnum.state,
                         Legislation.govt_source.ilike("%Texas%")
                     ),
-                    Legislation.govt_type == GovtTypeEnum.FEDERAL
+                    Legislation.govt_type == GovtTypeEnum.federal
                 )
             )
 

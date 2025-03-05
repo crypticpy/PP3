@@ -1059,10 +1059,10 @@ class DataStore:
             query = self.db_session.query(Legislation).filter(
                 or_(
                     and_(
-                        Legislation.govt_type == GovtTypeEnum.STATE,
+                        Legislation.govt_type == GovtTypeEnum.state,
                         Legislation.govt_source.ilike("%Texas%")
                     ),
-                    Legislation.govt_type == GovtTypeEnum.FEDERAL
+                    Legislation.govt_type == GovtTypeEnum.federal
                 )
             )
 
@@ -1280,10 +1280,10 @@ class DataStore:
             base_query = self.db_session.query(Legislation).filter(
                 or_(
                     and_(
-                        Legislation.govt_type == GovtTypeEnum.STATE,
+                        Legislation.govt_type == GovtTypeEnum.state,
                         Legislation.govt_source.ilike("%Texas%")
                     ),
-                    Legislation.govt_type == GovtTypeEnum.FEDERAL
+                    Legislation.govt_type == GovtTypeEnum.federal
                 )
             )
 
@@ -1348,10 +1348,10 @@ class DataStore:
                         .filter(
                             or_(
                                 and_(
-                                    Legislation.govt_type == GovtTypeEnum.STATE,
+                                    Legislation.govt_type == GovtTypeEnum.state,
                                     Legislation.govt_source.ilike("%Texas%")
                                 ),
-                                Legislation.govt_type == GovtTypeEnum.FEDERAL
+                                Legislation.govt_type == GovtTypeEnum.federal
                             )
                         )
                         .group_by('month')

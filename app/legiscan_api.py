@@ -373,7 +373,7 @@ class LegiScanAPI:
                 return None
 
             # Convert LegiScan's "state" to GovtTypeEnum
-            govt_type = GovtTypeEnum.FEDERAL if bill_data["state"] == "US" else GovtTypeEnum.STATE
+            govt_type = GovtTypeEnum.federal if bill_data["state"] == "US" else GovtTypeEnum.state
             external_id = str(bill_data["bill_id"])
 
             # Start a transaction
@@ -383,7 +383,7 @@ class LegiScanAPI:
                 # Check if bill already exists
                 existing = self.db_session.query(Legislation).filter(
                     and_(
-                        Legislation.data_source == DataSourceEnum.LEGISCAN,
+                        Legislation.data_source == DataSourceEnum.legiscan,
                         Legislation.external_id == external_id
                     )
                 ).first()
@@ -394,7 +394,7 @@ class LegiScanAPI:
                 # Build the upsert attributes with proper enum instance
                 attrs = {
                     "external_id": external_id,
-                    "data_source": DataSourceEnum.LEGISCAN,
+                    "data_source": DataSourceEnum.legiscan,
                     "govt_type": govt_type,
                     "govt_source": bill_data.get("session", {}).get("session_name", "Unknown Session"),
                     "bill_number": bill_data.get("bill_number", ""),
@@ -576,7 +576,7 @@ class LegiScanAPI:
 
             # Parse text date
             text_date_str = text_info.get("date", "")
-            text_date = datetime.utcnow()
+            text_date = datetime.now(timezone.utc)
             if text_date_str:
                 try:
                     text_date = datetime.strptime(text_date_str, "%Y-%m-%d")
@@ -625,10 +625,12 @@ class LegiScanAPI:
 
             # Add content if available
             if content is not None:
+                # Sanitize text content to remove any NUL characters if it's not binary
+                if not content_is_binary and isinstance(content, str):
+                    content = content.replace("\x00", "")
                 attrs["text_content"] = content
                 # If binary content, store metadata about the content type
                 if content_is_binary:
-                    # Store content type in metadata if we have it
                     text_metadata = {'is_binary': True}
                     if hasattr(LegislationText, 'text_metadata'):
                         attrs["text_metadata"] = text_metadata
@@ -643,7 +645,8 @@ class LegiScanAPI:
 
         self.db_session.flush()
 
-    def _map_bill_status(self, status_val) -> BillStatusEnum:
+
+    def _map_bill_status(self, status_val) -> str:
         """
         Maps LegiScan numeric status to BillStatusEnum.
 
@@ -654,20 +657,19 @@ class LegiScanAPI:
             Corresponding BillStatusEnum value
         """
         if not status_val:
-            return BillStatusEnum.NEW
+            return BillStatusEnum.NEW.value
 
         mapping = {
-            "1": BillStatusEnum.INTRODUCED,
-            "2": BillStatusEnum.UPDATED,
-            "3": BillStatusEnum.UPDATED,
-            "4": BillStatusEnum.PASSED,
-            "5": BillStatusEnum.VETOED,
-            "6": BillStatusEnum.DEFEATED,
-            "7": BillStatusEnum.ENACTED
+            "1": BillStatusEnum.INTRODUCED.value,
+            "2": BillStatusEnum.UPDATED.value,
+            "3": BillStatusEnum.UPDATED.value,
+            "4": BillStatusEnum.PASSED.value,
+            "5": BillStatusEnum.VETOED.value,
+            "6": BillStatusEnum.DEFEATED.value,
+            "7": BillStatusEnum.ENACTED.value
         }
-        # Convert to string to ensure lookup works with different input types
         status_str = str(status_val)
-        return mapping.get(status_str, BillStatusEnum.UPDATED)
+        return mapping.get(status_str, BillStatusEnum.UPDATED.value)
 
     def _track_amendments(self, bill: Legislation, amendments: List[Dict[str, Any]]) -> int:
         """
@@ -973,7 +975,7 @@ class LegiScanAPI:
             # Check if we have this bill and if the change_hash is different
             existing = self.db_session.query(Legislation).filter(
                 Legislation.external_id == str(bill_id),
-                Legislation.data_source == DataSourceEnum.LEGISCAN
+                Legislation.data_source == DataSourceEnum.legiscan
             ).first()
 
             if not existing or existing.change_hash != change_hash:
@@ -1097,10 +1099,10 @@ class LegiScanAPI:
             query = query.filter(
                 or_(
                     and_(
-                        Legislation.govt_type == GovtTypeEnum.STATE,
+                        Legislation.govt_type == GovtTypeEnum.state,
                         Legislation.govt_source.ilike("%Texas%")
                     ),
-                    Legislation.govt_type == GovtTypeEnum.FEDERAL
+                    Legislation.govt_type == GovtTypeEnum.federal
                 )
             )
 
