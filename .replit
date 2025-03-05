@@ -6,3 +6,14 @@ channel = "stable-24_05"
 
 [deployment]
 run = ["sh", "-c", "npm run dev"]
+
+[workflows]
+runButton = "Run PolicyPulse API"
+
+[[workflows.workflow]]
+name = "Run PolicyPulse API"
+author = 39522656
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run.py"
