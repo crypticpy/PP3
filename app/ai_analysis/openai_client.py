@@ -102,7 +102,7 @@ class OpenAIClient:
 
                 if transaction.is_active:  # Make sure transaction is active before rollback
                     transaction.rollback()
-                
+
                 raise
             finally:
                 # Ensure transaction is closed properly if not committed
@@ -159,8 +159,7 @@ class OpenAIClient:
                         "temperature": temperature,
                         "response_format": {
                             "type": "json_schema", 
-                            "json_schema": json_schema,
-                            "strict": True
+                            "json_schema": json_schema
                         },
                         "max_tokens": 8000,  # Legacy parameter but keeping for compatibility
                         "store": store
@@ -298,8 +297,7 @@ class OpenAIClient:
                     "temperature": temperature,
                     "response_format": {
                         "type": "json_schema", 
-                        "json_schema": json_schema,
-                        "strict": True
+                        "json_schema": json_schema
                     },
                     "max_tokens": 8000,  # Legacy parameter but keeping for compatibility
                     "store": store
