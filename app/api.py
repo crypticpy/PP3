@@ -416,6 +416,7 @@ class AnalysisOptions(BaseModel):
     deep_analysis: bool = Field(False, description="Whether to perform a more thorough analysis")
     texas_focus: bool = Field(True, description="Whether to focus analysis on Texas impacts")
     focus_areas: Optional[List[str]] = Field(None, description="Specific areas to focus the analysis on")
+    model_name: Optional[str] = Field(None, description="Name of the AI model to use for analysis")
 
     @field_validator('focus_areas')
     def validate_focus_areas(cls, v):
@@ -428,13 +429,22 @@ class AnalysisOptions(BaseModel):
                     raise ValueError(f"'{area}' is not a recognized focus area")
         return v
 
+    @field_validator('model_name')
+    def validate_model_name(cls, v):
+        """Validate that the model name is a recognized model."""
+        if v is not None:
+            valid_models = ["gpt-4o", "gpt-4o-2024-08-06", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"]
+            if v not in valid_models and not v.startswith(tuple(valid_models)):
+                raise ValueError(f"Model name '{v}' is not a recognized model. Valid options include: {', '.join(valid_models)}")
+        return v
+
     class Config:
         schema_extra = {
             "example": {
                 "deep_analysis": True,
                 "texas_focus": True,
                 "focus_areas": ["public health", "municipal governments"],
-                "model_name": "gpt-4o""
+                "model_name": "gpt-4o"
             }
         }
 
