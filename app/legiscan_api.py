@@ -884,8 +884,10 @@ class LegiScanAPI:
             setattr(sync_meta, "last_successful_sync", datetime.now(timezone.utc))
             
             if summary["errors"]:
-                sync_meta.status = SyncStatusEnum.PARTIAL
-                sync_meta.errors = {"count": len(summary["errors"]), "samples": summary["errors"][:5]}
+                setattr(sync_meta, 'status', SyncStatusEnum.PARTIAL)
+                # Assuming that `errors` is a JSON column and that mutable is set up correctly
+                sync_meta.errors["count"] = len(summary["errors"])
+                sync_meta.errors["samples"] = summary["errors"][:5]
             else:
                 sync_meta.status = SyncStatusEnum.COMPLETED
                 
