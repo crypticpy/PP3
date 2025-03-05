@@ -174,12 +174,19 @@ async def general_exception_handler(request: Request, exc: Exception):
 
 
 # -----------------------------------------------------------------------------
-# Application Lifecycle Handlers
+# Application Lifecycle Handler
 # -----------------------------------------------------------------------------
-@app.on_event("startup")
-def startup_event():
-    """Initialize resources when the application starts up."""
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifecycle event handler for setup and teardown of application resources.
+    Replaces the deprecated @app.on_event("startup") and @app.on_event("shutdown").
+    """
     global data_store, ai_analyzer, legiscan_api
+    
+    # Startup: Initialize resources
     try:
         data_store = DataStore(max_retries=3)
         ai_analyzer = AIAnalysis(db_session=data_store.db_session)
@@ -189,13 +196,11 @@ def startup_event():
         logger.critical(f"Failed to initialize application services: {e}", exc_info=True)
         # Re-raise the exception to prevent the application from starting in an inconsistent state
         raise
-
-
-@app.on_event("shutdown")
-def shutdown_event():
-    """Clean up resources when the application shuts down."""
-    global data_store, ai_analyzer, legiscan_api
     
+    # Yield control back to FastAPI
+    yield
+    
+    # Shutdown: Clean up resources
     # Close the data store connection if it exists
     if data_store:
         try:
@@ -208,6 +213,9 @@ def shutdown_event():
     data_store = None
     ai_analyzer = None
     legiscan_api = None
+
+# Assign the lifespan to the app
+app.lifespan = lifespan
 
 
 # -----------------------------------------------------------------------------
