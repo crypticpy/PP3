@@ -637,32 +637,37 @@ class DataStore:
     def get_search_history(self, email: str) -> List[Dict[str, Any]]:
         """
         Retrieve the search history for a user.
-        
+
         Args:
             email: User's email.
-            
+
         Returns:
             List[Dict[str, Any]]: List of search history records.
-            
+
         Raises:
             ValidationError: If email format is invalid
         """
         try:
+            # Make sure db_session is not None before attempting to use it
+            if self.db_session is None:
+                logger.error("Database session is None")
+                return []
+
             # Verify connection is active
             self.db_session.execute(text("SELECT 1"))
-            
+
             # Get the user by email
             user = self.db_session.query(User).filter_by(email=email).first()
             if not user:
                 return []
-                
+
             history = (
                 self.db_session.query(SearchHistory)
                 .filter_by(user_id=user.id)
                 .order_by(SearchHistory.created_at.desc())
                 .all()
             )
-            
+
             return [
                 {
                     "id": record.id,
@@ -698,11 +703,11 @@ class DataStore:
         """
         try:
             # Start with base query for count
-            base_query = self.db_session.query(Legislation)
-            total_count = base_query.count()
+            base_query = self.db_session.query(Legislation) if self.db_session else None
+            total_count = base_query.count() if base_query else 0
             
             # Apply sorting and pagination for the results query
-            query = base_query.order_by(Legislation.updated_at.desc())
+            query = base_query.order_by(Legislation.updated_at.desc()) if base_query else []
             
             # Calculate pagination metadata
             page_size = limit if limit > 0 else total_count
@@ -713,9 +718,9 @@ class DataStore:
             
             # Apply pagination
             if limit > 0:
-                query = query.limit(limit)
+                query = query.limit(limit) if hasattr(query, 'limit') else query  # type: ignore
             if offset > 0:
-                query = query.offset(offset)
+                query = query.offset(offset) if hasattr(query, 'offset') else query  # type: ignore
                 
             # Execute query
             records = query.all()

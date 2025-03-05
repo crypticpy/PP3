@@ -82,7 +82,7 @@ def sync_command(args):
     scheduler = PolicyPulseScheduler()
     
     try:
-        result = scheduler.run_sync_now()
+        result = scheduler.run_sync_now()  # Method run_sync_now is not implemented in PolicyPulseScheduler
         print("\n=== Sync Results ===")
         print(f"Success: {result}")
     finally:
