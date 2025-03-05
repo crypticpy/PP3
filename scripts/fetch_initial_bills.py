@@ -23,7 +23,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Now we can import from app
 from app.models import init_db, Legislation
 from app.legiscan_api import LegiScanAPI
-from app.ai_analysis import AIAnalysis
+from app.ai_analysis.analyzer import AIAnalysis
 
 # Configure logging
 logging.basicConfig(level=logging.INFO,
