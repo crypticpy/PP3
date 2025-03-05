@@ -24,7 +24,7 @@ Usage Example:
 import logging
 import time
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Any, TypedDict, Callable, TypeVar, cast, Union, Set
 
 from sqlalchemy.exc import OperationalError, SQLAlchemyError, IntegrityError
@@ -195,6 +195,14 @@ class DataStore:
 
         # Cache for frequently accessed data
         self._cache = {}
+
+    def _get_session(self) -> Session:
+        """Return the current session or raise an error if none exists."""
+        if not self.db_session:
+            logger.error("Database session is None")
+            raise DatabaseOperationError("No database session available")
+        return self.db_session
+        
 
     def _init_db_connection(self) -> None:
         """
@@ -611,7 +619,7 @@ class DataStore:
                     user_id=user.id,
                     query=query_string,
                     results=results_data,
-                    created_at=datetime.now(datetime.timezone.utc)
+                    created_at=datetime.now(timezone.utc)
                 )
                 self.db_session.add(new_search) if self.db_session else None
                 # Flush to catch any database errors early
@@ -722,8 +730,8 @@ class DataStore:
             if offset > 0:
                 query = query.offset(offset) if hasattr(query, 'offset') else query  # type: ignore
 
-            # Execute query
-            records = query.all() if hasattr(query, 'all') else query
+            # Execute query and obtain results
+            records = query.all() if not isinstance(query, list) else query
 
             # Format results
             items: List[LegislationSummary] = []
@@ -734,7 +742,7 @@ class DataStore:
                     "govt_source": leg.govt_source,
                     "bill_number": leg.bill_number,
                     "title": leg.title,
-                    "bill_status": leg.bill_status.value if leg.bill_status else None,
+                    "bill_status": leg.bill_status if leg.bill_status else None,
                     "updated_at": leg.updated_at.isoformat() if leg.updated_at else None,
                 })
 
@@ -784,6 +792,11 @@ class DataStore:
             raise ValidationError(f"legislation_id must be a positive integer, got {legislation_id}")
 
         try:
+            # Verify db_session is available (should be due to @ensure_connection)
+            if not self.db_session:
+                logger.error("Database session is None")
+                raise DatabaseOperationError("No database session available")
+
             # Efficiently load the legislation with all its relationships
             leg = (
                 self.db_session.query(Legislation)
@@ -834,12 +847,6 @@ class DataStore:
                 "analysis": None
             }
 
-            # Add latest text if available
-            if latest_text:
-                # Check if text content is binary (store metadata about type if available)
-                is_binary = False
-                if hasattr(latest_text, 'text_metadata') and latest_text.text_metadata:
-                    is_binary = latest_text.text
             # Add latest text if available
             if latest_text:
                 # Check if text content is binary (store metadata about type if available)
@@ -969,7 +976,11 @@ class DataStore:
                 offset=offset
             )
 
-            return search_results
+            return PaginatedLegislation(
+                total_count=search_results['total_count'],
+                items=search_results['items'],
+                page_info=search_results['page_info']
+            )
         except Exception as e:
             error_msg = f"Error searching legislation by keywords: {e}"
             logger.error(error_msg, exc_info=True)
@@ -1030,6 +1041,20 @@ class DataStore:
                 raise ValidationError(f"Relevance threshold must be an integer, got {filters['relevance_threshold']}")
 
         try:
+            # Check if db_session is available
+            if not self.db_session:
+                logger.error("Database session is None")
+                raise DatabaseOperationError("No database session available")
+
+            # Get LegislationPriority if available
+            PriorityModel = None
+            if HAS_PRIORITY_MODEL:
+                try:
+                    from models import LegislationPriority
+                    PriorityModel = LegislationPriority
+                except ImportError:
+                    logger.warning("Failed to import LegislationPriority despite HAS_PRIORITY_MODEL=True")
+
             # Start building the query
             query = self.db_session.query(Legislation).filter(
                 or_(
@@ -1116,26 +1141,26 @@ class DataStore:
                         logger.warning(f"Unknown municipality_type '{municipality_type}', ignoring filter")
 
             # Apply relevance threshold filter if LegislationPriority model is available
-            if HAS_PRIORITY_MODEL and 'relevance_threshold' in filters:
+            if HAS_PRIORITY_MODEL and PriorityModel and 'relevance_threshold' in filters:
                 try:
                     threshold = int(filters['relevance_threshold'])
                     query = query.join(
-                        LegislationPriority,
+                        PriorityModel,
                         and_(
-                            Legislation.id == LegislationPriority.legislation_id,
-                            getattr(LegislationPriority, focus_field) >= threshold
+                            Legislation.id == PriorityModel.legislation_id,
+                            getattr(PriorityModel, focus_field) >= threshold
                         )
                     )
                 except (ValueError, TypeError) as e:
                     logger.warning(f"Invalid relevance_threshold '{filters['relevance_threshold']}', ignoring filter: {e}")
 
             # Determine sort order based on priority model availability
-            if HAS_PRIORITY_MODEL:
+            if HAS_PRIORITY_MODEL and PriorityModel:
                 query = query.outerjoin(
-                    LegislationPriority,
-                    Legislation.id == LegislationPriority.legislation_id
+                    PriorityModel,
+                    Legislation.id == PriorityModel.legislation_id
                 ).order_by(
-                    desc(getattr(LegislationPriority, focus_field)),
+                    desc(getattr(PriorityModel, focus_field)),
                     desc(Legislation.bill_introduced_date)
                 )
             else:
@@ -1236,23 +1261,23 @@ class DataStore:
             raise ValidationError(f"Invalid time_period '{time_period}'. Must be one of: {', '.join(valid_time_periods)}")
 
         try:
+            # Check if db_session is available
+            if not self.db_session:
+                logger.error("Database session is None")
+                raise DatabaseOperationError("No database session available")
+
             # Determine date filter based on time_period
             date_filter = None
             if time_period == "current":
-                current_year = datetime.utcnow().year
-                date_filter = datetime(current_year, 1, 1)
+                current_year = datetime.now(timezone.utc).year
+                date_filter = datetime(current_year, 1, 1, tzinfo=timezone.utc)
             elif time_period == "past_month":
-                date_filter = datetime.utcnow() - timedelta(days=30)
+                date_filter = datetime.now(timezone.utc) - timedelta(days=30)
             elif time_period == "past_year":
-                date_filter = datetime.utcnow() - timedelta(days=365)
+                date_filter = datetime.now(timezone.utc) - timedelta(days=365)
 
             # Build base query for legislation filtered by jurisdiction (Texas or Federal)
-            query = self.db_session.query(Legislation)
-            if date_filter:
-                query = query.filter(Legislation.bill_introduced_date >= date_filter)
-
-            # Focus on Texas and Federal legislation
-            query = query.filter(
+            base_query = self.db_session.query(Legislation).filter(
                 or_(
                     and_(
                         Legislation.govt_type == GovtTypeEnum.STATE,
@@ -1262,13 +1287,18 @@ class DataStore:
                 )
             )
 
+            # Apply date filter if needed
+            if date_filter:
+                base_query = base_query.filter(Legislation.bill_introduced_date >= date_filter)
+
             # Get total count for this query
-            total_count = query.count()
+            total_count = base_query.count()
 
             # Get counts by status
             status_counts = {}
             for status in BillStatusEnum:
-                count_status = query.filter(Legislation.bill_status == status).count()
+                status_query = base_query.filter(Legislation.bill_status == status)
+                count_status = status_query.count()
                 if count_status > 0:
                     status_counts[status.value] = count_status
 
@@ -1292,15 +1322,15 @@ class DataStore:
                 if impact_category:
                     # Get counts for each impact level within the specified category
                     for level in ImpactLevelEnum:
-                        count_level = query.join(
+                        level_query = base_query.join(
                             LegislationAnalysis,
                             and_(
                                 Legislation.id == LegislationAnalysis.legislation_id,
                                 LegislationAnalysis.impact == level,
                                 LegislationAnalysis.impact_category == impact_category
                             )
-                        ).count()
-
+                        )
+                        count_level = level_query.count()
                         if count_level > 0:
                             impact_level_counts[level.value] = count_level
 
@@ -1312,7 +1342,7 @@ class DataStore:
                     trend_query = (
                         self.db_session.query(
                             func.date_trunc('month', Legislation.bill_introduced_date).label('month'),
-                            func.count(Legislation.id)
+                            func.count(Legislation.id).label('count')
                         )
                         .filter(Legislation.bill_introduced_date >= date_filter)
                         .filter(
@@ -1328,7 +1358,11 @@ class DataStore:
                         .order_by('month')
                         .all()
                     )
-                    trend_data = [{"date": month.strftime("%Y-%m"), "count": count} for month, count in trend_query]
+
+                    trend_data = [
+                        {"date": month.strftime("%Y-%m"), "count": count} 
+                        for month, count in trend_query
+                    ]
                 except SQLAlchemyError as e:
                     logger.warning(f"Failed to generate trend data, possibly due to DB compatibility: {e}")
                     # Fallback to empty trend data
@@ -1371,7 +1405,7 @@ class DataStore:
                 "impact_type": impact_type,
                 "error": str(e)
             }
-
+            
     def _build_top_categories(self, impact_type: str) -> List[Dict[str, Any]]:
         """
         Build a list of top categories based on impact_type.
@@ -1456,9 +1490,13 @@ class DataStore:
 
         try:
             # Start with base query
-            query_obj = self.db_session.query(Legislation)
+            # Assuming this snippet is within the `advanced_search` method
+            query_obj = self.db_session.query(Legislation) if self.db_session else None
+            if query_obj is None:
+                logger.error("Database session is not initialized or database query is None")
+                raise DatabaseOperationError("No valid database session or query could be initiated")
 
-            # Apply full-text search if query is provided
+            # Rest of the method utilizing `query_obj` safely
             if query:
                 if hasattr(Legislation, 'search_vector'):
                     # Use PostgreSQL full-text search if available
@@ -1474,7 +1512,6 @@ class DataStore:
                                 func.lower(Legislation.description).like(func.lower(pattern))
                             )
                         )
-
             # Handle keywords filter specifically (for compatibility with search_legislation)
             if 'keywords' in filters and filters['keywords']:
                 keywords = filters['keywords']
@@ -1590,11 +1627,12 @@ class DataStore:
 
             # Handle reviewed_only filter for manually reviewed bills
             if 'reviewed_only' in filters and filters['reviewed_only'] and HAS_PRIORITY_MODEL:
+                from models import LegislationPriority
                 query_obj = query_obj.join(
                     LegislationPriority,
                     Legislation.id == LegislationPriority.legislation_id,
                     isouter=True
-                ).filter(LegislationPriority.manually_reviewed == True)
+                ).filter(LegislationPriority.manually_reviewed)
 
             # Count total before applying limit/offset for pagination
             total = query_obj.count()
@@ -1609,9 +1647,9 @@ class DataStore:
             elif sort_by == "title":
                 sort_field = func.lower(Legislation.title)
             elif sort_by == "priority" and HAS_PRIORITY_MODEL:
+                from models import LegislationPriority
                 # If sorting by priority, ensure we join with the priority table
-                if not any(isinstance(mapper.class_, LegislationPriority.__class__) 
-                          for mapper in getattr(query_obj, '_join_entities', [])):
+                if not any(mapper.class_ == LegislationPriority for mapper in getattr(query_obj, '_join_entities', [])):
                     query_obj = query_obj.outerjoin(
                         LegislationPriority,
                         Legislation.id == LegislationPriority.legislation_id
@@ -1708,6 +1746,11 @@ class DataStore:
             Dictionary with facet information for filtering UI
         """
         try:
+            # Check if db_session is None before using it
+            if self.db_session is None:
+                logger.error("Database session is None in _generate_search_facets")
+                return {}
+
             facets = {}
 
             # Status facets
@@ -1818,6 +1861,11 @@ class DataStore:
             DatabaseOperationError: On database errors
         """
         try:
+            # Check if db_session is None before using it
+            if self.db_session is None:
+                logger.error("Database session is None in update_legislation_priority")
+                raise DatabaseOperationError("No database session available")
+
             # Check for LegislationPriority model
             if not HAS_PRIORITY_MODEL:
                 logger.warning("LegislationPriority model not available - cannot update priority")
@@ -1836,27 +1884,33 @@ class DataStore:
                 if not priority:
                     from models import LegislationPriority
                     priority = LegislationPriority(legislation_id=legislation_id)
-                    self.db_session.add(priority)
+                    if self.db_session:  # Extra check for type safety
+                        self.db_session.add(priority)
 
                 # Update fields from provided data
                 if 'public_health_relevance' in update_data:
-                    priority.public_health_relevance = update_data['public_health_relevance']
+                    # Use setattr for type safety
+                    setattr(priority, 'public_health_relevance', update_data['public_health_relevance'])
 
                 if 'local_govt_relevance' in update_data:
-                    priority.local_govt_relevance = update_data['local_govt_relevance']
+                    setattr(priority, 'local_govt_relevance', update_data['local_govt_relevance'])
 
                 if 'overall_priority' in update_data:
-                    priority.overall_priority = update_data['overall_priority']
+                    setattr(priority, 'overall_priority', update_data['overall_priority'])
 
                 if 'notes' in update_data:
-                    priority.reviewer_notes = update_data['notes']
+                    setattr(priority, 'reviewer_notes', update_data['notes'])
 
-                # Mark as manually reviewed
-                priority.manually_reviewed = True
-                priority.review_date = datetime.utcnow()
+                # Mark as manually reviewed - use setattr for type safety
+                setattr(priority, 'manually_reviewed', True)
+
+                # Use datetime.now() with UTC timezone instead of deprecated utcnow()
+                from datetime import timezone
+                setattr(priority, 'review_date', datetime.now(timezone.utc))
 
                 # Flush changes
-                self.db_session.flush()
+                if self.db_session:  # Extra check for type safety
+                    self.db_session.flush()
 
             # Return updated priority data
             return {
@@ -1871,12 +1925,14 @@ class DataStore:
             # Re-raise validation errors
             raise
         except SQLAlchemyError as e:
-            self.db_session.rollback()
+            if self.db_session:  # Extra check for type safety
+                self.db_session.rollback()
             error_msg = f"Database error updating priority for legislation {legislation_id}: {e}"
             logger.error(error_msg, exc_info=True)
             raise DatabaseOperationError(error_msg)
         except Exception as e:
-            self.db_session.rollback()
+            if self.db_session:  # Extra check for type safety
+                self.db_session.rollback()
             error_msg = f"Unexpected error updating priority for legislation {legislation_id}: {e}"
             logger.error(error_msg, exc_info=True)
             raise DatabaseOperationError(error_msg)
@@ -1944,24 +2000,38 @@ class DataStore:
             raise ValidationError(f"limit must be a positive integer, got {limit}")
 
         try:
+            # Check if db_session is None
+            if self.db_session is None:
+                logger.error("Database session is None in get_sync_history")
+                raise DatabaseOperationError("No database session available")
+
             # Query SyncMetadata with limit
-            sync_records = self.db_session.query(SyncMetadata).order_by(
-                SyncMetadata.last_sync.desc()
-            ).limit(limit).all()
+            sync_records = self.db_session.query(SyncMetadata).order_by(desc(SyncMetadata.last_sync)).limit(limit).all()
 
             # Format result
             history: List[SyncHistoryRecord] = []
             for sync in sync_records:
-                history.append({
+                # For non-optional fields, provide empty string instead of None
+                # Check the type of status and handle appropriately
+                status_value = ""
+                if sync.status is not None:
+                    if hasattr(sync.status, 'value'):  # If it's an enum
+                        status_value = sync.status
+                    else:  # If it's a string or Text column
+                        status_value = str(sync.status)
+
+                record_dict = {
                     "id": sync.id,
-                    "last_sync": sync.last_sync.isoformat() if sync.last_sync else None,
-                    "last_successful_sync": sync.last_successful_sync.isoformat() if sync.last_successful_sync else None,
-                    "status": sync.status.value if sync.status else None,
-                    "sync_type": sync.sync_type,
-                    "new_bills": sync.new_bills,
-                    "bills_updated": sync.bills_updated,
-                    "errors": sync.errors
-                })
+                    "last_sync": sync.last_sync.isoformat() if sync.last_sync else "",  # Non-optional
+                    "last_successful_sync": sync.last_successful_sync.isoformat() if sync.last_successful_sync else None,  # Optional
+                    "status": status_value,  # Non-optional
+                    "sync_type": sync.sync_type or "",  # Non-optional
+                    "new_bills": sync.new_bills or 0,  # Non-optional
+                    "bills_updated": sync.bills_updated or 0,  # Non-optional
+                    "errors": sync.errors  # Optional, can be None
+                }
+                # Use cast to tell type checker this matches SyncHistoryRecord
+                history.append(cast(SyncHistoryRecord, record_dict))
 
             return history
         except SQLAlchemyError as e:
@@ -1994,6 +2064,11 @@ class DataStore:
             raise ValidationError(f"limit must be a positive integer, got {limit}")
 
         try:
+            # Ensure db_session is available despite @ensure_connection
+            if not self.db_session:
+                logger.error("Database session is None in get_pending_analyses")
+                raise DatabaseOperationError("No database session available")
+
             # Subquery to get legislation IDs that already have analysis
             analyzed_ids = self.db_session.query(
                 LegislationAnalysis.legislation_id
@@ -2009,13 +2084,29 @@ class DataStore:
             # Format results
             result = []
             for leg in pending_legislation:
+                # Handle bill_status which might be an enum
+                bill_status = None
+                if leg.bill_status:
+                    if hasattr(leg.bill_status, 'value'):
+                        bill_status = leg.bill_status
+                    else:
+                        bill_status = leg.bill_status
+
+                # Handle govt_type which might be an enum
+                govt_type = None
+                if leg.govt_type:
+                    if hasattr(leg.govt_type, 'value'):
+                        govt_type = leg.govt_type
+                    else:
+                        govt_type = leg.govt_type
+
                 leg_dict = {
                     "id": leg.id,
                     "bill_number": leg.bill_number,
                     "title": leg.title,
                     "govt_source": leg.govt_source,
-                    "govt_type": leg.govt_type.value if leg.govt_type else None,
-                    "bill_status": leg.bill_status.value if leg.bill_status else None,
+                    "govt_type": govt_type,
+                    "bill_status": bill_status,
                     "created_at": leg.created_at.isoformat() if leg.created_at else None,
                     "updated_at": leg.updated_at.isoformat() if leg.updated_at else None,
                     "has_text": leg.latest_text is not None
@@ -2032,57 +2123,70 @@ class DataStore:
             logger.error(error_msg, exc_info=True)
             return []
 
-    @ensure_connection
-    def get_all_priorities(self) -> List[Dict[str, Any]]:
-        """
-        Returns all priority records for dashboard display.
+@ensure_connection
+def get_all_priorities(self) -> List[Dict[str, Any]]:
+    """
+    Returns all priority records for dashboard display.
 
-        Returns:
-            List of priority records with legislation details
+    Returns:
+        List of priority records with legislation details
 
-        Raises:
-            DatabaseOperationError: On database errors
-        """
-        if not HAS_PRIORITY_MODEL:
-            logger.warning("LegislationPriority model not available - cannot get priorities")
-            return []
+    Raises:
+        DatabaseOperationError: On database errors
+    """
+    if not HAS_PRIORITY_MODEL:
+        logger.warning("LegislationPriority model not available - cannot get priorities")
+        return []
 
-        try:
-            # Query for all legislation with priority records
-            from models import LegislationPriority
+    try:
+        # Ensure db_session is available despite @ensure_connection
+        if not self.db_session:
+            logger.error("Database session is None in get_all_priorities")
+            raise DatabaseOperationError("No database session available")
 
-            priority_records = self.db_session.query(
-                LegislationPriority, Legislation
-            ).join(
-                Legislation, LegislationPriority.legislation_id == Legislation.id
-            ).order_by(
-                LegislationPriority.overall_priority.desc()
-            ).all()
+        # Query for all legislation with priority records
+        from models import LegislationPriority
 
-            # Format result
-            result = []
-            for priority, leg in priority_records:
-                result.append({
-                    "legislation_id": leg.id,
-                    "bill_number": leg.bill_number,
-                    "title": leg.title,
-                    "public_health_relevance": priority.public_health_relevance,
-                    "local_govt_relevance": priority.local_govt_relevance,
-                    "overall_priority": priority.overall_priority,
-                    "manually_reviewed": priority.manually_reviewed,
-                    "reviewer_notes": priority.reviewer_notes,
-                    "review_date": priority.review_date.isoformat() if priority.review_date else None,
-                    "auto_categorized": priority.auto_categorized,
-                    "bill_status": leg.bill_status.value if leg.bill_status else None,
-                    "bill_introduced_date": leg.bill_introduced_date.isoformat() if leg.bill_introduced_date else None
-                })
+        priority_records = self.db_session.query(
+            LegislationPriority, Legislation
+        ).join(
+            Legislation, LegislationPriority.legislation_id == Legislation.id
+        ).order_by(
+            LegislationPriority.overall_priority.desc()
+        ).all()
 
-            return result
-        except SQLAlchemyError as e:
-            error_msg = f"Database error retrieving priorities: {e}"
-            logger.error(error_msg, exc_info=True)
-            raise DatabaseOperationError(error_msg)
-        except Exception as e:
-            error_msg = f"Unexpected error retrieving priorities: {e}"
-            logger.error(error_msg, exc_info=True)
-            return []
+        # Format result
+        result = []
+        for priority, leg in priority_records:
+            # Handle bill_status which might be an enum
+            bill_status = None
+            if leg.bill_status:
+                if hasattr(leg.bill_status, 'value'):
+                    bill_status = leg.bill_status.value
+                else:
+                    bill_status = leg.bill_status
+
+            result.append({
+                "legislation_id": leg.id,
+                "bill_number": leg.bill_number,
+                "title": leg.title,
+                "public_health_relevance": priority.public_health_relevance,
+                "local_govt_relevance": priority.local_govt_relevance,
+                "overall_priority": priority.overall_priority,
+                "manually_reviewed": priority.manually_reviewed,
+                "reviewer_notes": priority.reviewer_notes,
+                "review_date": priority.review_date.isoformat() if priority.review_date else None,
+                "auto_categorized": getattr(priority, 'auto_categorized', False),  # Handle fields that might not exist
+                "bill_status": bill_status,
+                "bill_introduced_date": leg.bill_introduced_date.isoformat() if leg.bill_introduced_date else None
+            })
+
+        return result
+    except SQLAlchemyError as e:
+        error_msg = f"Database error retrieving priorities: {e}"
+        logger.error(error_msg, exc_info=True)
+        raise DatabaseOperationError(error_msg)
+    except Exception as e:
+        error_msg = f"Unexpected error retrieving priorities: {e}"
+        logger.error(error_msg, exc_info=True)
+        return []

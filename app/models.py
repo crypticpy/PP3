@@ -19,17 +19,18 @@ import enum
 import os
 import time
 import logging
-from datetime import datetime
-from typing import List, Dict, Any, Optional, Union, Callable, Type, cast
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
+from typing import List, Dict, Any, Optional, Union, Callable, Type, cast, TYPE_CHECKING
 
-from sqlalchemy import (
-    create_engine, Column, Integer, String, DateTime, Text, LargeBinary,
-    ForeignKey, Boolean, UniqueConstraint, Index, Float, Enum as SQLEnum,
-    func, and_, or_, text, event
-)
+from sqlalchemy import (create_engine, Column, Integer, String, DateTime, Text,
+                        LargeBinary, ForeignKey, Boolean, UniqueConstraint,
+                        Index, Float, Enum as SQLEnum, func, and_, or_, text,
+                        event)
 from sqlalchemy.dialects.postgresql import JSONB, BYTEA
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker, Session, validates
+from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.engine import Engine
 from sqlalchemy.event import listen
 from sqlalchemy_utils import TSVectorType
@@ -42,13 +43,17 @@ logger.setLevel(logging.INFO)
 # Create the base class for declarative models
 Base = declarative_base()
 
+tz = ZoneInfo('America/Chicago')
+dt = datetime.now(tz)
+
+
 # -----------------------------------------------------------------------------
 # 1) Abstract Base Model with Audit Fields
 # -----------------------------------------------------------------------------
 class BaseModel(Base):
     """
     Abstract base model that provides common audit fields for all inheriting models.
-    
+
     Attributes:
         created_at: Timestamp when the record was created
         updated_at: Timestamp when the record was last updated
@@ -57,14 +62,24 @@ class BaseModel(Base):
     """
     __abstract__ = True
 
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False,
-                       doc="Timestamp when the record was created")
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False,
-                       doc="Timestamp when the record was last updated")
-    created_by = Column(String(50), nullable=True,
-                       doc="User who created the record")
-    updated_by = Column(String(50), nullable=True,
-                       doc="User who last updated the record")
+    created_at = Column(
+        DateTime(timezone=True),
+        default=func.now(),  # Use function reference
+        nullable=False,
+        doc="Timestamp when the record was created")
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=func.now(),  # Use function reference
+        onupdate=func.now(),  # Use function reference
+        nullable=False,
+        doc="Timestamp when the record was last updated")
+    created_by = Column(String(50),
+                        nullable=True,
+                        doc="User who created the record")
+    updated_by = Column(String(50),
+                        nullable=True,
+                        doc="User who last updated the record")
+
 
 # -----------------------------------------------------------------------------
 # 2) Custom Type for Text/Binary Content
@@ -110,34 +125,17 @@ class FlexibleContentType(TypeDecorator):
             # For other databases, use LargeBinary which can store both
             return dialect.type_descriptor(LargeBinary)
 
-    def process_bind_param(self, value, dialect):
-        """
-        Process the value before binding it to the database.
-        
-        Args:
-            value: The value to bind
-            dialect: SQLAlchemy dialect
-            
-        Returns:
-            Processed value ready for storage
-        """
+    def process_bind_param(self, value, dialect) -> Optional[str]:
         if value is None:
             return None
-            
-        # If it's already a string, store it as is
+
         if isinstance(value, str):
             return value
-            
-        # If it's bytes, encode it specially for text columns
+
         if isinstance(value, bytes):
-            if dialect.name == 'postgresql':
-                # Use bytea directly for PostgreSQL
-                return value
-            else:
-                # For others, we need special handling
-                return value
-        
-        # If it's something else, convert to string
+            # Decode bytes for all dialects, even PostgreSQL.
+            return value.decode('utf-8', errors='replace')
+
         return str(value)
 
     def process_result_value(self, value, dialect):
@@ -153,17 +151,18 @@ class FlexibleContentType(TypeDecorator):
         """
         if value is None:
             return None
-            
+
         # If it's bytes, return as is (binary content)
         if isinstance(value, bytes):
             return value
-            
+
         # If it's a string, return as is
         if isinstance(value, str):
             return value
-            
+
         # For any other case, return as is
         return value
+
 
 # -----------------------------------------------------------------------------
 # 2) Enumerations
@@ -181,6 +180,7 @@ class DataSourceEnum(enum.Enum):
     CONGRESS_GOV = "congress_gov"
     OTHER = "other"
 
+
 class GovtTypeEnum(enum.Enum):
     """
     Enumeration for government types.
@@ -195,6 +195,7 @@ class GovtTypeEnum(enum.Enum):
     STATE = "state"
     COUNTY = "county"
     CITY = "city"
+
 
 class BillStatusEnum(enum.Enum):
     """
@@ -219,6 +220,7 @@ class BillStatusEnum(enum.Enum):
     ENACTED = "enacted"
     PENDING = "pending"
 
+
 class ImpactLevelEnum(enum.Enum):
     """
     Enumeration for overall impact levels of legislation.
@@ -233,6 +235,7 @@ class ImpactLevelEnum(enum.Enum):
     MODERATE = "moderate"
     HIGH = "high"
     CRITICAL = "critical"
+
 
 class ImpactCategoryEnum(enum.Enum):
     """
@@ -259,6 +262,7 @@ class ImpactCategoryEnum(enum.Enum):
     SOCIAL_SERVICES = "social_services"
     JUSTICE = "justice"
 
+
 class AmendmentStatusEnum(enum.Enum):
     """
     Enumeration for amendment statuses.
@@ -274,6 +278,7 @@ class AmendmentStatusEnum(enum.Enum):
     REJECTED = "rejected"
     WITHDRAWN = "withdrawn"
 
+
 class NotificationTypeEnum(enum.Enum):
     """
     Enumeration for notification types.
@@ -288,6 +293,7 @@ class NotificationTypeEnum(enum.Enum):
     NEW_BILL = "new_bill"
     STATUS_CHANGE = "status_change"
     ANALYSIS_COMPLETE = "analysis_complete"
+
 
 class SyncStatusEnum(enum.Enum):
     """
@@ -305,6 +311,7 @@ class SyncStatusEnum(enum.Enum):
     COMPLETED = "completed"
     FAILED = "failed"
     PARTIAL = "partial"
+
 
 # -----------------------------------------------------------------------------
 # 3) User-Related Models
@@ -325,19 +332,28 @@ class User(BaseModel):
         alert_history: History of alerts sent to the user
     """
     __tablename__ = 'users'
-    
+
     id = Column(Integer, primary_key=True)
     email = Column(String, unique=True, nullable=False)
     name = Column(String(100), nullable=True)
     is_active = Column(Boolean, default=True)
     role = Column(String(20), default="user")  # e.g., user, admin
-    
+
     # Relationships
-    preferences = relationship("UserPreference", back_populates="user", uselist=False, cascade="all, delete-orphan")
-    searches = relationship("SearchHistory", back_populates="user", cascade="all, delete-orphan")
-    alert_preferences = relationship("AlertPreference", back_populates="user", cascade="all, delete-orphan")
-    alert_history = relationship("AlertHistory", back_populates="user", cascade="all, delete-orphan")
-    
+    preferences = relationship("UserPreference",
+                               back_populates="user",
+                               uselist=False,
+                               cascade="all, delete-orphan")
+    searches = relationship("SearchHistory",
+                            back_populates="user",
+                            cascade="all, delete-orphan")
+    alert_preferences = relationship("AlertPreference",
+                                     back_populates="user",
+                                     cascade="all, delete-orphan")
+    alert_history = relationship("AlertHistory",
+                                 back_populates="user",
+                                 cascade="all, delete-orphan")
+
     @validates('email')
     def validate_email(self, key, address):
         """
@@ -356,11 +372,13 @@ class User(BaseModel):
         import re
         if not isinstance(address, str):
             raise ValueError("Email must be a string")
-            
-        if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', address):
+
+        if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+                        address):
             raise ValueError(f"Invalid email format: {address}")
-            
+
         return address
+
 
 class UserPreference(BaseModel):
     """
@@ -379,24 +397,24 @@ class UserPreference(BaseModel):
         user: Relationship to User
     """
     __tablename__ = 'user_preferences'
-    
+
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    
+
     # Preference settings stored as JSONB for flexibility
     keywords = Column(JSONB, nullable=True)
     health_focus = Column(JSONB, nullable=True)
     local_govt_focus = Column(JSONB, nullable=True)
     regions = Column(JSONB, nullable=True)
-    
+
     # Display preferences
     default_view = Column(String(20), default="all")
     items_per_page = Column(Integer, default=25)
     sort_by = Column(String(20), default="updated_at")
-    
+
     # Relationship
     user = relationship("User", back_populates="preferences")
-    
+
     @validates('items_per_page')
     def validate_items_per_page(self, key, value):
         """
@@ -416,6 +434,7 @@ class UserPreference(BaseModel):
             raise ValueError("items_per_page must be a positive integer")
         return value
 
+
 class SearchHistory(BaseModel):
     """
     Records user search queries and corresponding results.
@@ -429,14 +448,15 @@ class SearchHistory(BaseModel):
         user: Relationship to User
     """
     __tablename__ = 'search_history'
-    
+
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     query = Column(String, nullable=True)
     filters = Column(JSONB, nullable=True)  # Applied filters as JSON
     results = Column(JSONB, nullable=True)  # Summary of search results
-    
+
     user = relationship("User", back_populates="searches")
+
 
 class AlertPreference(BaseModel):
     """
@@ -459,29 +479,29 @@ class AlertPreference(BaseModel):
         user: Relationship to User
     """
     __tablename__ = 'alert_preferences'
-    
+
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     email = Column(String(255), nullable=False)
     active = Column(Boolean, default=True)
-    
+
     # Notification settings (e.g., email, SMS, in-app) stored as JSONB
     alert_channels = Column(JSONB, nullable=True)
     custom_keywords = Column(JSONB, nullable=True)
     ignore_list = Column(JSONB, nullable=True)
     alert_rules = Column(JSONB, nullable=True)
-    
+
     # Priority thresholds (0-100 scale)
     health_threshold = Column(Integer, default=60)
     local_govt_threshold = Column(Integer, default=60)
-    
+
     # Alert toggles
     notify_on_new = Column(Boolean, default=False)
     notify_on_update = Column(Boolean, default=False)
     notify_on_analysis = Column(Boolean, default=True)
-    
+
     user = relationship("User", back_populates="alert_preferences")
-    
+
     @validates('health_threshold', 'local_govt_threshold')
     def validate_threshold(self, key, value):
         """
@@ -501,6 +521,7 @@ class AlertPreference(BaseModel):
             raise ValueError(f"{key} must be an integer between 0 and 100")
         return value
 
+
 class AlertHistory(BaseModel):
     """
     Logs the history of alerts sent to users.
@@ -517,18 +538,22 @@ class AlertHistory(BaseModel):
         legislation: Relationship to Legislation
     """
     __tablename__ = 'alert_history'
-    
+
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    legislation_id = Column(Integer, ForeignKey('legislation.id'), nullable=False)
-    
+    legislation_id = Column(Integer,
+                            ForeignKey('legislation.id'),
+                            nullable=False)
+
     alert_type = Column(SQLEnum(NotificationTypeEnum), nullable=False)
     alert_content = Column(Text, nullable=True)
-    delivery_status = Column(String(50), nullable=True)  # e.g., sent, error, pending
+    delivery_status = Column(String(50),
+                             nullable=True)  # e.g., sent, error, pending
     error_message = Column(Text, nullable=True)
-    
+
     user = relationship("User", back_populates="alert_history")
     legislation = relationship("Legislation", back_populates="alert_history")
+
 
 # -----------------------------------------------------------------------------
 # 4) Legislation and Related Models
@@ -567,12 +592,15 @@ class Legislation(BaseModel):
         alert_history: Relationship to alert history
     """
     __tablename__ = 'legislation'
-    
+
     id = Column(Integer, primary_key=True)
-    external_id = Column(String(50), nullable=False)  # External identifier (e.g., from LegiScan)
+    external_id = Column(
+        String(50),
+        nullable=False)  # External identifier (e.g., from LegiScan)
     data_source = Column(SQLEnum(DataSourceEnum), nullable=False)
     govt_type = Column(SQLEnum(GovtTypeEnum), nullable=False)
-    govt_source = Column(String(100), nullable=False)  # e.g., "US Congress 119th"
+    govt_source = Column(String(100),
+                         nullable=False)  # e.g., "US Congress 119th"
     bill_number = Column(String(50), nullable=False)
     bill_type = Column(String(50), nullable=True)
     title = Column(Text, nullable=False)
@@ -580,38 +608,61 @@ class Legislation(BaseModel):
     bill_status = Column(SQLEnum(BillStatusEnum), default=BillStatusEnum.NEW)
     url = Column(Text, nullable=True)
     state_link = Column(Text, nullable=True)
-    
+
     # Key dates
     bill_introduced_date = Column(DateTime, nullable=True)
     bill_last_action_date = Column(DateTime, nullable=True)
     bill_status_date = Column(DateTime, nullable=True)
     last_api_check = Column(DateTime, default=datetime.utcnow, nullable=True)
-    
+
     # API metadata
     change_hash = Column(String(50), nullable=True)
     raw_api_response = Column(JSONB, nullable=True)
-    
+
     # Full-text search vector (PostgreSQL)
     search_vector = Column(TSVectorType('title', 'description'), nullable=True)
-    
+
     # Relationships
-    analyses = relationship("LegislationAnalysis", back_populates="legislation", cascade="all, delete-orphan")
-    texts = relationship("LegislationText", back_populates="legislation", cascade="all, delete-orphan")
-    sponsors = relationship("LegislationSponsor", back_populates="legislation", cascade="all, delete-orphan")
-    amendments = relationship("Amendment", back_populates="legislation", cascade="all, delete-orphan")
-    priority = relationship("LegislationPriority", back_populates="legislation", uselist=False, cascade="all, delete-orphan")
-    impact_ratings = relationship("ImpactRating", back_populates="legislation", cascade="all, delete-orphan")
-    implementation_requirements = relationship("ImplementationRequirement", back_populates="legislation", cascade="all, delete-orphan")
-    alert_history = relationship("AlertHistory", back_populates="legislation", cascade="all, delete-orphan")
-    
+    analyses = relationship("LegislationAnalysis",
+                            back_populates="legislation",
+                            cascade="all, delete-orphan")
+    texts = relationship("LegislationText",
+                         back_populates="legislation",
+                         cascade="all, delete-orphan")
+    sponsors = relationship("LegislationSponsor",
+                            back_populates="legislation",
+                            cascade="all, delete-orphan")
+    amendments = relationship("Amendment",
+                              back_populates="legislation",
+                              cascade="all, delete-orphan")
+    priority = relationship("LegislationPriority",
+                            back_populates="legislation",
+                            uselist=False,
+                            cascade="all, delete-orphan")
+    impact_ratings = relationship("ImpactRating",
+                                  back_populates="legislation",
+                                  cascade="all, delete-orphan")
+    implementation_requirements = relationship("ImplementationRequirement",
+                                               back_populates="legislation",
+                                               cascade="all, delete-orphan")
+    alert_history = relationship("AlertHistory",
+                                 back_populates="legislation",
+                                 cascade="all, delete-orphan")
+
     __table_args__ = (
-        UniqueConstraint('data_source', 'govt_source', 'bill_number', name='unique_bill_identifier'),
+        UniqueConstraint('data_source',
+                         'govt_source',
+                         'bill_number',
+                         name='unique_bill_identifier'),
         Index('idx_legislation_status', 'bill_status'),
-        Index('idx_legislation_dates', 'bill_introduced_date', 'bill_last_action_date'),
+        Index('idx_legislation_dates', 'bill_introduced_date',
+              'bill_last_action_date'),
         Index('idx_legislation_change', 'change_hash'),
-        Index('idx_legislation_search', 'search_vector', postgresql_using='gin'),
+        Index('idx_legislation_search',
+              'search_vector',
+              postgresql_using='gin'),
     )
-    
+
     @property
     def latest_analysis(self) -> Optional["LegislationAnalysis"]:
         """
@@ -635,7 +686,7 @@ class Legislation(BaseModel):
         if self.texts:
             return sorted(self.texts, key=lambda t: t.version_num)[-1]
         return None
-        
+
     @validates('title')
     def validate_title(self, key, value):
         """
@@ -654,6 +705,7 @@ class Legislation(BaseModel):
         if not value or not value.strip():
             raise ValueError("Legislation title cannot be empty")
         return value
+
 
 class LegislationAnalysis(BaseModel):
     """
@@ -691,27 +743,32 @@ class LegislationAnalysis(BaseModel):
         parent_analysis: Relationship to parent analysis
     """
     __tablename__ = 'legislation_analysis'
-    
+
     id = Column(Integer, primary_key=True)
-    legislation_id = Column(Integer, ForeignKey('legislation.id'), nullable=False)
-    
+    legislation_id = Column(Integer,
+                            ForeignKey('legislation.id'),
+                            nullable=False)
+
     # Versioning fields
     analysis_version = Column(Integer, default=1, nullable=False)
-    version_tag = Column(String(50), nullable=True)  # e.g., 'initial', 'revised'
-    previous_version_id = Column(Integer, ForeignKey('legislation_analysis.id'), nullable=True)
+    version_tag = Column(String(50),
+                         nullable=True)  # e.g., 'initial', 'revised'
+    previous_version_id = Column(Integer,
+                                 ForeignKey('legislation_analysis.id'),
+                                 nullable=True)
     changes_from_previous = Column(JSONB, nullable=True)
-    
+
     # Analysis metadata
     analysis_date = Column(DateTime, default=datetime.utcnow, nullable=False)
-    
+
     # Impact assessment
     impact_category = Column(SQLEnum(ImpactCategoryEnum), nullable=True)
     impact = Column(SQLEnum(ImpactLevelEnum), nullable=True)
-    
+
     # Summary and key points
     summary = Column(Text, nullable=True)
     key_points = Column(JSONB, nullable=True)
-    
+
     # Detailed impacts for various sectors
     public_health_impacts = Column(JSONB, nullable=True)
     local_gov_impacts = Column(JSONB, nullable=True)
@@ -720,28 +777,30 @@ class LegislationAnalysis(BaseModel):
     education_impacts = Column(JSONB, nullable=True)
     infrastructure_impacts = Column(JSONB, nullable=True)
     stakeholder_impacts = Column(JSONB, nullable=True)
-    
+
     # Action recommendations and resource needs
     recommended_actions = Column(JSONB, nullable=True)
     immediate_actions = Column(JSONB, nullable=True)
     resource_needs = Column(JSONB, nullable=True)
-    
+
     # Raw analysis data for reference
     raw_analysis = Column(JSONB, nullable=True)
-    
+
     # Additional metadata
     model_version = Column(String(50), nullable=True)
     confidence_score = Column(Float, nullable=True)
     processing_time = Column(Integer, nullable=True)  # in milliseconds
-    
+
     # Relationships
     legislation = relationship("Legislation", back_populates="analyses")
-    child_analyses = relationship("LegislationAnalysis", backref="parent_analysis", remote_side=[id])
-    
-    __table_args__ = (
-        UniqueConstraint('legislation_id', 'analysis_version', name='unique_analysis_version'),
-    )
-    
+    child_analyses = relationship("LegislationAnalysis",
+                                  backref="parent_analysis",
+                                  remote_side=[id])
+
+    __table_args__ = (UniqueConstraint('legislation_id',
+                                       'analysis_version',
+                                       name='unique_analysis_version'), )
+
     @validates('analysis_version')
     def validate_analysis_version(self, key, value):
         """
@@ -760,6 +819,7 @@ class LegislationAnalysis(BaseModel):
         if not isinstance(value, int) or value <= 0:
             raise ValueError("Analysis version must be a positive integer")
         return value
+
 
 class LegislationText(BaseModel):
     """
@@ -780,30 +840,35 @@ class LegislationText(BaseModel):
         legislation: Relationship to Legislation
     """
     __tablename__ = 'legislation_text'
-    
+
     id = Column(Integer, primary_key=True)
-    legislation_id = Column(Integer, ForeignKey('legislation.id'), nullable=False)
-    
+    legislation_id = Column(Integer,
+                            ForeignKey('legislation.id'),
+                            nullable=False)
+
     version_num = Column(Integer, default=1, nullable=False)
-    text_type = Column(String(50), nullable=True)  # e.g., introduced, amended, enrolled
-    
+    text_type = Column(String(50),
+                       nullable=True)  # e.g., introduced, amended, enrolled
+
     # Use the custom type for text content that can handle both text and binary
     text_content = Column(FlexibleContentType, nullable=True)
-    
+
     text_hash = Column(String(50), nullable=True)
-    text_date = Column(DateTime, default=datetime.utcnow, nullable=True)
-    
+    text_date = Column(DateTime,
+                       default=datetime.now(timezone.utc),
+                       nullable=True)
+
     # Additional fields for content metadata
     text_metadata = Column(JSONB, nullable=True)
     is_binary = Column(Boolean, default=False)
     content_type = Column(String(100), nullable=True)  # MIME type
-    
+
     legislation = relationship("Legislation", back_populates="texts")
-    
-    __table_args__ = (
-        UniqueConstraint('legislation_id', 'version_num', name='unique_text_version'),
-    )
-    
+
+    __table_args__ = (UniqueConstraint('legislation_id',
+                                       'version_num',
+                                       name='unique_text_version'), )
+
     @validates('version_num')
     def validate_version_num(self, key, value):
         """
@@ -822,7 +887,7 @@ class LegislationText(BaseModel):
         if not isinstance(value, int) or value <= 0:
             raise ValueError("Version number must be a positive integer")
         return value
-        
+
     def set_content(self, content: Union[str, bytes]) -> None:
         """
         Set the text_content field with appropriate metadata.
@@ -839,12 +904,12 @@ class LegislationText(BaseModel):
             self.is_binary = False
             self.content_type = None
             return
-            
+
         if isinstance(content, str):
             self.text_content = content
             self.is_binary = False
             self.content_type = "text/plain"
-            
+
             # Store metadata
             self.text_metadata = {
                 "is_binary": False,
@@ -854,11 +919,11 @@ class LegislationText(BaseModel):
         elif isinstance(content, bytes):
             self.text_content = content
             self.is_binary = True
-            
+
             # Try to detect content type from bytes signature
             content_type = self._detect_content_type(content)
             self.content_type = content_type
-            
+
             # Store metadata
             self.text_metadata = {
                 "is_binary": True,
@@ -866,24 +931,26 @@ class LegislationText(BaseModel):
                 "size_bytes": len(content)
             }
         else:
-            raise TypeError(f"Content must be either string or bytes, not {type(content).__name__}")
-    
+            raise TypeError(
+                f"Content must be either string or bytes, not {type(content).__name__}"
+            )
+
     def get_content(self) -> Union[str, bytes]:
         """
         Get the text content, handling both string and binary formats.
-        
+
         Returns:
             The content as either string or bytes
         """
         if self.text_content is None:
-            return None
-            
+            return "" if not self.is_binary else b""
         if self.is_binary:
             return self.text_content
         else:
             # Ensure we return a string if it's not binary
-            return str(self.text_content) if not isinstance(self.text_content, str) else self.text_content
-    
+            return str(self.text_content) if not isinstance(
+                self.text_content, str) else self.text_content
+
     def _detect_content_type(self, data: bytes) -> str:
         """
         Detect the content type based on binary signatures.
@@ -902,9 +969,10 @@ class LegislationText(BaseModel):
         elif data.startswith(b'PK\x03\x04'):
             return 'application/zip'  # ZIP (could be DOCX, XLSX)
         # Add more signatures as needed
-        
+
         # Default to generic binary
         return 'application/octet-stream'
+
 
 class LegislationSponsor(BaseModel):
     """
@@ -922,19 +990,22 @@ class LegislationSponsor(BaseModel):
         legislation: Relationship to Legislation
     """
     __tablename__ = 'legislation_sponsors'
-    
+
     id = Column(Integer, primary_key=True)
-    legislation_id = Column(Integer, ForeignKey('legislation.id'), nullable=False)
-    
+    legislation_id = Column(Integer,
+                            ForeignKey('legislation.id'),
+                            nullable=False)
+
     sponsor_external_id = Column(String(50), nullable=True)
     sponsor_name = Column(String(255), nullable=False)
     sponsor_title = Column(String(100), nullable=True)
     sponsor_state = Column(String(50), nullable=True)
     sponsor_party = Column(String(50), nullable=True)
-    sponsor_type = Column(String(50), nullable=True)  # e.g., primary, co-sponsor
-    
+    sponsor_type = Column(String(50),
+                          nullable=True)  # e.g., primary, co-sponsor
+
     legislation = relationship("Legislation", back_populates="sponsors")
-    
+
     @validates('sponsor_name')
     def validate_sponsor_name(self, key, value):
         """
@@ -953,6 +1024,7 @@ class LegislationSponsor(BaseModel):
         if not value or not value.strip():
             raise ValueError("Sponsor name cannot be empty")
         return value
+
 
 class Amendment(BaseModel):
     """
@@ -977,36 +1049,40 @@ class Amendment(BaseModel):
         legislation: Relationship to Legislation
     """
     __tablename__ = 'amendments'
-    
+
     id = Column(Integer, primary_key=True)
-    amendment_id = Column(String(50), nullable=False)  # External amendment ID from LegiScan
-    legislation_id = Column(Integer, ForeignKey('legislation.id'), nullable=False)
-    
+    amendment_id = Column(
+        String(50), nullable=False)  # External amendment ID from LegiScan
+    legislation_id = Column(Integer,
+                            ForeignKey('legislation.id'),
+                            nullable=False)
+
     adopted = Column(Boolean, default=False)
-    status = Column(SQLEnum(AmendmentStatusEnum), default=AmendmentStatusEnum.PROPOSED)
+    status = Column(SQLEnum(AmendmentStatusEnum),
+                    default=AmendmentStatusEnum.PROPOSED)
     amendment_date = Column(DateTime, nullable=True)
     title = Column(String(255), nullable=True)
     description = Column(Text, nullable=True)
     amendment_hash = Column(String(50), nullable=True)
-    
+
     amendment_text = Column(FlexibleContentType, nullable=True)
     amendment_url = Column(String(255), nullable=True)
     state_link = Column(String(255), nullable=True)
-    
+
     chamber = Column(String(50), nullable=True)  # Originating chamber
     sponsor_info = Column(JSONB, nullable=True)  # Sponsor details as JSON
-    
+
     # Additional metadata field for binary content
     text_metadata = Column(JSONB, nullable=True)
     is_binary_text = Column(Boolean, default=False)
-    
+
     legislation = relationship("Legislation", back_populates="amendments")
-    
+
     __table_args__ = (
         Index('idx_amendments_legislation', 'legislation_id'),
         Index('idx_amendments_date', 'amendment_date'),
     )
-    
+
     def set_amendment_text(self, content: Union[str, bytes]) -> None:
         """
         Set the amendment_text field with appropriate metadata.
@@ -1021,7 +1097,7 @@ class Amendment(BaseModel):
             self.amendment_text = None
             self.is_binary_text = False
             return
-            
+
         if isinstance(content, str):
             self.amendment_text = content
             self.is_binary_text = False
@@ -1033,10 +1109,10 @@ class Amendment(BaseModel):
         elif isinstance(content, bytes):
             self.amendment_text = content
             self.is_binary_text = True
-            
+
             # Try to detect content type
             content_type = self._detect_content_type(content)
-            
+
             # Store metadata
             self.text_metadata = {
                 "is_binary": True,
@@ -1044,8 +1120,10 @@ class Amendment(BaseModel):
                 "size_bytes": len(content)
             }
         else:
-            raise TypeError(f"Content must be either string or bytes, not {type(content).__name__}")
-    
+            raise TypeError(
+                f"Content must be either string or bytes, not {type(content).__name__}"
+            )
+
     def _detect_content_type(self, data: bytes) -> str:
         """
         Detect the content type based on binary signatures.
@@ -1063,9 +1141,10 @@ class Amendment(BaseModel):
             return 'application/msword'  # MS Office
         elif data.startswith(b'PK\x03\x04'):
             return 'application/zip'  # ZIP (could be DOCX, XLSX)
-        
+
         # Default to generic binary
         return 'application/octet-stream'
+
 
 class LegislationPriority(BaseModel):
     """
@@ -1090,35 +1169,38 @@ class LegislationPriority(BaseModel):
         legislation: Relationship to Legislation
     """
     __tablename__ = 'legislation_priorities'
-    
+
     id = Column(Integer, primary_key=True)
-    legislation_id = Column(Integer, ForeignKey('legislation.id'), nullable=False)
-    
+    legislation_id = Column(Integer,
+                            ForeignKey('legislation.id'),
+                            nullable=False)
+
     public_health_relevance = Column(Integer, default=0)
     local_govt_relevance = Column(Integer, default=0)
     overall_priority = Column(Integer, default=0)
-    
+
     auto_categorized = Column(Boolean, default=False)
     auto_categories = Column(JSONB, nullable=True)
-    
+
     manually_reviewed = Column(Boolean, default=False)
     manual_priority = Column(Integer, default=0)
     reviewer_notes = Column(Text, nullable=True)
     review_date = Column(DateTime, nullable=True)
-    
+
     should_notify = Column(Boolean, default=False)
     notification_sent = Column(Boolean, default=False)
     notification_date = Column(DateTime, nullable=True)
-    
+
     legislation = relationship("Legislation", back_populates="priority")
-    
+
     __table_args__ = (
         Index('idx_priority_health', 'public_health_relevance'),
         Index('idx_priority_local_govt', 'local_govt_relevance'),
         Index('idx_priority_overall', 'overall_priority'),
     )
-    
-    @validates('public_health_relevance', 'local_govt_relevance', 'overall_priority', 'manual_priority')
+
+    @validates('public_health_relevance', 'local_govt_relevance',
+               'overall_priority', 'manual_priority')
     def validate_score(self, key, value):
         """
         Validate that priority scores are integers between 0 and 100.
@@ -1135,10 +1217,11 @@ class LegislationPriority(BaseModel):
         """
         if value is None:
             return 0
-            
+
         if not isinstance(value, int) or value < 0 or value > 100:
             raise ValueError(f"{key} must be an integer between 0 and 100")
         return value
+
 
 class ImpactRating(BaseModel):
     """
@@ -1159,23 +1242,25 @@ class ImpactRating(BaseModel):
         legislation: Relationship to Legislation
     """
     __tablename__ = 'impact_ratings'
-    
+
     id = Column(Integer, primary_key=True)
-    legislation_id = Column(Integer, ForeignKey('legislation.id'), nullable=False)
-    
+    legislation_id = Column(Integer,
+                            ForeignKey('legislation.id'),
+                            nullable=False)
+
     impact_category = Column(SQLEnum(ImpactCategoryEnum), nullable=False)
     impact_level = Column(SQLEnum(ImpactLevelEnum), nullable=False)
-    
+
     impact_description = Column(Text, nullable=True)
     affected_entities = Column(JSONB, nullable=True)
     confidence_score = Column(Float, nullable=True)
-    
+
     is_ai_generated = Column(Boolean, default=True)
     reviewed_by = Column(String(100), nullable=True)
     review_date = Column(DateTime, nullable=True)
-    
+
     legislation = relationship("Legislation", back_populates="impact_ratings")
-    
+
     @validates('confidence_score')
     def validate_confidence_score(self, key, value):
         """
@@ -1193,10 +1278,12 @@ class ImpactRating(BaseModel):
         """
         if value is None:
             return None
-            
+
         if not isinstance(value, (int, float)) or value < 0 or value > 1:
-            raise ValueError("Confidence score must be a number between 0.0 and 1.0")
+            raise ValueError(
+                "Confidence score must be a number between 0.0 and 1.0")
         return float(value)
+
 
 class ImplementationRequirement(BaseModel):
     """
@@ -1215,19 +1302,24 @@ class ImplementationRequirement(BaseModel):
         legislation: Relationship to Legislation
     """
     __tablename__ = 'implementation_requirements'
-    
+
     id = Column(Integer, primary_key=True)
-    legislation_id = Column(Integer, ForeignKey('legislation.id'), nullable=False)
-    
-    requirement_type = Column(String(50), nullable=False)  # e.g., "training", "staffing", "reporting"
+    legislation_id = Column(Integer,
+                            ForeignKey('legislation.id'),
+                            nullable=False)
+
+    requirement_type = Column(
+        String(50),
+        nullable=False)  # e.g., "training", "staffing", "reporting"
     description = Column(Text, nullable=False)
     estimated_cost = Column(String(100), nullable=True)
     funding_provided = Column(Boolean, default=False)
     implementation_deadline = Column(DateTime, nullable=True)
     entity_responsible = Column(String(100), nullable=True)
-    
-    legislation = relationship("Legislation", back_populates="implementation_requirements")
-    
+
+    legislation = relationship("Legislation",
+                               back_populates="implementation_requirements")
+
     @validates('requirement_type', 'description')
     def validate_required_fields(self, key, value):
         """
@@ -1247,38 +1339,27 @@ class ImplementationRequirement(BaseModel):
             raise ValueError(f"{key} cannot be empty")
         return value
 
+
 # -----------------------------------------------------------------------------
 # 5) Synchronization Metadata and Error Tracking Models
 # -----------------------------------------------------------------------------
 class SyncMetadata(BaseModel):
-    """
-    Records metadata for synchronization operations with external APIs (e.g., LegiScan).
-    Tracks when syncs occur, their status, and summary statistics.
-    
-    Attributes:
-        id: Primary key
-        last_sync: When the last sync was attempted
-        last_successful_sync: When the last successful sync completed
-        status: Status of the sync operation
-        sync_type: Type of sync operation
-        new_bills: Number of new bills added
-        bills_updated: Number of bills updated
-        errors: Detailed error information
-        sync_errors: Relationship to sync errors
-    """
     __tablename__ = 'sync_metadata'
-    
-    id = Column(Integer, primary_key=True)
-    last_sync = Column(DateTime, default=datetime.utcnow, nullable=False)
-    last_successful_sync = Column(DateTime, nullable=True)
-    status = Column(SQLEnum(SyncStatusEnum), default=SyncStatusEnum.PENDING, nullable=False)
-    sync_type = Column(String(50), nullable=True)  # e.g., "nightly", "manual"
-    new_bills = Column(Integer, default=0)
-    bills_updated = Column(Integer, default=0)
-    errors = Column(JSONB, nullable=True)  # Detailed error information
-    
-    # Relationship to SyncError
-    sync_errors = relationship("SyncError", back_populates="sync_metadata")
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    last_sync: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(timezone.utc), nullable=False)
+    last_successful_sync: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    status: Mapped[SyncStatusEnum] = mapped_column(SQLEnum(SyncStatusEnum),
+                                                       default=SyncStatusEnum.PENDING,
+                                                       nullable=False)
+    sync_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    new_bills: Mapped[int] = mapped_column(Integer, default=0)
+    bills_updated: Mapped[int] = mapped_column(Integer, default=0)
+    errors: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSONB, nullable=True)
+
+    sync_errors: Mapped[List["SyncError"]] = relationship("SyncError", back_populates="sync_metadata")
+
+
 
 class SyncError(BaseModel):
     """
@@ -1295,19 +1376,21 @@ class SyncError(BaseModel):
         sync_metadata: Relationship to SyncMetadata
     """
     __tablename__ = 'sync_errors'
-    
+
     id = Column(Integer, primary_key=True)
     sync_id = Column(Integer, ForeignKey('sync_metadata.id'), nullable=False)
     error_type = Column(String(50), nullable=True)
     error_message = Column(Text, nullable=True)
     stack_trace = Column(Text, nullable=True)
     error_time = Column(DateTime, default=datetime.utcnow, nullable=False)
-    
+
     sync_metadata = relationship("SyncMetadata", back_populates="sync_errors")
+
 
 # -----------------------------------------------------------------------------
 # 6) PostgreSQL-Specific Optimizations
 # -----------------------------------------------------------------------------
+
 
 # Configure PostgreSQL to use BYTEA for binary data and enable full-text search
 def setup_postgres_extensions(conn, branch=None):
@@ -1323,18 +1406,23 @@ def setup_postgres_extensions(conn, branch=None):
     if conn.dialect.name == 'postgresql':
         # Enable the pg_trgm extension for trigram-based text search
         conn.execute(text('CREATE EXTENSION IF NOT EXISTS pg_trgm'))
-        
+
         # Enable unaccent for accent-insensitive search
         conn.execute(text('CREATE EXTENSION IF NOT EXISTS unaccent'))
 
+
 # Register the event listener properly
 from sqlalchemy import event
+
 event.listen(Engine, "connect", setup_postgres_extensions)
+
 
 # -----------------------------------------------------------------------------
 # 7) Database Initialization Logic
 # -----------------------------------------------------------------------------
-def init_db(db_url: Optional[str] = None, echo: bool = False, max_retries: int = 3) -> sessionmaker:
+def init_db(db_url: Optional[str] = None,
+            echo: bool = False,
+            max_retries: int = 3) -> sessionmaker:
     """
     Initializes the database engine and returns a session factory.
     Includes robust error handling and connection retry logic.
@@ -1350,40 +1438,45 @@ def init_db(db_url: Optional[str] = None, echo: bool = False, max_retries: int =
     Raises:
         Exception: If database connection fails after maximum retries
     """
-    db_url = db_url or os.environ.get("DATABASE_URL", "postgresql://user:password@localhost:5432/policypulse")
+    db_url = db_url or os.environ.get(
+        "DATABASE_URL",
+        "postgresql://user:password@localhost:5432/policypulse")
     engine = None
     attempt = 0
-    
+
     while attempt < max_retries:
         try:
             # Create the engine with appropriate options
             engine = create_engine(
-                db_url, 
+                db_url,
                 echo=echo,
                 pool_pre_ping=True,  # Test connections before using them
-                pool_recycle=3600,   # Recycle connections after 1 hour
-                pool_size=10,        # Connection pool size
-                max_overflow=20      # Max additional connections
+                pool_recycle=3600,  # Recycle connections after 1 hour
+                pool_size=10,  # Connection pool size
+                max_overflow=20  # Max additional connections
             )
-            
+
             # Test connection with a simple query
             with engine.connect() as connection:
                 connection.execute(text("SELECT 1"))
-                
+
             logger.info("Database connection established successfully")
             break
         except Exception as e:
             attempt += 1
-            logger.warning(f"Database connection attempt {attempt} failed: {e}")
+            logger.warning(
+                f"Database connection attempt {attempt} failed: {e}")
             if attempt >= max_retries:
-                logger.error(f"Exceeded maximum retries ({max_retries}) for database connection.")
+                logger.error(
+                    f"Exceeded maximum retries ({max_retries}) for database connection."
+                )
                 raise
-                
+
             # Exponential backoff
-            wait_time = 2 ** attempt
+            wait_time = 2**attempt
             logger.info(f"Retrying in {wait_time} seconds...")
             time.sleep(wait_time)
-    
+
     # Create all tables if they don't exist
     try:
         Base.metadata.create_all(engine)
@@ -1391,6 +1484,6 @@ def init_db(db_url: Optional[str] = None, echo: bool = False, max_retries: int =
     except Exception as e:
         logger.error(f"Failed to create database schema: {e}")
         raise
-    
+
     # Return a sessionmaker bound to the engine
     return sessionmaker(bind=engine, expire_on_commit=False)

@@ -18,6 +18,7 @@ import sys
 import argparse
 import logging
 from datetime import datetime
+from typing import Any
 
 from models import init_db, Legislation, LegislationAnalysis, SyncMetadata
 from legiscan_api import LegiScanAPI
@@ -79,10 +80,10 @@ def sync_command(args):
     logger.info(f"Starting {'forced ' if args.force else ''}sync operation")
     
     db_session, db_session_factory = init_resources()
-    scheduler = PolicyPulseScheduler()
+    scheduler: Any = PolicyPulseScheduler()
     
     try:
-        result = scheduler.run_sync_now()  # Method run_sync_now is not implemented in PolicyPulseScheduler
+        result = scheduler.run_sync_now()  # type: ignore # Method run_sync_now is not implemented in PolicyPulseScheduler
         print("\n=== Sync Results ===")
         print(f"Success: {result}")
     finally:

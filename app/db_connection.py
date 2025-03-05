@@ -162,8 +162,12 @@ def check_database_status():
 
             # Check if admin user exists
             if 'users' in status["tables"]:
+                # Execute the query
                 cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'admin'")
-                status["details"]["admin_user_exists"] = cursor.fetchone()[0] > 0
+                # Fetch the result
+                result = cursor.fetchone()
+                # Check if result is not None and then subscript
+                status["details"]["admin_user_exists"] = (result[0] if result else 0) > 0
 
         conn.close()
     except Exception as e:
