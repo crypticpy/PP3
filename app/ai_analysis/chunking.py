@@ -6,7 +6,7 @@ import re
 import logging
 from typing import List, Tuple, Any
 
-from ai_analysis.errors import ContentProcessingError
+from .errors import ContentProcessingError
 
 logger = logging.getLogger(__name__)
 

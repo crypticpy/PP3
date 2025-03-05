@@ -433,35 +433,35 @@ def merge_analyses(base: Dict[str, Any], new: Dict[str, Any]) -> Dict[str, Any]:
                             if len(merged[impact_dict][category]) >= 8:
                                 break
 
-        # For actions, get the most relevant from both
-        for action_type in ["recommended_actions", "immediate_actions", "resource_needs"]:
-            if action_type in new and action_type in base:
-                # Combine and deduplicate
-                all_actions = set(base[action_type])
-                for action in new[action_type]:
-                    all_actions.add(action)
-                # Set a reasonable limit based on action type
-                limit = 8 if action_type == "recommended_actions" else 5
-                merged[action_type] = list(all_actions)[:limit]
+    # For actions, get the most relevant from both
+    for action_type in ["recommended_actions", "immediate_actions", "resource_needs"]:
+        if action_type in new and action_type in base:
+            # Combine and deduplicate
+            all_actions = set(base[action_type])
+            for action in new[action_type]:
+                all_actions.add(action)
+            # Set a reasonable limit based on action type
+            limit = 8 if action_type == "recommended_actions" else 5
+            merged[action_type] = list(all_actions)[:limit]
 
-        # For impact_summary, keep the most severe assessment
-        if "impact_summary" in new and "impact_summary" in base:
-            # Impact level priority (higher = more severe)
-            impact_priority = {
-                "low": 1,
-                "moderate": 2,
-                "high": 3,
-                "critical": 4
-            }
+    # For impact_summary, keep the most severe assessment
+    if "impact_summary" in new and "impact_summary" in base:
+        # Impact level priority (higher = more severe)
+        impact_priority = {
+            "low": 1,
+            "moderate": 2,
+            "high": 3,
+            "critical": 4
+        }
 
-            base_level = impact_priority.get(base["impact_summary"]["impact_level"], 0)
-            new_level = impact_priority.get(new["impact_summary"]["impact_level"], 0)
+        base_level = impact_priority.get(base["impact_summary"]["impact_level"], 0)
+        new_level = impact_priority.get(new["impact_summary"]["impact_level"], 0)
 
-            # Keep the more severe impact assessment
-            if new_level > base_level:
-                merged["impact_summary"] = new["impact_summary"]
+        # Keep the more severe impact assessment
+        if new_level > base_level:
+            merged["impact_summary"] = new["impact_summary"]
 
-        return merged
+    return merged
 
 
     def create_chunk_prompt(
