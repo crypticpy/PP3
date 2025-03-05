@@ -2,117 +2,89 @@
  * API service for interacting with the backend
  */
 
+import axios from 'axios';
+
 // Base URL for API requests
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
+const API_BASE_URL = '/api';
 
-/**
- * Generic fetch wrapper with error handling
- * 
- * @param {string} endpoint - API endpoint to call
- * @param {Object} options - Fetch options
- * @returns {Promise<any>} - Response data
- */
-async function fetchApi(endpoint, options = {}) {
-  try {
-    const url = `${API_BASE_URL}${endpoint}`;
-    
-    // Set default headers
-    const headers = {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    };
-    
-    const response = await fetch(url, {
-      ...options,
-      headers,
-    });
-    
-    // Handle non-2xx responses
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail || `API error: ${response.status} ${response.statusText}`);
+// Create axios instance with common config
+const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Handle response interceptor for error handling
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Handle global error cases here
+    const { response } = error;
+
+    if (response && response.status === 401) {
+      // Handle unauthorized access
+      console.error('Unauthorized access');
+      // Could redirect to login page if needed
     }
-    
-    // Parse JSON response
-    return await response.json();
-  } catch (error) {
-    console.error(`API request failed: ${error.message}`, error);
-    throw error;
+
+    return Promise.reject(error);
   }
-}
+);
 
 /**
- * Get a list of bills with optional filtering
- * 
- * @param {Object} params - Query parameters
- * @param {string} params.state - Filter by state
- * @param {string} params.keyword - Search by keyword
- * @param {number} params.limit - Maximum number of bills to return
- * @param {number} params.offset - Number of bills to skip
- * @returns {Promise<Array>} - List of bills
+ * API Services for all endpoints
  */
-export async function getBills(params = {}) {
-  // Build query string from params
-  const queryParams = new URLSearchParams();
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null) {
-      queryParams.append(key, value);
-    }
-  });
-  
-  const queryString = queryParams.toString();
-  const endpoint = `/bills/${queryString ? `?${queryString}` : ''}`;
-  
-  return fetchApi(endpoint);
-}
-
-/**
- * Get detailed information about a specific bill
- * 
- * @param {number} billId - Bill ID
- * @returns {Promise<Object>} - Bill details
- */
-export async function getBillDetails(billId) {
-  return fetchApi(`/bills/${billId}`);
-}
-
-/**
- * Get AI analysis for a specific bill
- * 
- * @param {number} billId - Bill ID
- * @returns {Promise<Object>} - Analysis results
- */
-export async function getBillAnalysis(billId) {
-  return fetchApi(`/bills/${billId}/analysis`);
-}
-
-/**
- * Get a list of available states
- * 
- * @returns {Promise<Array<string>>} - List of state codes
- */
-export async function getStates() {
-  return fetchApi('/states/');
-}
-
-/**
- * Refresh bill data from LegiScan API
- * 
- * @param {string} state - Optional state to refresh
- * @returns {Promise<Object>} - Refresh result
- */
-export async function refreshData(state = null) {
-  const queryParams = state ? `?state=${state}` : '';
-  return fetchApi(`/refresh/${queryParams}`, { method: 'POST' });
-}
-
-// Export all functions as a single object
 const apiService = {
-  getBills,
-  getBillDetails,
-  getBillAnalysis,
-  getStates,
-  refreshData,
+  // Health Check
+  checkHealth: () => apiClient.get('/health'),
+
+  // Bills / Legislation
+  getBills: (params) => apiClient.get('/bills/', { params }),
+  getBillDetails: (billId) => apiClient.get(`/bills/${billId}`),
+  getBillAnalysis: (billId) => apiClient.get(`/bills/${billId}/analysis`),
+
+  // Search Functionality
+  searchBills: (query, filters) => apiClient.post('/search/advanced', { query, filters }),
+
+  // Texas Specific Endpoints
+  getTexasHealthLegislation: (params) => apiClient.get('/texas/health-legislation', { params }),
+  getTexasLocalGovtLegislation: (params) => apiClient.get('/texas/local-govt-legislation', { params }),
+
+  // Dashboard Analytics
+  getImpactSummary: (params) => apiClient.get('/dashboard/impact-summary', { params }),
+  getRecentActivity: (params) => apiClient.get('/dashboard/recent-activity', { params }),
+
+  // User Preferences
+  getUserPreferences: (email) => apiClient.get(`/users/${email}/preferences`),
+  updateUserPreferences: (email, prefsData) => apiClient.post(`/users/${email}/preferences`, prefsData),
+
+  // Search History
+  getSearchHistory: (email) => apiClient.get(`/users/${email}/search`),
+  addSearchHistory: (email, searchData) => apiClient.post(`/users/${email}/search`, searchData),
+
+  // Analysis
+  requestAnalysis: (legId, options) => apiClient.post(`/legislation/${legId}/analysis`, options),
+  getAnalysisHistory: (legId) => apiClient.get(`/legislation/${legId}/analysis/history`),
+
+  // Priority Management
+  updatePriority: (legId, priorityData) => apiClient.post(`/legislation/${legId}/priority`, priorityData),
+
+  // Sync Operations
+  getSyncStatus: () => apiClient.get('/sync/status'),
+  triggerSync: (force = false) => apiClient.post('/sync/trigger', { force }),
+
+  // General utility methods
+  getStates: () => apiClient.get('/states/'),
+  refreshData: (state = null) => apiClient.post('/refresh/', { state }),
 };
 
-export default apiService; 
+// Export the billService for components that specifically need it
+export const billService = {
+  getAllBills: apiService.getBills,
+  getBillDetails: apiService.getBillDetails,
+  searchBills: (params) => apiService.getBills(params),
+  getBillAnalysis: apiService.getBillAnalysis,
+};
+
+export default apiService;
