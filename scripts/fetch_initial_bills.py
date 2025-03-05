@@ -14,6 +14,7 @@ import os
 import sys
 import logging
 import argparse
+import app.models
 from datetime import datetime
 from sqlalchemy.orm import Session
 
