@@ -1310,24 +1310,26 @@ class SyncError(BaseModel):
 # -----------------------------------------------------------------------------
 
 # Configure PostgreSQL to use BYTEA for binary data and enable full-text search
-@event.listens_for(Engine, "before_create")
-def setup_postgres_extensions(target, connection, **kw):
+def setup_postgres_extensions(conn, branch=None):
     """
     Set up PostgreSQL-specific configurations when creating tables.
     This includes enabling extensions needed for full-text search.
     
     Args:
-        target: SQLAlchemy engine
-        connection: Database connection
-        **kw: Additional keyword arguments
+        conn: Database connection
+        branch: Branch indicator
     """
     # Only run on PostgreSQL
-    if connection.dialect.name == 'postgresql':
+    if conn.dialect.name == 'postgresql':
         # Enable the pg_trgm extension for trigram-based text search
-        connection.execute(text('CREATE EXTENSION IF NOT EXISTS pg_trgm'))
+        conn.execute(text('CREATE EXTENSION IF NOT EXISTS pg_trgm'))
         
         # Enable unaccent for accent-insensitive search
-        connection.execute(text('CREATE EXTENSION IF NOT EXISTS unaccent'))
+        conn.execute(text('CREATE EXTENSION IF NOT EXISTS unaccent'))
+
+# Register the event listener properly
+from sqlalchemy import event
+event.listen(Engine, "connect", setup_postgres_extensions)
 
 # -----------------------------------------------------------------------------
 # 7) Database Initialization Logic
