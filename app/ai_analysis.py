@@ -52,7 +52,7 @@ from pydantic import BaseModel, Field, validator, root_validator, ValidationErro
 from dotenv import load_dotenv
 
 # Import required models
-from models import (
+from app.models import (
     Legislation,
     LegislationText,
     LegislationAnalysis,
@@ -62,7 +62,7 @@ from models import (
 
 # Try to import additional related models if available
 try:
-    from models import LegislationPriority
+    from app.models import LegislationPriority
     HAS_PRIORITY_MODEL = True
 except ImportError:
     HAS_PRIORITY_MODEL = False
