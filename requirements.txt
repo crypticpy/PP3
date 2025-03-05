@@ -7,3 +7,4 @@ sqlalchemy-utils
 apscheduler
 requests
 pydantic
+python-dotenv
