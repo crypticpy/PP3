@@ -1,0 +1,79 @@
+def get_relevant_texas_legislation(self, relevance_type: str = "health", min_score: int = 50, limit: int = 100) -> List[Dict[str, Any]]:
+        """
+        Retrieves legislation particularly relevant to Texas public health or local government.
+
+        Args:
+            relevance_type: Type of relevance to filter by ("health", "local_govt", or "both")
+            min_score: Minimum relevance score (0-100)
+            limit: Maximum number of results to return
+
+        Returns:
+            List of relevant legislation dictionaries
+        """
+        try:
+            # Skip if LegislationPriority is not available
+            if not HAS_PRIORITY_MODEL:
+                logger.warning("Cannot get relevant Texas legislation: LegislationPriority model not available")
+                return []
+
+            # Build the query based on relevance type
+            query = self.db_session.query(Legislation).join(
+                LegislationPriority,
+                Legislation.id == LegislationPriority.legislation_id
+            )
+
+            # Filter by Texas
+            query = query.filter(
+                or_(
+                    and_(
+                        Legislation.govt_type == GovtTypeEnum.STATE,
+                        Legislation.govt_source.ilike("%Texas%")
+                    ),
+                    Legislation.govt_type == GovtTypeEnum.FEDERAL
+                )
+            )
+
+            # Apply relevance filter
+            if relevance_type == "health":
+                query = query.filter(LegislationPriority.public_health_relevance >= min_score)
+                query = query.order_by(LegislationPriority.public_health_relevance.desc())
+            elif relevance_type == "local_govt":
+                query = query.filter(LegislationPriority.local_govt_relevance >= min_score)
+                query = query.order_by(LegislationPriority.local_govt_relevance.desc())
+            else:  # "both" or any other value
+                query = query.filter(
+                    or_(
+                        LegislationPriority.public_health_relevance >= min_score,
+                        LegislationPriority.local_govt_relevance >= min_score
+                    )
+                )
+                query = query.order_by(LegislationPriority.overall_priority.desc())
+
+            # Get results
+            legislation_list = query.limit(limit).all()
+
+            # Format results
+            results = []
+            for leg in legislation_list:
+                results.append({
+                    "id": leg.id,
+                    "bill_number": leg.bill_number,
+                    "title": leg.title,
+                    "description": leg.description[:200] + "..." if len(leg.description or "") > 200 else leg.description,
+                    "status": leg.bill_status.value if leg.bill_status else None,
+                    "introduced_date": leg.bill_introduced_date.isoformat() if leg.bill_introduced_date else None,
+                    "govt_type": leg.govt_type.value if leg.govt_type else None,
+                    "url": leg.url,
+                    "health_relevance": leg.priority.public_health_relevance if leg.priority else 0,
+                    "local_govt_relevance": leg.priority.local_govt_relevance if leg.priority else 0,
+                    "overall_priority": leg.priority.overall_priority if leg.priority else 0
+                })
+
+            return results
+
+        except SQLAlchemyError as e:
+            logger.error(f"Database error getting relevant Texas legislation: {e}", exc_info=True)
+            return []
+        except Exception as e:
+            logger.error(f"Error getting relevant Texas legislation: {e}", exc_info=True)
+            return []

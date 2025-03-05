@@ -896,7 +896,7 @@ class LegiScanAPI:
             error_msg = f"Fatal error in sync operation: {str(e)}"
             logger.error(error_msg, exc_info=True)
 
-            sync_meta.status = SyncStatusEnum.FAILED
+            setattr(sync_meta, "status", SyncStatusEnum.FAILED)
             setattr(sync_meta, 'errors', {"critical_error": error_msg})
 
             sync_error = SyncError(
@@ -909,7 +909,7 @@ class LegiScanAPI:
 
             summary["status"] = "failed"
             summary["errors"].append(error_msg)
-            summary["end_time"] = datetime.utcnow()
+            summary["end_time"] = datetime.now(timezone.utc)
 
         finally:
             # Ensure we commit any pending changes
