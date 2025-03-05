@@ -46,7 +46,7 @@ try:
     HAS_PRIORITY_MODEL = True
 except ImportError:
     HAS_PRIORITY_MODEL = False
-    
+
 try:
     from app.models import Amendment, AmendmentStatusEnum
     HAS_AMENDMENT_MODEL = True
@@ -75,32 +75,32 @@ class LegiScanConfig:
     rate_limit_delay: float = 1.0
     max_retries: int = 3
     timeout: int = 30
-    
+
 
 class LegiScanAPI:
     """
     Client for interacting with the LegiScan API and storing/updating 
     legislation data in the local database.
-    
+
     Focuses on US Congress and Texas legislation with special attention to
     bills relevant to public health and local government.
     """
-    
+
     def __init__(self, db_session: Session, api_key: Optional[str] = None):
         """
         Initialize the LegiScan API client.
-        
+
         Args:
             db_session: SQLAlchemy session for database operations
             api_key: Optional API key (uses LEGISCAN_API_KEY env var if not provided)
-        
+
         Raises:
             ValueError: If no API key is available
         """
         self.api_key = api_key or os.environ.get("LEGISCAN_API_KEY")
         if not self.api_key:
             raise ValueError("LEGISCAN_API_KEY not set. Please set the LEGISCAN_API_KEY environment variable.")
-            
+
         self.config = LegiScanConfig(
             api_key=self.api_key,
             base_url="https://api.legiscan.com/",
@@ -108,22 +108,22 @@ class LegiScanAPI:
             max_retries=3,
             timeout=30
         )
-        
+
         self.db_session = db_session
 
         # Rate limiting controls
         self.last_request = datetime.now(timezone.utc)
-        
+
         # Texas & US focus
         self.monitored_jurisdictions = ["US", "TX"]
-        
+
         # Public health relevance keywords for prioritization
         self.health_keywords = [
             "health", "healthcare", "public health", "medicaid", "medicare", "hospital", 
             "physician", "vaccine", "immunization", "disease", "epidemic", "public health emergency",
             "mental health", "substance abuse", "addiction", "opioid", "healthcare workforce" 
         ]
-        
+
         # Local government relevance keywords for prioritization
         self.local_govt_keywords = [
             "municipal", "county", "local government", "city council", "zoning", 
@@ -143,15 +143,15 @@ class LegiScanAPI:
     def _make_request(self, operation: str, params: Optional[Dict[str, Any]] = None, retries: Optional[int] = None) -> Dict[str, Any]:
         """
         Makes a request to the LegiScan API with rate limiting and retry logic.
-        
+
         Args:
             operation: LegiScan API operation to perform
             params: Optional parameters for the API call
             retries: Number of retry attempts on failure (defaults to config value)
-            
+
         Returns:
             JSON response data
-            
+
         Raises:
             ApiError: If the API request fails after retries or returns an error
             RateLimitError: If rate limiting is encountered
@@ -162,7 +162,7 @@ class LegiScanAPI:
             params = {}
         params["key"] = self.api_key
         params["op"] = operation
-        
+
         max_retries = self.config.max_retries if retries is None else retries
 
         # Implement retry logic with exponential backoff
@@ -181,11 +181,11 @@ class LegiScanAPI:
                 except json.JSONDecodeError:
                     logger.error(f"Invalid JSON response from LegiScan API: {resp.text[:100]}...")
                     raise ApiError("Invalid JSON response from LegiScan API")
-                
+
                 if data.get("status") != "OK":
                     err_msg = data.get("alert", {}).get("message", "Unknown error from LegiScan")
                     logger.warning(f"LegiScan API returned error: {err_msg}")
-                    
+
                     # Check if we should retry based on error message
                     if "rate limit" in err_msg.lower():
                         wait_time = 5 * (2 ** attempt)  # Exponential backoff
@@ -194,11 +194,11 @@ class LegiScanAPI:
                         if attempt == max_retries - 1:
                             raise RateLimitError(f"LegiScan API rate limit exceeded after {max_retries} retries")
                         continue
-                    
+
                     raise ApiError(f"LegiScan API error: {err_msg}")
 
                 return data
-                
+
             except requests.exceptions.RequestException as e:
                 if attempt < max_retries - 1:
                     wait_time = 2 ** attempt
@@ -207,7 +207,7 @@ class LegiScanAPI:
                 else:
                     logger.error(f"API request failed after {max_retries} attempts: {e}")
                     raise ApiError(f"API request failed: {e}")
-                    
+
         # This should never be reached due to the raise in the loop
         raise ApiError("API request failed: Maximum retries exceeded")
 
@@ -217,10 +217,10 @@ class LegiScanAPI:
     def get_session_list(self, state: str) -> List[Dict[str, Any]]:
         """
         Retrieves available legislative sessions for a state.
-        
+
         Args:
             state: Two-letter state code
-            
+
         Returns:
             List of session information dictionaries
         """
@@ -234,10 +234,10 @@ class LegiScanAPI:
     def get_master_list(self, session_id: int) -> Dict[str, Any]:
         """
         Retrieves the full master bill list for a session.
-        
+
         Args:
             session_id: LegiScan session ID
-            
+
         Returns:
             Dictionary of bill information
         """
@@ -252,10 +252,10 @@ class LegiScanAPI:
         """
         Retrieves the optimized master bill list for change detection.
         The raw version includes change_hash values for efficient updates.
-        
+
         Args:
             session_id: LegiScan session ID
-            
+
         Returns:
             Dictionary of bill information with change_hash values
         """
@@ -265,21 +265,21 @@ class LegiScanAPI:
         except ApiError as e:
             logger.error(f"get_master_list_raw({session_id}) failed: {e}")
             return {}
-            
+
     def get_bill(self, bill_id: int) -> Optional[Dict[str, Any]]:
         """
         Retrieves detailed information for a specific bill.
-        
+
         Args:
             bill_id: LegiScan bill ID
-            
+
         Returns:
             Dictionary with bill details or None if not found
         """
         try:
             data = self._make_request("getBill", {"id": bill_id})
             bill_data = data.get("bill")
-            
+
             # Validate essential bill data
             if bill_data and self._validate_bill_data(bill_data):
                 return bill_data
@@ -289,14 +289,14 @@ class LegiScanAPI:
         except ApiError as e:
             logger.error(f"get_bill({bill_id}) failed: {e}")
             return None
-    
+
     def _validate_bill_data(self, bill_data: Dict[str, Any]) -> bool:
         """
         Validates that essential fields are present in the bill data.
-        
+
         Args:
             bill_data: Bill data from LegiScan API
-            
+
         Returns:
             True if all required fields are present, False otherwise
         """
@@ -306,10 +306,10 @@ class LegiScanAPI:
     def get_bill_text(self, doc_id: int) -> Optional[Union[str, bytes]]:
         """
         Retrieves the text content of a bill document.
-        
+
         Args:
             doc_id: LegiScan document ID
-            
+
         Returns:
             Decoded text content (str) for text documents,
             raw bytes for binary content (e.g., PDFs), or
@@ -324,7 +324,7 @@ class LegiScanAPI:
                 try:
                     # First try to decode as UTF-8 text
                     decoded_bytes = base64.b64decode(encoded)
-                    
+
                     # Check if content appears to be a binary format (PDF, DOC, etc.)
                     # Common binary file signatures
                     binary_signatures = [
@@ -332,7 +332,7 @@ class LegiScanAPI:
                         b'\xD0\xCF\x11\xE0',  # MS Office
                         b'PK\x03\x04'  # ZIP (often used for DOCX, XLSX)
                     ]
-                    
+
                     if any(decoded_bytes.startswith(sig) for sig in binary_signatures):
                         # Return as binary data with content type
                         return decoded_bytes
@@ -354,18 +354,18 @@ class LegiScanAPI:
     def save_bill_to_db(self, bill_data: Dict[str, Any], detect_relevance: bool = True) -> Optional[Legislation]:
         """
         Creates or updates a bill record in the database based on LegiScan data.
-        
+
         Args:
             bill_data: Bill information from LegiScan API
             detect_relevance: Whether to calculate relevance scores for Texas public health
-            
+
         Returns:
             Updated or created Legislation object, or None on failure
         """
         if not bill_data or not self._validate_bill_data(bill_data):
             logger.warning("Invalid bill data provided to save_bill_to_db")
             return None
-            
+
         try:
             # Check if we are monitoring this state
             if bill_data.get("state") not in self.monitored_jurisdictions:
@@ -378,7 +378,7 @@ class LegiScanAPI:
 
             # Start a transaction
             transaction = self.db_session.begin_nested()
-            
+
             try:
                 # Check if bill already exists
                 existing = self.db_session.query(Legislation).filter(
@@ -407,7 +407,7 @@ class LegiScanAPI:
                     "change_hash": bill_data.get("change_hash"),
                     "raw_api_response": bill_data,
                 }
-                
+
                 # Convert date strings if available
                 introduced_str = bill_data.get("introduced_date", "")
                 if introduced_str:
@@ -415,21 +415,21 @@ class LegiScanAPI:
                         attrs["bill_introduced_date"] = datetime.strptime(introduced_str, "%Y-%m-%d")
                     except ValueError:
                         logger.warning(f"Invalid introduced_date format: {introduced_str}")
-                        
+
                 status_str = bill_data.get("status_date", "")
                 if status_str:
                     try:
                         attrs["bill_status_date"] = datetime.strptime(status_str, "%Y-%m-%d")
                     except ValueError:
                         logger.warning(f"Invalid status_date format: {status_str}")
-                        
+
                 last_action_str = bill_data.get("last_action_date", "")
                 if last_action_str:
                     try:
                         attrs["bill_last_action_date"] = datetime.strptime(last_action_str, "%Y-%m-%d")
                     except ValueError:
                         logger.warning(f"Invalid last_action_date format: {last_action_str}")
-                        
+
                 # Track when we last checked this bill
                 attrs["last_api_check"] = datetime.utcnow()
 
@@ -451,11 +451,11 @@ class LegiScanAPI:
 
                 # Save bill text if present
                 self._save_legislation_texts(bill_obj, bill_data.get("texts", []))
-                
+
                 # Calculate relevance scores if requested
                 if detect_relevance and HAS_PRIORITY_MODEL:
                     self._calculate_bill_relevance(bill_obj)
-                    
+
                 # Process amendments if present
                 if "amendments" in bill_data and bill_data["amendments"]:
                     self._track_amendments(bill_obj, bill_data["amendments"])
@@ -463,7 +463,7 @@ class LegiScanAPI:
                 # Commit all changes
                 transaction.commit()
                 return bill_obj
-                
+
             except Exception as e:
                 transaction.rollback()
                 raise e
@@ -533,7 +533,7 @@ class LegiScanAPI:
     def _save_sponsors(self, bill: Legislation, sponsors: List[Dict[str, Any]]) -> None:
         """
         Saves or updates bill sponsors.
-        
+
         Args:
             bill: Legislation database object
             sponsors: List of sponsor dictionaries from LegiScan
@@ -560,14 +560,14 @@ class LegiScanAPI:
     def _save_legislation_texts(self, bill: Legislation, texts: List[Dict[str, Any]]) -> None:
         """
         Saves or updates bill text versions.
-        
+
         Args:
             bill: Legislation database object
             texts: List of text version dictionaries from LegiScan
         """
         for text_info in texts:
             version_num = text_info.get("version", 1)
-            
+
             # Check if this text version already exists
             existing = self.db_session.query(LegislationText).filter_by(
                 legislation_id=bill.id,
@@ -588,7 +588,7 @@ class LegiScanAPI:
             doc_id = text_info.get("doc_id")
             content = None
             content_is_binary = False
-            
+
             # For version 1 (introduced) or final versions, we'll retrieve the text now
             if doc_id and (version_num == 1 or text_info.get("type") in ("Enrolled", "Chaptered")):
                 doc_base64 = text_info.get("doc")
@@ -622,7 +622,7 @@ class LegiScanAPI:
                 "text_date": text_date,
                 "text_hash": text_info.get("text_hash"),
             }
-            
+
             # Add content if available
             if content is not None:
                 attrs["text_content"] = content
@@ -646,10 +646,10 @@ class LegiScanAPI:
     def _map_bill_status(self, status_val) -> BillStatusEnum:
         """
         Maps LegiScan numeric status to BillStatusEnum.
-        
+
         Args:
             status_val: LegiScan status value
-            
+
         Returns:
             Corresponding BillStatusEnum value
         """
@@ -668,7 +668,7 @@ class LegiScanAPI:
         # Convert to string to ensure lookup works with different input types
         status_str = str(status_val)
         return mapping.get(status_str, BillStatusEnum.UPDATED)
-    
+
     def _track_amendments(self, bill: Legislation, amendments: List[Dict[str, Any]]) -> int:
         """
         Track amendments back to their parent bills.
@@ -754,44 +754,44 @@ class LegiScanAPI:
                             else:
                                 # Convert other types to dict if possible
                                 raw_data = dict(bill.raw_api_response) if hasattr(bill.raw_api_response, '__iter__') else {}
-    
+
                         # Ensure amendments is a list
                         if "amendments" not in raw_data:
                             raw_data["amendments"] = []
                         elif not isinstance(raw_data["amendments"], list):
                             raw_data["amendments"] = []
-    
+
                         # Check if this amendment is already tracked
                         amendments_list = raw_data["amendments"]
                         existing_ids = []
                         for a in amendments_list:
                             if isinstance(a, dict) and "amendment_id" in a:
                                 existing_ids.append(a.get("amendment_id"))
-    
+
                         # Add the new amendment if not already tracked
                         if amendment_id not in existing_ids:
                             amendments_list.append(amend_data)
-    
+
                             # Use setattr to update the raw_api_response
                             setattr(bill, "raw_api_response", raw_data)
-    
+
                     except Exception as e:
                         logger.warning(f"Error storing amendment in raw_api_response: {e}")
-    
+
                     processed_count += 1
 
         return processed_count
-    
+
     # ------------------------------------------------------------------------
     # Sync Operations
     # ------------------------------------------------------------------------
     def run_sync(self, sync_type: str = "daily") -> Dict[str, Any]:
         """
         Runs a complete sync operation for all monitored jurisdictions.
-        
+
         Args:
             sync_type: Type of sync (e.g., "daily", "weekly", "manual")
-            
+
         Returns:
             Dictionary with sync statistics and status including:
             - new_bills: Number of new bills added
@@ -803,7 +803,7 @@ class LegiScanAPI:
             - amendments_tracked: Number of amendments processed
         """
         sync_start = datetime.utcnow()
-        
+
         # Create a sync metadata record
         sync_meta = SyncMetadata(
             last_sync=sync_start,
@@ -812,7 +812,7 @@ class LegiScanAPI:
         )
         self.db_session.add(sync_meta)
         self.db_session.commit()
-        
+
         summary = {
             "new_bills": 0,
             "bills_updated": 0,
@@ -822,52 +822,52 @@ class LegiScanAPI:
             "status": "in_progress",
             "amendments_tracked": 0
         }
-        
+
         try:
             # Process each jurisdiction
             for state in self.monitored_jurisdictions:
                 # Get active sessions
                 active_sessions = self._get_active_sessions(state)
-                
+
                 for session in active_sessions:
                     session_id = session.get("session_id")
                     if not session_id:
                         continue
-                    
+
                     # Get the master bill list with change_hash
                     master_list = self.get_master_list_raw(session_id)
                     if not master_list:
                         summary["errors"].append(f"Failed to get master list for session {session_id}")
                         continue
-                        
+
                     # Get list of bills that need updating
                     changed_bill_ids = self._identify_changed_bills(master_list)
-                    
+
                     # Process each changed bill
                     for bill_id in changed_bill_ids:
                         try:
                             bill_data = self.get_bill(bill_id)
                             if not bill_data:
                                 continue
-                                
+
                             bill_obj = self.save_bill_to_db(bill_data, detect_relevance=True)
-                            
+
                             if bill_obj:
                                 if bill_obj.created_at == bill_obj.updated_at:
                                     summary["new_bills"] += 1
                                 else:
                                     summary["bills_updated"] += 1
-                                
+
                                 # Track amendments if present
                                 if "amendments" in bill_data and bill_data["amendments"]:
                                     amendments_count = self._track_amendments(bill_obj, bill_data["amendments"])
                                     summary["amendments_tracked"] += amendments_count
-                                    
+
                         except Exception as e:
                             error_msg = f"Error processing bill {bill_id}: {str(e)}"
                             logger.error(error_msg)
                             summary["errors"].append(error_msg)
-                            
+
                             # Record the error
                             sync_error = SyncError(
                                 sync_id=sync_meta.id,
@@ -876,32 +876,30 @@ class LegiScanAPI:
                             )
                             self.db_session.add(sync_error)
                             self.db_session.commit()
-            
+
             # Update sync metadata
             sync_meta.bills_updated = summary["bills_updated"]
             sync_meta.new_bills = summary["new_bills"]
             # Use setattr to avoid SQLAlchemy Column assignment issues
             setattr(sync_meta, "last_successful_sync", datetime.now(timezone.utc))
-            
+
             if summary["errors"]:
                 setattr(sync_meta, 'status', SyncStatusEnum.PARTIAL)
-                # Assuming that `errors` is a JSON column and that mutable is set up correctly
-                sync_meta.errors["count"] = len(summary["errors"])
-                sync_meta.errors["samples"] = summary["errors"][:5]
+                setattr(sync_meta, 'errors', {"count": len(summary["errors"]), "samples": summary["errors"][:5]})
             else:
                 sync_meta.status = SyncStatusEnum.COMPLETED
-                
+
             summary["status"] = sync_meta.status.value
             summary["end_time"] = datetime.utcnow()
-            
+
         except Exception as e:
             # Handle critical errors
             error_msg = f"Fatal error in sync operation: {str(e)}"
             logger.error(error_msg, exc_info=True)
-            
+
             sync_meta.status = SyncStatusEnum.FAILED
-            sync_meta.errors = {"critical_error": error_msg}
-            
+            setattr(sync_meta, 'errors', {"critical_error": error_msg})
+
             sync_error = SyncError(
                 sync_id=sync_meta.id,
                 error_type="fatal_error",
@@ -909,11 +907,11 @@ class LegiScanAPI:
                 stack_trace=str(sys.exc_info())
             )
             self.db_session.add(sync_error)
-            
+
             summary["status"] = "failed"
             summary["errors"].append(error_msg)
             summary["end_time"] = datetime.utcnow()
-            
+
         finally:
             # Ensure we commit any pending changes
             try:
@@ -921,86 +919,86 @@ class LegiScanAPI:
             except SQLAlchemyError as e:
                 logger.error(f"Failed to commit sync metadata updates: {e}")
                 self.db_session.rollback()
-            
+
         return summary
-    
+
     def _get_active_sessions(self, state: str) -> List[Dict[str, Any]]:
         """
         Gets active legislative sessions for a state.
-        
+
         Args:
             state: Two-letter state code
-            
+
         Returns:
             List of active session dictionaries
         """
         sessions = self.get_session_list(state)
         active_sessions = []
-        
+
         current_year = datetime.now().year
-        
+
         for session in sessions:
             # Consider active if year_end is current year or later,
             # or if sine_die is 0 (session not adjourned)
             if (session.get("year_end", 0) >= current_year or 
                 session.get("sine_die", 1) == 0):
                 active_sessions.append(session)
-                
+
         return active_sessions
-    
+
     def _identify_changed_bills(self, master_list: Dict[str, Any]) -> List[int]:
         """
         Identifies bills that need updating based on change_hash comparison.
-        
+
         Args:
             master_list: Master bill list from LegiScan API
-            
+
         Returns:
             List of bill IDs that need updating
         """
         if not master_list:
             return []
-            
+
         changed_bill_ids = []
-        
+
         for key, bill_info in master_list.items():
             if key == "0":  # Skip metadata
                 continue
-                
+
             bill_id = bill_info.get("bill_id")
             change_hash = bill_info.get("change_hash")
-            
+
             if not bill_id or not change_hash:
                 continue
-                
+
             # Check if we have this bill and if the change_hash is different
             existing = self.db_session.query(Legislation).filter(
                 Legislation.external_id == str(bill_id),
                 Legislation.data_source == DataSourceEnum.LEGISCAN
             ).first()
-            
+
             if not existing or existing.change_hash != change_hash:
                 changed_bill_ids.append(bill_id)
-                
+
         return changed_bill_ids
 
     def lookup_bills_by_keywords(self, keywords: List[str], limit: int = 100) -> List[Dict[str, Any]]:
         """
         Searches for bills matching the given keywords using LegiScan's search API.
-        
+
         Args:
             keywords: List of keywords to search for
             limit: Maximum number of results to return
-            
+
         Returns:
             List of bill information dictionaries
         """
         if not keywords:
             return []
-            
+
         results = []
         query = " AND ".join(keywords)
-        
+
         # Search in monitored jurisdictions
         for state in self.monitored_jurisdictions:
             try:
@@ -1010,9 +1008,9 @@ class LegiScanAPI:
                     "query": query,
                     "year": 2  # Current sessions
                 })
-                
+
                 search_results = data.get("searchresult", {})
-                
+
                 # Skip the summary info
                 for key, item in search_results.items():
                     if key != "summary" and isinstance(item, dict):
@@ -1024,61 +1022,61 @@ class LegiScanAPI:
                             "bill_number": item.get("bill_number"),
                             "title": item.get("title", "")
                         })
-                        
+
                         if len(results) >= limit:
                             break
-                            
+
             except Exception as e:
                 logger.error(f"Error searching bills with keywords {keywords} in {state}: {e}")
-                
+
         return results
 
     def get_bill_relevance_score(self, bill_data: Dict[str, Any]) -> Dict[str, int]:
         """
         Calculates relevance scores for public health and local government.
-        
+
         Args:
             bill_data: Bill information dictionary
-            
+
         Returns:
             Dictionary with relevance scores for health, local government, and overall
         """
         if not bill_data:
             return {"health_relevance": 0, "local_govt_relevance": 0, "overall_relevance": 0}
-            
+
         combined_text = f"{bill_data.get('title', '')} {bill_data.get('description', '')}"
-        
+
         # Calculate health relevance
         health_score = 0
         for keyword in self.health_keywords:
             if keyword.lower() in combined_text.lower():
                 health_score += 10
-                
+
         # Calculate local government relevance
         local_govt_score = 0
         for keyword in self.local_govt_keywords:
             if keyword.lower() in combined_text.lower():
                 local_govt_score += 10
-                
+
         # Cap scores at 100
         health_score = min(100, health_score)
         local_govt_score = min(100, local_govt_score)
-        
+
         return {
             "health_relevance": health_score,
             "local_govt_relevance": local_govt_score,
             "overall_relevance": (health_score + local_govt_score) // 2
         }
-        
+
     def get_relevant_texas_legislation(self, relevance_type: str = "health", min_score: int = 50, limit: int = 100) -> List[Dict[str, Any]]:
         """
         Retrieves legislation particularly relevant to Texas public health or local government.
-        
+
         Args:
             relevance_type: Type of relevance to filter by ("health", "local_govt", or "both")
             min_score: Minimum relevance score (0-100)
             limit: Maximum number of results to return
-            
+
         Returns:
             List of relevant legislation dictionaries
         """
@@ -1087,13 +1085,13 @@ class LegiScanAPI:
             if not HAS_PRIORITY_MODEL:
                 logger.warning("Cannot get relevant Texas legislation: LegislationPriority model not available")
                 return []
-                
+
             # Build the query based on relevance type
             query = self.db_session.query(Legislation).join(
                 LegislationPriority,
                 Legislation.id == LegislationPriority.legislation_id
             )
-            
+
             # Filter by Texas
             query = query.filter(
                 or_(
@@ -1104,7 +1102,7 @@ class LegiScanAPI:
                     Legislation.govt_type == GovtTypeEnum.FEDERAL
                 )
             )
-            
+
             # Apply relevance filter
             if relevance_type == "health":
                 query = query.filter(LegislationPriority.public_health_relevance >= min_score)
@@ -1120,10 +1118,10 @@ class LegiScanAPI:
                     )
                 )
                 query = query.order_by(LegislationPriority.overall_priority.desc())
-                
+
             # Get results
             legislation_list = query.limit(limit).all()
-            
+
             # Format results
             results = []
             for leg in legislation_list:
@@ -1140,9 +1138,9 @@ class LegiScanAPI:
                     "local_govt_relevance": leg.priority.local_govt_relevance if leg.priority else 0,
                     "overall_priority": leg.priority.overall_priority if leg.priority else 0
                 })
-                
+
             return results
-            
+
         except SQLAlchemyError as e:
             logger.error(f"Database error getting relevant Texas legislation: {e}", exc_info=True)
             return []
