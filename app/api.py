@@ -23,6 +23,7 @@ Run:
    uvicorn api:app --host 0.0.0.0 --port 8000 --reload
 """
 
+import os
 import logging
 import traceback
 from typing import Optional, List, Dict, Any, Type, Union, Callable, TypeVar, cast
@@ -30,7 +31,7 @@ from datetime import datetime, timedelta, timezone
 from contextlib import contextmanager
 from functools import wraps
 
-from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request, Response, status
+from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request, Response, status, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
@@ -38,8 +39,8 @@ from pydantic import BaseModel, Field, EmailStr, HttpUrl, field_validator, model
 from pydantic.error_wrappers import ErrorWrapper
 
 # 1) Import your custom modules
-from data_store import DataStore, ConnectionError, ValidationError, DatabaseOperationError
-from ai_analysis import AIAnalysis
+from data_store import DataStore, ConnectionError, ValidationError, DatabaseOperationError, BillStore
+from ai_analysis import AIAnalysis, analyze_bill
 from legiscan_api import LegiScanAPI
 from models import (
     BillStatusEnum,
@@ -82,6 +83,34 @@ data_store: Optional[DataStore] = None
 ai_analyzer: Optional[AIAnalysis] = None
 legiscan_api: Optional[LegiScanAPI] = None
 
+# Initialize data store
+bill_store = BillStore()
+
+# Initialize LegiScan API
+legiscan_api = LegiScanAPI(api_key=os.getenv("LEGISCAN_API_KEY"))
+
+# Models
+class BillSummary(BaseModel):
+    bill_id: int
+    state: str
+    bill_number: str
+    title: str
+    description: str
+    status: str
+    last_action: Optional[str] = None
+    last_action_date: Optional[str] = None
+
+class BillDetail(BillSummary):
+    text: Optional[str] = None
+    sponsors: List[str] = []
+    history: List[dict] = []
+    votes: List[dict] = []
+
+class AnalysisResult(BaseModel):
+    summary: str
+    key_points: List[str]
+    potential_impacts: str
+    sentiment: float
 
 # -----------------------------------------------------------------------------
 # Custom Exception Handlers
@@ -1612,3 +1641,106 @@ try:
     import asyncio
 except ImportError:
     pass
+
+@app.get("/")
+async def root():
+    """Root endpoint to verify API is running."""
+    return {"message": "Legislative Analysis API is running"}
+
+@app.get("/bills/", response_model=List[BillSummary])
+async def get_bills(
+    state: Optional[str] = Query(None, description="Filter by state (e.g., 'CA', 'NY')"),
+    keyword: Optional[str] = Query(None, description="Search by keyword in title or description"),
+    limit: int = Query(50, ge=1, le=100, description="Maximum number of bills to return"),
+    offset: int = Query(0, ge=0, description="Number of bills to skip")
+):
+    """
+    Get a list of bills with optional filtering.
+    """
+    try:
+        bills = bill_store.get_bills(state=state, keyword=keyword, limit=limit, offset=offset)
+        return bills
+    except Exception as e:
+        logger.error(f"Error retrieving bills: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving bills: {str(e)}")
+
+@app.get("/bills/{bill_id}", response_model=BillDetail)
+async def get_bill(bill_id: int):
+    """
+    Get detailed information about a specific bill.
+    """
+    try:
+        bill = bill_store.get_bill(bill_id)
+        if not bill:
+            raise HTTPException(status_code=404, detail=f"Bill with ID {bill_id} not found")
+        return bill
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error retrieving bill {bill_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving bill: {str(e)}")
+
+@app.get("/bills/{bill_id}/analysis", response_model=AnalysisResult)
+async def get_bill_analysis(bill_id: int):
+    """
+    Get AI analysis for a specific bill.
+    """
+    try:
+        # Get the bill details
+        bill = bill_store.get_bill(bill_id)
+        if not bill:
+            raise HTTPException(status_code=404, detail=f"Bill with ID {bill_id} not found")
+        
+        # Check if bill has text
+        if not bill.get("text"):
+            # Try to fetch text from LegiScan if not available
+            try:
+                bill_text = legiscan_api.get_bill_text(bill_id)
+                if bill_text:
+                    # Update the bill in the store with the text
+                    bill["text"] = bill_text
+                    bill_store.update_bill(bill)
+                else:
+                    raise HTTPException(status_code=404, detail="Bill text not available")
+            except Exception as e:
+                logger.error(f"Error fetching bill text from LegiScan: {str(e)}")
+                raise HTTPException(status_code=404, detail="Bill text not available")
+        
+        # Analyze the bill
+        analysis = analyze_bill(
+            bill_text=bill["text"],
+            bill_title=bill.get("title"),
+            state=bill.get("state")
+        )
+        
+        return analysis
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error analyzing bill {bill_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error analyzing bill: {str(e)}")
+
+@app.get("/states/", response_model=List[str])
+async def get_states():
+    """
+    Get a list of available states.
+    """
+    try:
+        states = bill_store.get_states()
+        return states
+    except Exception as e:
+        logger.error(f"Error retrieving states: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving states: {str(e)}")
+
+@app.post("/refresh/")
+async def refresh_data(state: Optional[str] = None):
+    """
+    Refresh bill data from LegiScan API.
+    """
+    try:
+        # This would typically be an admin-only endpoint with authentication
+        count = bill_store.refresh_from_legiscan(legiscan_api, state=state)
+        return {"message": f"Successfully refreshed {count} bills"}
+    except Exception as e:
+        logger.error(f"Error refreshing data: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error refreshing data: {str(e)}")

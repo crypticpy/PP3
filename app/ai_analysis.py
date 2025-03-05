@@ -49,6 +49,7 @@ import tiktoken
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field, validator, root_validator, ValidationError
+from dotenv import load_dotenv
 
 # Import required models
 from models import (
@@ -66,10 +67,17 @@ try:
 except ImportError:
     HAS_PRIORITY_MODEL = False
 
-# Configure logging
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+# Load environment variables
+load_dotenv()
 
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+# Initialize OpenAI API
+openai.api_key = os.getenv("OPENAI_API_KEY")
+if not openai.api_key:
+    logger.error("OpenAI API key not found. Please set OPENAI_API_KEY in your environment variables.")
 
 # Custom exceptions for better error handling
 class AIAnalysisError(Exception):
@@ -1752,4 +1760,33 @@ class AIAnalysis:
                 if error_handling == "stop":
                     raise AIAnalysisError(f"Batch analysis stopped due to error on legislation ID={leg_id}: {error_msg}")
         
-        return results               
+        return results
+
+# Create a singleton instance
+analyzer = AIAnalysis(db_session=Session(), model_name="gpt-4o-2024-08-06")
+
+def analyze_legislation(legislation_id: int) -> LegislationAnalysis:
+    """
+    Convenience function to analyze a legislation.
+    
+    Args:
+        legislation_id: The ID of the legislation to analyze
+        
+    Returns:
+        The analyzed LegislationAnalysis object
+    """
+    return analyzer.analyze_legislation(legislation_id)
+
+def analyze_bill(bill_text, bill_title=None, state=None):
+    """
+    Convenience function to analyze a bill.
+    
+    Args:
+        bill_text (str): The text content of the bill
+        bill_title (str, optional): The title of the bill
+        state (str, optional): The state where the bill was introduced
+        
+    Returns:
+        dict: Analysis results
+    """
+    return analyzer.analyze_bill(bill_text, bill_title, state)               
