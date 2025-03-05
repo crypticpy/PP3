@@ -90,7 +90,7 @@ class FlexibleContentType(TypeDecorator):
     For PostgreSQL, uses Text for text content and BYTEA for binary content.
     For other databases, uses LargeBinary which can store both types but
     requires explicit type handling when retrieving.
-    
+
     This type automatically detects if the content is text or binary based on the
     input data type and stores it accordingly.
     """
@@ -100,7 +100,7 @@ class FlexibleContentType(TypeDecorator):
     def __init__(self, binary_type=None, **kwargs):
         """
         Initialize the flexible content type.
-        
+
         Args:
             binary_type: SQLAlchemy column type to use for binary data (defaults to BYTEA for PostgreSQL)
             **kwargs: Additional keyword arguments for the column
@@ -111,10 +111,10 @@ class FlexibleContentType(TypeDecorator):
     def load_dialect_impl(self, dialect):
         """
         Load the appropriate dialect implementation.
-        
+
         Args:
             dialect: SQLAlchemy dialect
-            
+
         Returns:
             Dialect-specific implementation type
         """
@@ -141,11 +141,11 @@ class FlexibleContentType(TypeDecorator):
     def process_result_value(self, value, dialect):
         """
         Process the value retrieved from the database.
-        
+
         Args:
             value: The value retrieved
             dialect: SQLAlchemy dialect
-            
+
         Returns:
             Processed value ready for Python
         """
@@ -170,7 +170,7 @@ class FlexibleContentType(TypeDecorator):
 class DataSourceEnum(enum.Enum):
     """
     Enumeration for the source of legislative data.
-    
+
     Values:
         LEGISCAN: Data from the LegiScan API
         CONGRESS_GOV: Data from the Congress.gov website
@@ -184,7 +184,7 @@ class DataSourceEnum(enum.Enum):
 class GovtTypeEnum(enum.Enum):
     """
     Enumeration for government types.
-    
+
     Values:
         FEDERAL: Federal government (e.g., U.S. Congress)
         STATE: State government (e.g., Texas Legislature)
@@ -200,7 +200,7 @@ class GovtTypeEnum(enum.Enum):
 class BillStatusEnum(enum.Enum):
     """
     Enumeration for legislative bill statuses.
-    
+
     Values:
         NEW: Newly added to the system
         INTRODUCED: Formally introduced in the legislature
@@ -224,7 +224,7 @@ class BillStatusEnum(enum.Enum):
 class ImpactLevelEnum(enum.Enum):
     """
     Enumeration for overall impact levels of legislation.
-    
+
     Values:
         LOW: Minimal impact
         MODERATE: Moderate impact
@@ -240,7 +240,7 @@ class ImpactLevelEnum(enum.Enum):
 class ImpactCategoryEnum(enum.Enum):
     """
     Enumeration for categorizing impacts of legislation.
-    
+
     Values:
         PUBLIC_HEALTH: Impact on public health agencies and services
         LOCAL_GOV: Impact on local government operations
@@ -266,7 +266,7 @@ class ImpactCategoryEnum(enum.Enum):
 class AmendmentStatusEnum(enum.Enum):
     """
     Enumeration for amendment statuses.
-    
+
     Values:
         PROPOSED: Amendment has been proposed but not yet voted on
         ADOPTED: Amendment has been adopted
@@ -282,7 +282,7 @@ class AmendmentStatusEnum(enum.Enum):
 class NotificationTypeEnum(enum.Enum):
     """
     Enumeration for notification types.
-    
+
     Values:
         HIGH_PRIORITY: Notification for high priority legislation
         NEW_BILL: Notification for new legislation
@@ -298,7 +298,7 @@ class NotificationTypeEnum(enum.Enum):
 class SyncStatusEnum(enum.Enum):
     """
     Enumeration for synchronization process statuses.
-    
+
     Values:
         PENDING: Sync operation is scheduled but not yet started
         IN_PROGRESS: Sync operation is currently running
@@ -319,7 +319,7 @@ class SyncStatusEnum(enum.Enum):
 class User(BaseModel):
     """
     Represents an application user.
-    
+
     Attributes:
         id: Primary key
         email: User's email address (unique)
@@ -358,14 +358,14 @@ class User(BaseModel):
     def validate_email(self, key, address):
         """
         Validate email format.
-        
+
         Args:
             key: Attribute name ('email')
             address: Email address value
-            
+
         Returns:
             Validated email address
-            
+
         Raises:
             ValueError: If email format is invalid
         """
@@ -383,7 +383,7 @@ class User(BaseModel):
 class UserPreference(BaseModel):
     """
     Stores user preferences such as keywords, focus areas, and regions.
-    
+
     Attributes:
         id: Primary key
         user_id: Foreign key to User
@@ -419,14 +419,14 @@ class UserPreference(BaseModel):
     def validate_items_per_page(self, key, value):
         """
         Validate items_per_page is a positive integer.
-        
+
         Args:
             key: Attribute name
             value: Value to validate
-            
+
         Returns:
             Validated value
-            
+
         Raises:
             ValueError: If value is not a positive integer
         """
@@ -438,7 +438,7 @@ class UserPreference(BaseModel):
 class SearchHistory(BaseModel):
     """
     Records user search queries and corresponding results.
-    
+
     Attributes:
         id: Primary key
         user_id: Foreign key to User
@@ -461,7 +461,7 @@ class SearchHistory(BaseModel):
 class AlertPreference(BaseModel):
     """
     Stores alert preferences for a user including channels and criteria.
-    
+
     Attributes:
         id: Primary key
         user_id: Foreign key to User
@@ -506,14 +506,14 @@ class AlertPreference(BaseModel):
     def validate_threshold(self, key, value):
         """
         Validate threshold values are between 0 and 100.
-        
+
         Args:
             key: Attribute name
             value: Value to validate
-            
+
         Returns:
             Validated value
-            
+
         Raises:
             ValueError: If value is not between 0 and 100
         """
@@ -525,7 +525,7 @@ class AlertPreference(BaseModel):
 class AlertHistory(BaseModel):
     """
     Logs the history of alerts sent to users.
-    
+
     Attributes:
         id: Primary key
         user_id: Foreign key to User
@@ -561,7 +561,7 @@ class AlertHistory(BaseModel):
 class Legislation(BaseModel):
     """
     Represents a legislative bill along with its metadata and relationships.
-    
+
     Attributes:
         id: Primary key
         external_id: External identifier (e.g., from LegiScan)
@@ -667,7 +667,7 @@ class Legislation(BaseModel):
     def latest_analysis(self) -> Optional["LegislationAnalysis"]:
         """
         Return the most recent analysis based on version number.
-        
+
         Returns:
             The most recent LegislationAnalysis or None if no analyses exist
         """
@@ -679,7 +679,7 @@ class Legislation(BaseModel):
     def latest_text(self) -> Optional["LegislationText"]:
         """
         Return the most recent text version based on version number.
-        
+
         Returns:
             The most recent LegislationText or None if no text versions exist
         """
@@ -691,14 +691,14 @@ class Legislation(BaseModel):
     def validate_title(self, key, value):
         """
         Validate that title is not empty.
-        
+
         Args:
             key: Attribute name
             value: Value to validate
-            
+
         Returns:
             Validated value
-            
+
         Raises:
             ValueError: If title is empty
         """
@@ -711,7 +711,7 @@ class LegislationAnalysis(BaseModel):
     """
     Stores AI-generated analysis of legislation with versioning.
     Captures summaries, key points, impacts, and recommendations.
-    
+
     Attributes:
         id: Primary key
         legislation_id: Foreign key to Legislation
@@ -805,14 +805,14 @@ class LegislationAnalysis(BaseModel):
     def validate_analysis_version(self, key, value):
         """
         Validate that analysis_version is a positive integer.
-        
+
         Args:
             key: Attribute name
             value: Value to validate
-            
+
         Returns:
             Validated value
-            
+
         Raises:
             ValueError: If analysis_version is not a positive integer
         """
@@ -825,7 +825,7 @@ class LegislationText(BaseModel):
     """
     Stores text content of a legislative bill with version tracking.
     Handles both text and binary content with proper metadata.
-    
+
     Attributes:
         id: Primary key
         legislation_id: Foreign key to Legislation
@@ -873,14 +873,14 @@ class LegislationText(BaseModel):
     def validate_version_num(self, key, value):
         """
         Validate that version_num is a positive integer.
-        
+
         Args:
             key: Attribute name
             value: Value to validate
-            
+
         Returns:
             Validated value
-            
+
         Raises:
             ValueError: If version_num is not a positive integer
         """
@@ -892,10 +892,10 @@ class LegislationText(BaseModel):
         """
         Set the text_content field with appropriate metadata.
         This method handles both string and binary content types appropriately.
-        
+
         Args:
             content: The content to set (either string or bytes)
-            
+
         Raises:
             TypeError: If content is neither string nor bytes
         """
@@ -954,10 +954,10 @@ class LegislationText(BaseModel):
     def _detect_content_type(self, data: bytes) -> str:
         """
         Detect the content type based on binary signatures.
-        
+
         Args:
             data: Binary data to analyze
-            
+
         Returns:
             Detected MIME type or 'application/octet-stream' if unknown
         """
@@ -976,8 +976,8 @@ class LegislationText(BaseModel):
 
 class LegislationSponsor(BaseModel):
     """
-    Represents a sponsor associated with a legislative bill.
-    
+    Represents a sponsorassociated with a legislative bill.
+
     Attributes:
         id: Primary key
         legislation_id: Foreign key to Legislation
@@ -1010,14 +1010,14 @@ class LegislationSponsor(BaseModel):
     def validate_sponsor_name(self, key, value):
         """
         Validate that sponsor_name is not empty.
-        
+
         Args:
             key: Attribute name
             value: Value to validate
-            
+
         Returns:
             Validated value
-            
+
         Raises:
             ValueError: If sponsor_name is empty
         """
@@ -1030,7 +1030,7 @@ class Amendment(BaseModel):
     """
     Tracks amendments to legislation with a link back to the parent bill.
     Facilitates tracking the history of legislative changes.
-    
+
     Attributes:
         id: Primary key
         amendment_id: External amendment ID from LegiScan
@@ -1086,10 +1086,10 @@ class Amendment(BaseModel):
     def set_amendment_text(self, content: Union[str, bytes]) -> None:
         """
         Set the amendment_text field with appropriate metadata.
-        
+
         Args:
             content: The content to set (either string or bytes)
-            
+
         Raises:
             TypeError: If content is neither string nor bytes
         """
@@ -1127,10 +1127,10 @@ class Amendment(BaseModel):
     def _detect_content_type(self, data: bytes) -> str:
         """
         Detect the content type based on binary signatures.
-        
+
         Args:
             data: Binary data to analyze
-            
+
         Returns:
             Detected MIME type or 'application/octet-stream' if unknown
         """
@@ -1150,7 +1150,7 @@ class LegislationPriority(BaseModel):
     """
     Tracks prioritization scores for legislation based on relevance to Texas public health
     and local government. Supports automatic categorization as well as manual review.
-    
+
     Attributes:
         id: Primary key
         legislation_id: Foreign key to Legislation
@@ -1204,14 +1204,14 @@ class LegislationPriority(BaseModel):
     def validate_score(self, key, value):
         """
         Validate that priority scores are integers between 0 and 100.
-        
+
         Args:
             key: Attribute name
             value: Value to validate
-            
+
         Returns:
             Validated value
-            
+
         Raises:
             ValueError: If value is not an integer between 0 and 100
         """
@@ -1227,7 +1227,7 @@ class ImpactRating(BaseModel):
     """
     Stores specific impact ratings for legislation based on AI analysis and manual review.
     Provides granular details on impact category, level, and confidence in the rating.
-    
+
     Attributes:
         id: Primary key
         legislation_id: Foreign key to Legislation
@@ -1265,14 +1265,14 @@ class ImpactRating(BaseModel):
     def validate_confidence_score(self, key, value):
         """
         Validate that confidence_score is a float between 0.0 and 1.0.
-        
+
         Args:
             key: Attribute name
             value: Value to validate
-            
+
         Returns:
             Validated value
-            
+
         Raises:
             ValueError: If value is not a float between 0.0 and 1.0
         """
@@ -1289,7 +1289,7 @@ class ImplementationRequirement(BaseModel):
     """
     Captures specific implementation requirements and timelines for legislation affecting public health
     and local government, detailing the type of requirement, estimated cost, and responsible entity.
-    
+
     Attributes:
         id: Primary key
         legislation_id: Foreign key to Legislation
@@ -1324,14 +1324,14 @@ class ImplementationRequirement(BaseModel):
     def validate_required_fields(self, key, value):
         """
         Validate that required fields are not empty.
-        
+
         Args:
             key: Attribute name
             value: Value to validate
-            
+
         Returns:
             Validated value
-            
+
         Raises:
             ValueError: If required field is empty
         """
@@ -1365,7 +1365,7 @@ class SyncError(BaseModel):
     """
     Logs errors encountered during synchronization operations.
     Associates each error with a specific sync operation.
-    
+
     Attributes:
         id: Primary key
         sync_id: Foreign key to SyncMetadata
@@ -1393,22 +1393,25 @@ class SyncError(BaseModel):
 
 
 # Configure PostgreSQL to use BYTEA for binary data and enable full-text search
-def setup_postgres_extensions(conn, branch=None):
-    """
-    Set up PostgreSQL-specific configurations when creating tables.
-    This includes enabling extensions needed for full-text search.
-    
-    Args:
-        conn: Database connection
-        branch: Branch indicator
-    """
-    # Only run on PostgreSQL
-    if conn.dialect.name == 'postgresql':
-        # Enable the pg_trgm extension for trigram-based text search
-        conn.execute(text('CREATE EXTENSION IF NOT EXISTS pg_trgm'))
-
-        # Enable unaccent for accent-insensitive search
-        conn.execute(text('CREATE EXTENSION IF NOT EXISTS unaccent'))
+def setup_postgres_extensions(conn, **kw):
+    """Set up PostgreSQL extensions like pgcrypto if needed."""
+    # Check if conn is a SQLAlchemy connection or raw psycopg2 connection
+    if hasattr(conn, 'dialect'):
+        # SQLAlchemy connection
+        if conn.dialect.name == 'postgresql':
+            conn.execute(text('CREATE EXTENSION IF NOT EXISTS pgcrypto'))
+            conn.execute(text('CREATE EXTENSION IF NOT EXISTS pg_trgm'))
+            conn.execute(text('CREATE EXTENSION IF NOT EXISTS unaccent'))
+    else:
+        # Raw psycopg2 connection
+        try:
+            with conn.cursor() as cur:
+                cur.execute('CREATE EXTENSION IF NOT EXISTS pgcrypto')
+                cur.execute('CREATE EXTENSION IF NOT EXISTS pg_trgm')
+                cur.execute('CREATE EXTENSION IF NOT EXISTS unaccent')
+            conn.commit()
+        except Exception as e:
+            logger.warning(f"Failed to create PostgreSQL extension: {e}")
 
 
 # Register the event listener properly
@@ -1434,7 +1437,7 @@ def init_db(db_url: Optional[str] = None,
 
     Returns:
         A SQLAlchemy sessionmaker bound to the engine.
-        
+
     Raises:
         Exception: If database connection fails after maximum retries
     """
