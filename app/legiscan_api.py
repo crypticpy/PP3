@@ -28,7 +28,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, func
 from sqlalchemy.exc import SQLAlchemyError
 
-from models import (
+from app.models import (
     Legislation,
     LegislationText,
     LegislationSponsor,
@@ -42,13 +42,13 @@ from models import (
 
 # Check if optional models are available
 try:
-    from models import LegislationPriority
+    from app.models import LegislationPriority
     HAS_PRIORITY_MODEL = True
 except ImportError:
     HAS_PRIORITY_MODEL = False
     
 try:
-    from models import Amendment, AmendmentStatusEnum
+    from app.models import Amendment, AmendmentStatusEnum
     HAS_AMENDMENT_MODEL = True
 except ImportError:
     HAS_AMENDMENT_MODEL = False
