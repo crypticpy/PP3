@@ -433,7 +433,8 @@ class AnalysisOptions(BaseModel):
             "example": {
                 "deep_analysis": True,
                 "texas_focus": True,
-                "focus_areas": ["public health", "municipal governments"]
+                "focus_areas": ["public health", "municipal governments"],
+                "model_name": "gpt-4o""
             }
         }
 
@@ -1036,7 +1037,7 @@ def list_texas_health_legislation(
     """
     with error_handler("List Texas health legislation", {
         ValidationError: status.HTTP_400_BAD_REQUEST,
-        DatabaseOperationError: status.HTTP_500_INTERNAL_SERVER_ERROR
+        DatabaseOperationError: status.HTTP_500_INTERNAL_SERVER_ERROR,
     }):
         # Validate pagination parameters
         if limit < 1 or limit > 100:
@@ -1154,11 +1155,11 @@ def list_texas_local_govt_legislation(
         if introduced_after:
             filters["introduced_after"] = introduced_after
         if keywords:
-            filters["keywords"] = [k.strip() for k in keywords.split(",") if k.strip()]
+            filters["keywords"] = ",".join([k.strip() for k in keywords.split(",") if k.strip()])
         if municipality_type:
             filters["municipality_type"] = municipality_type
         if relevance_threshold is not None:
-            filters["relevance_threshold"] = relevance_threshold
+            filters["relevance_threshold"] = str(relevance_threshold)
 
         # Get legislation
         legislation = store.get_texas_health_legislation(limit=limit, offset=offset, filters=filters)
@@ -1208,6 +1209,7 @@ def get_impact_summary(
         return store.get_impact_summary(impact_type=impact_type, time_period=time_period)
 
 
+# Ensure the store dependency is correctly provided and setup
 @app.get("/dashboard/recent-activity", tags=["Dashboard"])
 @log_api_call
 def get_recent_activity(
@@ -1229,6 +1231,13 @@ def get_recent_activity(
     Raises:
         HTTPException: If parameters are invalid
     """
+    # Ensure db_session is initialized
+    if not store.db_session:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database session is not initialized. Please try again later."
+        )
+
     with error_handler("Get recent activity", {
         ValidationError: status.HTTP_400_BAD_REQUEST,
         DatabaseOperationError: status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -1244,7 +1253,7 @@ def get_recent_activity(
         cutoff_date = datetime.now() - timedelta(days=days)
 
         try:
-            # Query for recently updated legislation
+            # Use the store's db_session to query for recently updated legislation
             recent_legs = store.db_session.query(Legislation).filter(
                 Legislation.updated_at >= cutoff_date
             ).order_by(Legislation.updated_at.desc()).limit(limit).all()
@@ -1256,9 +1265,9 @@ def get_recent_activity(
                     "id": leg.id,
                     "bill_number": leg.bill_number,
                     "title": leg.title,
-                    "status": leg.bill_status.value if leg.bill_status else None,
+                    "status": leg.bill_status if leg.bill_status else None,
                     "updated_at": leg.updated_at.isoformat() if leg.updated_at else None,
-                    "govt_type": leg.govt_type.value if leg.govt_type else None
+                    "govt_type": leg.govt_type if leg.govt_type else None
                 })
 
             return {"recent_legislation": activity, "time_period_days": days}
@@ -1322,7 +1331,7 @@ def advanced_search(
 def analyze_legislation_ai(
     leg_id: int,
     options: Optional[AnalysisOptions] = None,
-    background_tasks: BackgroundTasks = None,
+    background_tasks: Optional[BackgroundTasks] = None,
     analyzer: AIAnalysis = Depends(get_ai_analyzer),
     store: DataStore = Depends(get_data_store)
 ):
@@ -1352,7 +1361,7 @@ def analyze_legislation_ai(
             raise ValidationError("Legislation ID must be a positive integer")
 
         # Check if legislation exists
-        leg_obj = store.db_session.query(Legislation).filter_by(id=leg_id).first()
+        leg_obj = store.db_session.query(Legislation).filter_by(id=leg_id).first() if store.db_session else None
         if not leg_obj:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, 
@@ -1361,7 +1370,7 @@ def analyze_legislation_ai(
 
         # Set default options if none provided
         if options is None:
-            options = AnalysisOptions()
+            options = AnalysisOptions(deep_analysis=False, texas_focus=True, focus_areas=None)
 
         # Asynchronous processing if requested and background_tasks available
         if background_tasks and options.deep_analysis:

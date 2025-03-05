@@ -875,7 +875,7 @@ class LegiScanAPI:
                                 error_message=error_msg
                             )
                             self.db_session.add(sync_error)
-                            self.commit()
+                            self.db_session.commit()
 
             # Update sync metadata
             sync_meta.bills_updated = summary["bills_updated"]
