@@ -889,7 +889,7 @@ class LegiScanAPI:
             else:
                 setattr(sync_meta, "status", SyncStatusEnum.COMPLETED)
 
-            summary["status"] = sync_meta.status.value
+            summary["status"] = sync_meta.status
             summary["end_time"] = datetime.utcnow()
 
         except Exception as e:
