@@ -37,6 +37,7 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, Field, EmailStr, HttpUrl, field_validator, model_validator, constr, conint, confloat, AnyUrl
 from pydantic.error_wrappers import ErrorWrapper
+from contextlib import asynccontextmanager
 
 # 1) Import your custom modules
 from data_store import DataStore, ConnectionError, ValidationError, DatabaseOperationError, BillStore
@@ -176,7 +177,7 @@ async def general_exception_handler(request: Request, exc: Exception):
 # -----------------------------------------------------------------------------
 # Application Lifecycle Handler
 # -----------------------------------------------------------------------------
-from contextlib import asynccontextmanager
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
