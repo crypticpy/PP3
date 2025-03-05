@@ -48,7 +48,7 @@ import openai
 import tiktoken
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
-from pydantic import BaseModel, Field, validator, root_validator, ValidationError
+from pydantic import BaseModel, Field, field_validator, model_validator
 from dotenv import load_dotenv
 
 # Import required models
@@ -182,7 +182,7 @@ class AIAnalysisConfig(BaseModel):
     cache_ttl_minutes: int = 30
     log_level: str = "INFO"
 
-    @validator('max_context_tokens')
+    @field_validator('max_context_tokens')
     def check_max_context_tokens(cls, v):
         """Ensure max_context_tokens is reasonable."""
         if v < 1000:
@@ -190,15 +190,15 @@ class AIAnalysisConfig(BaseModel):
         if v > 1_000_000:
             raise ValueError("max_context_tokens seems unreasonably high")
         return v
-    
-    @validator('safety_buffer')
+
+    @field_validator('safety_buffer')
     def check_safety_buffer(cls, v):
         """Validate safety buffer."""
         if v < 0:
             raise ValueError("safety_buffer cannot be negative")
         return v
-        
-    @validator('max_retries')
+
+    @field_validator('max_retries')
     def check_max_retries(cls, v):
         """Validate max retries."""
         if v < 0:
@@ -206,8 +206,8 @@ class AIAnalysisConfig(BaseModel):
         if v > 10:
             raise ValueError("max_retries seems unreasonably high")
         return v
-        
-    @validator('retry_base_delay')
+
+    @field_validator('retry_base_delay')
     def check_retry_base_delay(cls, v):
         """Validate retry base delay."""
         if v <= 0:
@@ -215,8 +215,8 @@ class AIAnalysisConfig(BaseModel):
         if v > 10:
             raise ValueError("retry_base_delay seems unreasonably high")
         return v
-        
-    @validator('log_level')
+
+    @field_validator('log_level')
     def check_log_level(cls, v):
         """Validate log level."""
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
@@ -224,12 +224,12 @@ class AIAnalysisConfig(BaseModel):
             raise ValueError(f"log_level must be one of: {', '.join(valid_levels)}")
         return v
 
-    @root_validator
-    def check_api_key(cls, values):
+    @model_validator(mode='after')
+    def check_api_key(self):
         """Ensure API key is available in config or environment."""
-        if not values.get('openai_api_key') and not os.environ.get("OPENAI_API_KEY"):
+        if not self.openai_api_key and not os.environ.get("OPENAI_API_KEY"):
             raise ValueError("OpenAI API key must be provided or set in OPENAI_API_KEY environment variable")
-        return values
+        return self
 
 
 class AIAnalysis:

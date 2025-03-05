@@ -1744,3 +1744,105 @@ async def refresh_data(state: Optional[str] = None):
     except Exception as e:
         logger.error(f"Error refreshing data: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error refreshing data: {str(e)}")
+
+@app.post("/legislation/{leg_id}/analysis/async", tags=["Analysis"], response_model=AnalysisStatusResponse)
+@log_api_call
+async def analyze_legislation_ai_async(
+    leg_id: int,
+    options: Optional[AnalysisOptions] = None,
+    analyzer: AIAnalysis = Depends(get_ai_analyzer),
+    store: DataStore = Depends(get_data_store)
+):
+    """
+    Trigger an asynchronous AI-based structured analysis for the specified Legislation ID.
+
+    Args:
+        leg_id: Legislation ID to analyze
+        options: Optional analysis parameters
+        analyzer: AIAnalysis instance
+        store: DataStore instance
+
+    Returns:
+        Analysis status and results
+    """
+    with error_handler("Async AI analysis", {
+        ValidationError: status.HTTP_400_BAD_REQUEST,
+        DatabaseOperationError: status.HTTP_500_INTERNAL_SERVER_ERROR,
+        Exception: status.HTTP_500_INTERNAL_SERVER_ERROR
+    }):
+        # Validate legislation ID
+        if leg_id <= 0:
+            raise ValidationError("Legislation ID must be a positive integer")
+
+        # Check if legislation exists
+        leg_obj = store.db_session.query(Legislation).filter_by(id=leg_id).first()
+        if not leg_obj:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail=f"Legislation with ID {leg_id} not found"
+            )
+
+        # Set default options if none provided
+        if options is None:
+            options = AnalysisOptions()
+
+        try:
+            # Set model parameters if needed
+            if hasattr(options, "model_name") and options.model_name:
+                analyzer.model_name = options.model_name
+
+            # Run analysis asynchronously
+            analysis_obj = await analyzer.analyze_legislation_async(legislation_id=leg_id)
+
+            return {
+                "status": "completed",
+                "legislation_id": leg_id,
+                "analysis_id": analysis_obj.id,
+                "analysis_version": analysis_obj.analysis_version,
+                "analysis_date": analysis_obj.analysis_date.isoformat() if analysis_obj.analysis_date else None
+            }
+        except ValueError as ve:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(ve))
+        except Exception as e:
+            logger.error(f"Error analyzing legislation ID={leg_id} with AI: {e}", exc_info=True)
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Async AI analysis failed.")
+
+@app.post("/legislation/batch-analyze", tags=["Analysis"])
+@log_api_call
+async def batch_analyze_legislation(
+    legislation_ids: List[int], 
+    max_concurrent: int = Query(5, ge=1, le=10, description="Maximum number of concurrent analyses"),
+    analyzer: AIAnalysis = Depends(get_ai_analyzer)
+):
+    """
+    Analyze multiple pieces of legislation in parallel.
+
+    Args:
+        legislation_ids: List of legislation IDs to analyze
+        max_concurrent: Maximum number of concurrent analyses
+        analyzer: AIAnalysis instance
+
+    Returns:
+        Results of batch analysis
+    """
+    with error_handler("Batch analyze legislation", {
+        ValidationError: status.HTTP_400_BAD_REQUEST,
+        DatabaseOperationError: status.HTTP_500_INTERNAL_SERVER_ERROR,
+        Exception: status.HTTP_500_INTERNAL_SERVER_ERROR
+    }):
+        if not legislation_ids:
+            raise ValidationError("No legislation IDs provided")
+
+        if len(legislation_ids) > 50:  # Set a reasonable limit
+            raise ValidationError("Too many legislation IDs (maximum 50)")
+
+        # Run batch analysis
+        try:
+            results = await analyzer.batch_analyze_async(legislation_ids, max_concurrent)
+            return results
+        except Exception as e:
+            logger.error(f"Error in batch analysis: {e}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Batch analysis failed: {str(e)}"
+            )
