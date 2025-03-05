@@ -152,11 +152,11 @@ class AIAnalysis:
 
             # Now it's safe to compute token count
             token_count = self.token_counter.count_tokens(full_text)
-            
+
             if token_count > self.config.max_context_tokens:
                 raise TokenLimitError(f"Token count exceeds limit of {self.config.max_context_tokens}")
-                
-                
+
+
             safe_limit = self.config.max_context_tokens - self.config.safety_buffer
             logger.info(f"Legislation {legislation_id} has ~{token_count} tokens (limit: {safe_limit})")
 
@@ -436,7 +436,7 @@ class AIAnalysis:
                 full_text = leg_obj.description if leg_obj.description is not None else ""
             if isinstance(full_text, bytes):
                 full_text = full_text.decode("utf-8")
-            token_count = self.token_counter.count_tokens(full_text)
+            token_count = self.token_counter.count_tokens(str(full_text)) # Modification here
             completion_estimate = min(8000, token_count // 2)
             safe_limit = self.config.max_context_tokens - self.config.safety_buffer
             chunks_needed = (token_count + safe_limit - 1) // safe_limit if token_count > 0 else 1
@@ -687,8 +687,7 @@ class AIAnalysis:
             "successful": 0,
             "failed": 0,
             "skipped": 0,
-            "analyses": {},
-            "errors": {}
+            "analyses": {},"errors": {}
         }
         semaphore = asyncio.Semaphore(max_concurrent)
         async def process_legislation(leg_id):
