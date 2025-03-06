@@ -18,8 +18,9 @@ export default defineConfig({
     },
     cors: true,
     hmr: {
-      clientPort: 443,
-      host: 'replit.dev',
+      // Simplified HMR config
+      port: 5173,
+      host: '0.0.0.0',
     },
     watch: {
       usePolling: true,
@@ -28,7 +29,23 @@ export default defineConfig({
     fs: {
       strict: false
     },
-    // Add allowedHosts to fix the blocked host issue
-    allowedHosts: ['.replit.dev', '.replit.app', '.replit.com']
+    // Allow all Replit hosts
+    allowedHosts: 'all'
   },
+  // Add optimizeDeps to help with module resolution
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom'],
+    force: true
+  },
+  // Ensure we have full source maps for debugging
+  build: {
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom']
+        }
+      }
+    }
+  }
 });
