@@ -1,0 +1,41 @@
+2025-03-06 16:18:25,468 - __main__ - INFO - Starting PolicyPulse application
+2025-03-06 16:18:25,468 - __main__ - INFO - Port 5173 is available
+2025-03-06 16:18:25,468 - __main__ - INFO - Port 8000 is available
+2025-03-06 16:18:25,468 - __main__ - INFO - Using ports - Frontend: 5173, Backend: 8000
+2025-03-06 16:18:27,905 - __main__ - INFO - Starting backend on port 8000
+INFO:     Started server process [268]
+INFO:     Waiting for application startup.
+2025-03-06 16:18:28,469 - __main__ - INFO - Backend started, now starting frontend...
+2025-03-06 16:18:28,470 - __main__ - INFO - Starting frontend from project root: /home/runner/workspace on port 5173
+2025-03-06 16:18:28,470 - __main__ - INFO - Setting frontend API URL to: /api
+
+==== PolicyPulse Application Started ====
+  - Backend API: http://0.0.0.0:8000
+  - Frontend UI: http://0.0.0.0:5173
+For external access, use your Replit domain with these ports
+=========================================
+
+2025-03-06 16:18:28,663 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:18:28,663 - __main__ - INFO - FRONTEND: > legiscan-frontend@0.1.0 dev
+2025-03-06 16:18:28,663 - __main__ - INFO - FRONTEND: > vite --port 5173 --host 0.0.0.0
+2025-03-06 16:18:28,663 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:18:29,026 - __main__ - INFO - FRONTEND: Forced re-optimization of dependencies
+2025-03-06 16:18:29,107 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:18:29,108 - __main__ - INFO - FRONTEND: VITE v4.5.9  ready in 381 ms
+2025-03-06 16:18:29,108 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:18:29,108 - __main__ - INFO - FRONTEND: ➜  Local:   http://localhost:5173/
+2025-03-06 16:18:29,108 - __main__ - INFO - FRONTEND: ➜  Network: http://172.31.128.44:5173/
+2025-03-06 16:18:29,108 - __main__ - INFO - FRONTEND: ➜  press h to show help
+2025-03-06 16:18:29,423 - app.models - INFO - Database connection established successfully
+2025-03-06 16:18:30,361 - app.models - INFO - Database schema created or verified successfully
+2025-03-06 16:18:30,465 - app.data_store - INFO - Database session established successfully.
+2025-03-06 16:18:30,465 - app.api - INFO - Services initialized on startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     172.31.128.44:58784 - "GET / HTTP/1.1" 200 OK
+2025-03-06 16:18:33,013 - app.api - INFO - API call from 10.81.7.26: GET /health
+2025-03-06 16:18:33,013 - app.api - INFO - API call completed: GET /health (0.02ms)
+INFO:     10.81.7.26:0 - "GET /health HTTP/1.1" 200 OK
+2025-03-06 16:18:33,014 - app.api - INFO - API call from 10.81.7.26: GET /health
+2025-03-06 16:18:33,014 - app.api - INFO - API call completed: GET /health (0.02ms)
+INFO:     10.81.7.26:0 - "GET /health HTTP/1.1" 200 OK
