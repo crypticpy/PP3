@@ -8,7 +8,7 @@ channel = "stable-24_05"
 run = ["sh", "-c", "npm run dev"]
 
 [workflows]
-runButton = "Run PolicyPulse API"
+runButton = "Full App"
 
 [[workflows.workflow]]
 name = "Run PolicyPulse API"
@@ -18,6 +18,38 @@ author = 39522656
 task = "shell.exec"
 args = "python run.py"
 
+[[workflows.workflow]]
+name = "Frontend"
+author = 39522656
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Backend"
+author = 39522656
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run.py"
+
+[[workflows.workflow]]
+name = "Full App"
+author = 39522656
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev & python run.py"
+
 [[ports]]
 localPort = 3000
 externalPort = 80
+
+[[ports]]
+localPort = 3001
+externalPort = 3001
+
+[[ports]]
+localPort = 3002
+externalPort = 3002
