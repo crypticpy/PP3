@@ -112,3 +112,51 @@ export default {
   prepareImpactData,
   getImpactColors
 };
+/**
+ * Visualization service for data transformation and preparation
+ */
+
+/**
+ * Prepares timeline data for visualization from bill history
+ * @param {Array} history - Array of bill history events
+ * @returns {Array} - Formatted data for timeline visualization
+ */
+export const prepareBillTimelineData = (history = []) => {
+  if (!history || history.length === 0) return [];
+  
+  return history.map(event => ({
+    date: new Date(event.date),
+    action: event.action,
+    chamber: event.chamber,
+    importance: event.importance || 'normal',
+    // Add additional formatting as needed
+  })).sort((a, b) => a.date - b.date);
+};
+
+/**
+ * Prepares impact data for visualization
+ * @param {Object} impactData - Raw impact data
+ * @returns {Object} - Formatted data for impact visualization
+ */
+export const prepareImpactData = (impactData = {}) => {
+  const categories = Object.keys(impactData || {});
+  const values = categories.map(cat => impactData[cat]);
+  
+  return {
+    categories,
+    values,
+    // Add any additional formatting needed for charts
+  };
+};
+
+/**
+ * Prepares word frequency data for word cloud visualization
+ * @param {Object} textData - Text data with frequencies
+ * @returns {Array} - Formatted data for word cloud visualization
+ */
+export const prepareWordCloudData = (textData = {}) => {
+  return Object.entries(textData || {}).map(([text, value]) => ({
+    text,
+    value: typeof value === 'number' ? value : 1,
+  }));
+};
