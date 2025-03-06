@@ -12,5 +12,6 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+    allowedHosts: ['2d81b13f-422b-4641-a71e-b98d13690b4c-00-25k3c676pm01w.picard.replit.dev', '.replit.dev']
   },
 }); 
