@@ -26,6 +26,7 @@ Run:
 import os
 import logging
 import traceback
+import asyncio
 from typing import Optional, List, Dict, Any, Type, Union, Callable, TypeVar, cast, AsyncGenerator
 from datetime import datetime, timedelta, timezone
 from contextlib import contextmanager
@@ -1607,11 +1608,12 @@ def get_sync_status(
 # -----------------------------------------------------------------------------
 # Manual Sync Endpoint
 # -----------------------------------------------------------------------------
-@app.post("/sync/trigger", tags=["Sync"])
+@app.post("/sync/trigger", tags=["Sync"], response_model=dict)
 @log_api_call
 def trigger_sync(
     background_tasks: BackgroundTasks,
     force: bool = False,
+    background: bool = True,
     api: LegiScanAPI = Depends(get_legiscan_api)
 ):
     """
@@ -1619,6 +1621,7 @@ def trigger_sync(
 
     Args:
         force: Whether to force a sync even if one was recently run
+        background: Whether to run the sync in the background
         background_tasks: FastAPI background tasks for async processing
         api: LegiScanAPI instance
 
@@ -1632,7 +1635,8 @@ def trigger_sync(
         DatabaseOperationError: status.HTTP_500_INTERNAL_SERVER_ERROR,
         Exception: status.HTTP_500_INTERNAL_SERVER_ERROR
     }):
-        # Run sync in background
+        if background:
+            # Run sync in background
             async def run_sync_task():
                 try:
                     api.run_sync(sync_type="manual")
@@ -1646,10 +1650,8 @@ def trigger_sync(
                 "status": "processing",
                 "message": "Sync operation started in the background"
             }
-
-        # Run sync synchronously
-        try:
-            # Run a sync operation
+        else:
+            # Run sync synchronously
             result = api.run_sync(sync_type="manual")
 
             return {
@@ -1663,16 +1665,7 @@ def trigger_sync(
                     "end_time": result["end_time"].isoformat() if result["end_time"] else None
                 }
             }
-        except Exception as e:
-            logger.error(f"Error triggering sync: {e}", exc_info=True)
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
-
-# Add missing imports if needed at the top of the file
-try:
-    import asyncio
-except ImportError:
-    pass
 
 @app.get("/")
 async def root():
@@ -1843,7 +1836,7 @@ async def analyze_legislation_ai_async(
             logger.error(f"Error analyzing legislation ID={leg_id} with AI: {e}", exc_info=True)
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Async AI analysis failed.")
 
-@app.post("/legislation/batch-analyze", tags=["Analysis"])
+@app.post("/legislation/batch-analyze", tags=["Analysis"], response_model=dict)
 @log_api_call
 async def batch_analyze_legislation(
     legislation_ids: List[int], 
