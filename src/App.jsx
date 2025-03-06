@@ -1,7 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import './index.css';
 import { healthCheck } from './services/api';
+import LandingPage from './components/LandingPage';
+import StatusPage from './components/StatusPage';
 import ApiEndpointsStatus from './components/ApiEndpointsStatus';
 
 function App() {
@@ -39,34 +42,55 @@ function App() {
   }, []);
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <h1>Policy Pulse - The Legislative Tracker</h1>
-        <div className="api-status">
-          <p>
-            {apiStatus.isChecking ? 'Checking API status...' : (
-              <>
-                API Status: 
-                <span className={apiStatus.isOnline ? 'status-online' : 'status-offline'}>
-                  {apiStatus.isOnline ? 'Online' : 'Offline'}
-                </span>
-              </>
-            )}
-          </p>
-          <p>{apiStatus.message}</p>
-        </div>
-      </header>
-      
-      <main className="App-content">
-        {apiStatus.isOnline && 
-          <div className="mt-8 p-4 bg-white rounded-lg shadow">
-            <h2 className="text-2xl font-bold mb-4">API Dashboard</h2>
-            <p className="mb-4">Welcome to the Policy Pulse Legislative Tracker. Below you can see the status of all API endpoints.</p>
-            <ApiEndpointsStatus />
+    <Router>
+      <div className="App">
+        <header className="App-header">
+          <div className="container mx-auto flex justify-between items-center">
+            <Link to="/" className="text-white no-underline">
+              <h1 className="text-xl md:text-2xl font-bold">PolicyPulse - The Legislative Tracker</h1>
+            </Link>
+            <nav className="flex space-x-4">
+              <Link to="/" className="text-white hover:text-blue-200 transition">Home</Link>
+              <Link to="/dashboard" className="text-white hover:text-blue-200 transition">Dashboard</Link>
+              <Link to="/status" className="text-white hover:text-blue-200 transition">Status</Link>
+            </nav>
           </div>
-        }
-      </main>
-    </div>
+          <div className="api-status mt-2">
+            <p>
+              {apiStatus.isChecking ? 'Checking API status...' : (
+                <>
+                  API Status: 
+                  <span className={apiStatus.isOnline ? 'status-online' : 'status-offline'}>
+                    {apiStatus.isOnline ? 'Online' : 'Offline'}
+                  </span>
+                </>
+              )}
+            </p>
+          </div>
+        </header>
+        
+        <main className="App-content">
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/status" element={<StatusPage />} />
+            <Route path="/dashboard" element={
+              apiStatus.isOnline ? (
+                <div className="mt-8 p-4 bg-white rounded-lg shadow">
+                  <h2 className="text-2xl font-bold mb-4">API Dashboard</h2>
+                  <p className="mb-4">Welcome to the Policy Pulse Legislative Tracker. Below you can see the status of all API endpoints.</p>
+                  <ApiEndpointsStatus />
+                </div>
+              ) : (
+                <div className="mt-8 p-4 bg-red-50 rounded-lg shadow border border-red-200">
+                  <h2 className="text-2xl font-bold mb-4">API Dashboard - Offline</h2>
+                  <p className="text-red-600 mb-4">The API is currently offline. Please try again later.</p>
+                </div>
+              )
+            } />
+          </Routes>
+        </main>
+      </div>
+    </Router>
   );
 }
 
