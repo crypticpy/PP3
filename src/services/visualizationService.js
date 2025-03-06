@@ -11,15 +11,20 @@
  * @returns {Array} - Formatted data for timeline visualization
  */
 export const prepareBillTimelineData = (bill) => {
-  if (!bill || !bill.history) return [];
-  
-  return bill.history.map((event, index) => ({
-    id: index,
-    date: new Date(event.date),
-    title: event.action,
-    description: event.chamber || '',
-    status: event.importance || 'normal'
-  }));
+  if (!bill || !Array.isArray(bill.history)) return [];
+
+  try {
+    return bill.history.map((event, index) => ({
+      id: index,
+      date: event.date ? new Date(event.date) : null,
+      title: event.action || 'Unknown action',
+      description: event.chamber || '',
+      status: event.importance || 'normal'
+    })).filter(item => item.date); // Filter out items with invalid dates
+  } catch (error) {
+    console.error('Error preparing bill timeline data:', error);
+    return [];
+  }
 };
 
 /**

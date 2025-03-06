@@ -44,8 +44,20 @@ const apiService = {
   getBillDetails: (billId) => apiClient.get(`/bills/${billId}`),
   getBillAnalysis: (billId) => apiClient.get(`/bills/${billId}/analysis`),
 
+  // Legislation endpoints
+  getLegislation: (params) => apiClient.get('/legislation', { params }),
+  getLegislationDetails: (legId) => apiClient.get(`/legislation/${legId}`),
+
+  // Analysis endpoints
+  requestAnalysis: (legId, options) => apiClient.post(`/legislation/${legId}/analysis`, options),
+  getAnalysisHistory: (legId) => apiClient.get(`/legislation/${legId}/analysis/history`),
+  requestAsyncAnalysis: (legId, options) => apiClient.post(`/legislation/${legId}/analysis/async`, options),
+  batchAnalyze: (legislationIds, maxConcurrent = 5) => 
+    apiClient.post('/legislation/batch-analyze', { legislation_ids: legislationIds, max_concurrent: maxConcurrent }),
+
   // Search Functionality
-  searchBills: (query, filters) => apiClient.post('/search/advanced', { query, filters }),
+  searchBills: (query, filters) => apiClient.get('/legislation/search', { params: { keywords: query, ...filters } }),
+  advancedSearch: (searchParams) => apiClient.post('/search/advanced', searchParams),
 
   // Texas Specific Endpoints
   getTexasHealthLegislation: (params) => apiClient.get('/texas/health-legislation', { params }),
@@ -63,16 +75,12 @@ const apiService = {
   getSearchHistory: (email) => apiClient.get(`/users/${email}/search`),
   addSearchHistory: (email, searchData) => apiClient.post(`/users/${email}/search`, searchData),
 
-  // Analysis
-  requestAnalysis: (legId, options) => apiClient.post(`/legislation/${legId}/analysis`, options),
-  getAnalysisHistory: (legId) => apiClient.get(`/legislation/${legId}/analysis/history`),
-
   // Priority Management
   updatePriority: (legId, priorityData) => apiClient.post(`/legislation/${legId}/priority`, priorityData),
 
   // Sync Operations
   getSyncStatus: () => apiClient.get('/sync/status'),
-  triggerSync: (force = false) => apiClient.post('/sync/trigger', { force }),
+  triggerSync: (force = false, background = true) => apiClient.post('/sync/trigger', { force, background }),
 
   // General utility methods
   getStates: () => apiClient.get('/states/'),

@@ -6,8 +6,8 @@ import BillList from './pages/BillList';
 import BillDetail from './pages/BillDetail';
 import NotFound from './pages/NotFound';
 import { UserPreferencesProvider } from './context/UserPreferencesContext';
+import { NotificationProvider } from './context/NotificationContext';
 import UserPreferences from './pages/UserPreferences';
-import { NotificationProvider } from './contexts/NotificationContext';
 
 function App() {
   return (
@@ -27,4 +27,4 @@ function App() {
   );
 }
 
-export default App; 
+export default App;

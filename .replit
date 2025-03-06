@@ -19,21 +19,26 @@ mode = "sequential"
 task = "shell.exec"
 args = "python run.py"
 
-# Frontend port
 [[ports]]
 localPort = 3000
 externalPort = 80
-
-# Backend API port
-[[ports]]
-localPort = 3002
-externalPort = 3002
 
 [[ports]]
 localPort = 3001
 externalPort = 3001
 
+[[ports]]
+localPort = 3002
+externalPort = 3002
 
 [[ports]]
 localPort = 5173
 externalPort = 5173
+
+[[ports]]
+localPort = 8000
+externalPort = 8000
+
+[[ports]]
+localPort = 8001
+externalPort = 3000
