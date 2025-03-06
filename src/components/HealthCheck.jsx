@@ -1,6 +1,6 @@
 
-import React, { useEffect, useState } from 'react';
-import apiService from '../services/api';
+import React, { useState, useEffect } from 'react';
+import { apiService } from '../services/api';
 
 const HealthCheck = () => {
   const [status, setStatus] = useState('checking');
@@ -9,7 +9,7 @@ const HealthCheck = () => {
   
   useEffect(() => {
     // Get the API URL from environment or config for display purposes
-    const displayUrl = import.meta.env.VITE_API_URL || 'Default API URL';
+    const displayUrl = import.meta.env.VITE_API_URL || 'http://0.0.0.0:8000';
     setApiUrl(displayUrl);
     
     const checkHealth = async () => {
