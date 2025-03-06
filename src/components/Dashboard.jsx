@@ -210,3 +210,200 @@ const TimelineEvent = ({ date, title, description, isLeft }) => {
 };
 
 export default Dashboard;
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import apiService from '../services/apiService';
+import AnalysisSummary from './analysis/AnalysisSummary';
+import RecentActivity from './RecentActivity';
+import StatusIndicator from './StatusIndicator';
+
+const Dashboard = () => {
+  const [impactSummary, setImpactSummary] = useState(null);
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [statusData, setStatusData] = useState({ status: 'checking' });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      setLoading(true);
+      try {
+        // Check API health
+        const healthResponse = await apiService.get('/health');
+        setStatusData(healthResponse);
+
+        // Try to fetch impact summary
+        try {
+          const summaryResponse = await apiService.get('/dashboard/impact-summary');
+          setImpactSummary(summaryResponse);
+        } catch (summaryError) {
+          console.warn('Impact summary endpoint not available:', summaryError);
+        }
+
+        // Try to fetch recent activity
+        try {
+          const activityResponse = await apiService.get('/dashboard/recent-activity');
+          if (activityResponse && activityResponse.recent_legislation) {
+            setRecentActivity(activityResponse.recent_legislation);
+          }
+        } catch (activityError) {
+          console.warn('Recent activity endpoint not available:', activityError);
+          
+          // Fallback: try to get recent bills from legislation endpoint
+          try {
+            const legislationResponse = await apiService.get('/legislation?limit=5');
+            if (legislationResponse && legislationResponse.items) {
+              setRecentActivity(legislationResponse.items);
+            }
+          } catch (legError) {
+            console.error('Failed to fetch recent legislation:', legError);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError('Failed to load dashboard data. Please try again later.');
+        setStatusData({ status: 'error', message: 'API unavailable' });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="h-32 bg-gray-200 rounded mb-4"></div>
+          <div className="h-64 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-6 flex justify-between items-center">
+        <h1 className="text-3xl font-bold">PolicyPulse Dashboard</h1>
+        <StatusIndicator status={statusData.status} message={statusData.message} />
+      </div>
+
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+          <p>{error}</p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="lg:col-span-2 bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold mb-4">Legislative Impact Overview</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-blue-50 rounded-lg p-4">
+              <h3 className="text-lg font-medium text-blue-800 mb-2">Public Health</h3>
+              <p className="text-sm mb-2">
+                Recent legislation with significant public health impacts
+              </p>
+              <div className="flex justify-between items-center">
+                <span className="text-3xl font-bold text-blue-800">
+                  {impactSummary?.public_health_count || '?'}
+                </span>
+                <Link to="/legislation?impact=public_health" className="text-blue-600 hover:underline text-sm">
+                  View all
+                </Link>
+              </div>
+            </div>
+            <div className="bg-green-50 rounded-lg p-4">
+              <h3 className="text-lg font-medium text-green-800 mb-2">Local Government</h3>
+              <p className="text-sm mb-2">
+                Recent legislation with significant local government impacts
+              </p>
+              <div className="flex justify-between items-center">
+                <span className="text-3xl font-bold text-green-800">
+                  {impactSummary?.local_govt_count || '?'}
+                </span>
+                <Link to="/legislation?impact=local_gov" className="text-green-600 hover:underline text-sm">
+                  View all
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold mb-4">API Status</h2>
+          <div className="space-y-4">
+            <div className="flex items-center">
+              <div className={`w-3 h-3 rounded-full mr-2 ${
+                statusData.status === 'ok' ? 'bg-green-500' : 'bg-red-500'
+              }`}></div>
+              <span>API Status: {statusData.status === 'ok' ? 'Online' : 'Offline'}</span>
+            </div>
+            <div className="text-sm text-gray-600">
+              <p>Version: {statusData.version || 'Unknown'}</p>
+              <p>Message: {statusData.message || 'No information available'}</p>
+            </div>
+            <Link to="/status" className="inline-block mt-2 text-blue-600 hover:underline">
+              View detailed status
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-white rounded-lg shadow p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Recent Legislation</h2>
+            <Link to="/legislation" className="text-blue-600 hover:underline text-sm">
+              View all
+            </Link>
+          </div>
+          {recentActivity.length > 0 ? (
+            <div className="divide-y divide-gray-200">
+              {recentActivity.map((item, index) => (
+                <div key={index} className="py-3">
+                  <div className="flex justify-between">
+                    <Link to={`/legislation/${item.id}`} className="font-medium text-blue-600 hover:underline">
+                      {item.bill_number}
+                    </Link>
+                    <span className="text-sm text-gray-500">
+                      {new Date(item.updated_at || item.bill_last_action_date).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600 truncate">{item.title}</p>
+                  <div className="mt-1 flex space-x-2">
+                    {item.bill_status && (
+                      <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full">
+                        {item.bill_status}
+                      </span>
+                    )}
+                    {item.govt_type && (
+                      <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                        {item.govt_type}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500">No recent legislation found.</p>
+          )}
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold mb-4">Analysis Overview</h2>
+          <AnalysisSummary />
+          <div className="mt-4">
+            <Link to="/bills" className="text-blue-600 hover:underline">
+              Browse all analyzed bills
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Dashboard;
