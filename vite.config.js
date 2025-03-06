@@ -21,7 +21,7 @@ export default defineConfig({
           
           // Log outgoing proxy requests with full path
           proxy.on('proxyReq', (proxyReq, req, res) => {
-            console.log(`Proxying ${req.method} ${req.url} to http://0.0.0.0:8000${proxyReq.path}`);
+            console.log(`Proxying ${req.method} ${req.url} to ${options.target}${proxyReq.path}`);
           });
           
           // Log incoming proxy responses with status code
