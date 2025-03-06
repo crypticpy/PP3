@@ -1,0 +1,196 @@
+
+2025-03-06 16:43:51,350 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:43:51,350 - __main__ - INFO - FRONTEND: > legiscan-frontend@0.1.0 dev
+2025-03-06 16:43:51,351 - __main__ - INFO - FRONTEND: > vite --port 5173 --host 0.0.0.0
+2025-03-06 16:43:51,351 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:43:51,530 - __main__ - INFO - FRONTEND: The CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.
+2025-03-06 16:43:51,572 - app.models - INFO - Database schema created or verified successfully
+2025-03-06 16:43:51,594 - __main__ - INFO - FRONTEND: 4:43:51 PM [vite] (client) Forced re-optimization of dependencies
+2025-03-06 16:43:51,631 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:43:51,631 - __main__ - INFO - FRONTEND: VITE v6.2.0  ready in 223 ms
+2025-03-06 16:43:51,631 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:43:51,631 - __main__ - INFO - FRONTEND: ➜  Local:   http://localhost:5173/
+2025-03-06 16:43:51,632 - __main__ - INFO - FRONTEND: ➜  Network: http://172.31.128.44:5173/
+2025-03-06 16:43:51,632 - __main__ - INFO - FRONTEND: ➜  press h + enter to show help
+2025-03-06 16:43:51,666 - app.data_store - INFO - Database session established successfully.
+2025-03-06 16:43:51,666 - app.api - INFO - Services initialized on startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     172.31.128.44:48266 - "GET / HTTP/1.1" 200 OK
+2025-03-06 16:43:53,492 - __main__ - INFO - FRONTEND: 4:43:53 PM [vite] (client) Pre-transform error: Failed to resolve import "./pages/SearchPage" from "src/App.jsx". Does the file exist?
+2025-03-06 16:43:53,493 - __main__ - INFO - FRONTEND: Plugin: vite:import-analysis
+2025-03-06 16:43:53,493 - __main__ - INFO - FRONTEND: File: /home/runner/workspace/src/App.jsx:12:23
+2025-03-06 16:43:53,493 - __main__ - INFO - FRONTEND: 22 |  import BillDetail from "./pages/BillDetail";
+2025-03-06 16:43:53,493 - __main__ - INFO - FRONTEND: 23 |  import UserPreferences from "./pages/UserPreferences";
+2025-03-06 16:43:53,493 - __main__ - INFO - FRONTEND: 24 |  import SearchPage from "./pages/SearchPage";
+2025-03-06 16:43:53,493 - __main__ - INFO - FRONTEND: |                          ^
+2025-03-06 16:43:53,493 - __main__ - INFO - FRONTEND: 25 |  import NotFound from "./pages/NotFound";
+2025-03-06 16:43:53,493 - __main__ - INFO - FRONTEND: 26 |  function App() {
+2025-03-06 16:43:53,674 - __main__ - INFO - FRONTEND: 4:43:53 PM [vite] (client) Pre-transform error: /home/runner/workspace/src/pages/NotFound.jsx: Identifier 'React' has already been declared. (21:7)
+2025-03-06 16:43:53,674 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:43:53,674 - __main__ - INFO - FRONTEND: 19 |
+2025-03-06 16:43:53,674 - __main__ - INFO - FRONTEND: 20 | export default NotFound;
+2025-03-06 16:43:53,674 - __main__ - INFO - FRONTEND: > 21 | import React from 'react';
+2025-03-06 16:43:53,674 - __main__ - INFO - FRONTEND: |        ^
+2025-03-06 16:43:53,674 - __main__ - INFO - FRONTEND: 22 | import { Link } from 'react-router-dom';
+2025-03-06 16:43:53,674 - __main__ - INFO - FRONTEND: 23 |
+2025-03-06 16:43:53,674 - __main__ - INFO - FRONTEND: 24 | const NotFound = () => {
+2025-03-06 16:43:53,674 - __main__ - INFO - FRONTEND: Plugin: vite:react-babel
+2025-03-06 16:43:53,674 - __main__ - INFO - FRONTEND: File: /home/runner/workspace/src/pages/NotFound.jsx:21:7
+2025-03-06 16:43:53,675 - __main__ - INFO - FRONTEND: 19 |
+2025-03-06 16:43:53,675 - __main__ - INFO - FRONTEND: 20 |  export default NotFound;
+2025-03-06 16:43:53,675 - __main__ - INFO - FRONTEND: 21 |  import React from 'react';
+2025-03-06 16:43:53,675 - __main__ - INFO - FRONTEND: |         ^
+2025-03-06 16:43:53,675 - __main__ - INFO - FRONTEND: 22 |  import { Link } from 'react-router-dom';
+2025-03-06 16:43:53,675 - __main__ - INFO - FRONTEND: 23 |
+2025-03-06 16:43:54,050 - __main__ - INFO - FRONTEND: 4:43:54 PM [vite] (client) Pre-transform error: Failed to resolve import "./ImpactChart" from "src/components/visualizations/VisualizationDashboard.jsx". Does the file exist?
+2025-03-06 16:43:54,050 - __main__ - INFO - FRONTEND: Plugin: vite:import-analysis
+2025-03-06 16:43:54,050 - __main__ - INFO - FRONTEND: File: /home/runner/workspace/src/components/visualizations/VisualizationDashboard.jsx:4:24
+2025-03-06 16:43:54,051 - __main__ - INFO - FRONTEND: 18 |  import React, { useState } from "react";
+2025-03-06 16:43:54,051 - __main__ - INFO - FRONTEND: 19 |  import KeyTermsCloud from "./KeyTermsCloud";
+2025-03-06 16:43:54,051 - __main__ - INFO - FRONTEND: 20 |  import ImpactChart from "./ImpactChart";
+2025-03-06 16:43:54,051 - __main__ - INFO - FRONTEND: |                           ^
+2025-03-06 16:43:54,051 - __main__ - INFO - FRONTEND: 21 |  import BillTimeline from "./BillTimeline";
+2025-03-06 16:43:54,051 - __main__ - INFO - FRONTEND: 22 |  const VisualizationDashboard = ({ billData, analysisData }) => {
+2025-03-06 16:43:54,252 - __main__ - INFO - FRONTEND: Error:   Failed to scan for dependencies from entries:
+2025-03-06 16:43:54,252 - __main__ - INFO - FRONTEND: /home/runner/workspace/index.html
+2025-03-06 16:43:54,252 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:43:54,252 - __main__ - INFO - FRONTEND: ✘ [ERROR] The symbol "React" has already been declared
+2025-03-06 16:43:54,252 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:43:54,252 - __main__ - INFO - FRONTEND: src/pages/NotFound.jsx:21:7:
+2025-03-06 16:43:54,252 - __main__ - INFO - FRONTEND:       21 │ import React from 'react';
+2025-03-06 16:43:54,252 - __main__ - INFO - FRONTEND: ╵        ~~~~~
+2025-03-06 16:43:54,252 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:43:54,252 - __main__ - INFO - FRONTEND: The symbol "React" was originally declared here:
+2025-03-06 16:43:54,252 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:43:54,253 - __main__ - INFO - FRONTEND: src/pages/NotFound.jsx:1:7:
+2025-03-06 16:43:54,253 - __main__ - INFO - FRONTEND:       1 │ import React from 'react';
+2025-03-06 16:43:54,253 - __main__ - INFO - FRONTEND: ╵        ~~~~~
+2025-03-06 16:43:54,253 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:43:54,253 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:43:54,253 - __main__ - INFO - FRONTEND: ✘ [ERROR] The symbol "Link" has already been declared
+2025-03-06 16:43:54,253 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:43:54,253 - __main__ - INFO - FRONTEND: src/pages/NotFound.jsx:22:9:
+2025-03-06 16:43:54,253 - __main__ - INFO - FRONTEND:       22 │ import { Link } from 'react-router-dom';
+2025-03-06 16:43:54,253 - __main__ - INFO - FRONTEND: ╵          ~~~~
+2025-03-06 16:43:54,253 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:43:54,253 - __main__ - INFO - FRONTEND: The symbol "Link" was originally declared here:
+2025-03-06 16:43:54,253 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:43:54,253 - __main__ - INFO - FRONTEND: src/pages/NotFound.jsx:2:9:
+2025-03-06 16:43:54,253 - __main__ - INFO - FRONTEND:       2 │ import { Link } from 'react-router-dom';
+2025-03-06 16:43:54,253 - __main__ - INFO - FRONTEND: ╵          ~~~~
+2025-03-06 16:43:54,253 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:43:54,253 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:43:54,253 - __main__ - INFO - FRONTEND: ✘ [ERROR] The symbol "NotFound" has already been declared
+2025-03-06 16:43:54,253 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:43:54,253 - __main__ - INFO - FRONTEND: src/pages/NotFound.jsx:24:6:
+2025-03-06 16:43:54,253 - __main__ - INFO - FRONTEND:       24 │ const NotFound = () => {
+2025-03-06 16:43:54,253 - __main__ - INFO - FRONTEND: ╵       ~~~~~~~~
+2025-03-06 16:43:54,254 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:43:54,254 - __main__ - INFO - FRONTEND: The symbol "NotFound" was originally declared here:
+2025-03-06 16:43:54,254 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:43:54,254 - __main__ - INFO - FRONTEND: src/pages/NotFound.jsx:4:9:
+2025-03-06 16:43:54,254 - __main__ - INFO - FRONTEND:       4 │ function NotFound() {
+2025-03-06 16:43:54,254 - __main__ - INFO - FRONTEND: ╵          ~~~~~~~~
+2025-03-06 16:43:54,254 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:43:54,254 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:43:54,254 - __main__ - INFO - FRONTEND: ✘ [ERROR] Multiple exports with the same name "default"
+2025-03-06 16:43:54,254 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:43:54,254 - __main__ - INFO - FRONTEND: src/pages/NotFound.jsx:42:7:
+2025-03-06 16:43:54,254 - __main__ - INFO - FRONTEND:       42 │ export default NotFound;
+2025-03-06 16:43:54,254 - __main__ - INFO - FRONTEND: ╵        ~~~~~~~
+2025-03-06 16:43:54,254 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:43:54,254 - __main__ - INFO - FRONTEND: The name "default" was originally exported here:
+2025-03-06 16:43:54,254 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:43:54,254 - __main__ - INFO - FRONTEND: src/pages/NotFound.jsx:20:7:
+2025-03-06 16:43:54,254 - __main__ - INFO - FRONTEND:       20 │ export default NotFound;
+2025-03-06 16:43:54,254 - __main__ - INFO - FRONTEND: ╵        ~~~~~~~
+2025-03-06 16:43:54,254 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:43:54,254 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:43:54,254 - __main__ - INFO - FRONTEND: at failureErrorWithLog (/home/runner/workspace/node_modules/esbuild/lib/main.js:1477:15)
+2025-03-06 16:43:54,254 - __main__ - INFO - FRONTEND: at /home/runner/workspace/node_modules/esbuild/lib/main.js:946:25
+2025-03-06 16:43:54,254 - __main__ - INFO - FRONTEND: at runOnEndCallbacks (/home/runner/workspace/node_modules/esbuild/lib/main.js:1317:45)
+2025-03-06 16:43:54,254 - __main__ - INFO - FRONTEND: at buildResponseToResult (/home/runner/workspace/node_modules/esbuild/lib/main.js:944:7)
+2025-03-06 16:43:54,254 - __main__ - INFO - FRONTEND: at /home/runner/workspace/node_modules/esbuild/lib/main.js:956:9
+2025-03-06 16:43:54,254 - __main__ - INFO - FRONTEND: at new Promise (<anonymous>)
+2025-03-06 16:43:54,255 - __main__ - INFO - FRONTEND: at requestCallbacks.on-end (/home/runner/workspace/node_modules/esbuild/lib/main.js:955:54)
+2025-03-06 16:43:54,255 - __main__ - INFO - FRONTEND: at handleRequest (/home/runner/workspace/node_modules/esbuild/lib/main.js:648:17)
+2025-03-06 16:43:54,255 - __main__ - INFO - FRONTEND: at handleIncomingPacket (/home/runner/workspace/node_modules/esbuild/lib/main.js:673:7)
+2025-03-06 16:43:54,255 - __main__ - INFO - FRONTEND: at Socket.readFromStdout (/home/runner/workspace/node_modules/esbuild/lib/main.js:601:7)
+2025-03-06 16:43:54,255 - __main__ - INFO - FRONTEND: at Socket.emit (node:events:518:28)
+2025-03-06 16:43:54,255 - __main__ - INFO - FRONTEND: at addChunk (node:internal/streams/readable:561:12)
+2025-03-06 16:43:54,255 - __main__ - INFO - FRONTEND: at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+2025-03-06 16:43:54,255 - __main__ - INFO - FRONTEND: at Readable.push (node:internal/streams/readable:392:5)
+2025-03-06 16:43:54,255 - __main__ - INFO - FRONTEND: at Pipe.onStreamRead (node:internal/stream_base_commons:191:23)
+2025-03-06 16:43:54,540 - __main__ - INFO - FRONTEND: 4:43:54 PM [vite] Internal server error: Failed to resolve import "./pages/SearchPage" from "src/App.jsx". Does the file exist?
+2025-03-06 16:43:54,540 - __main__ - INFO - FRONTEND: Plugin: vite:import-analysis
+2025-03-06 16:43:54,540 - __main__ - INFO - FRONTEND: File: /home/runner/workspace/src/App.jsx:12:23
+2025-03-06 16:43:54,540 - __main__ - INFO - FRONTEND: 22 |  import BillDetail from "./pages/BillDetail";
+2025-03-06 16:43:54,540 - __main__ - INFO - FRONTEND: 23 |  import UserPreferences from "./pages/UserPreferences";
+2025-03-06 16:43:54,540 - __main__ - INFO - FRONTEND: 24 |  import SearchPage from "./pages/SearchPage";
+2025-03-06 16:43:54,540 - __main__ - INFO - FRONTEND: |                          ^
+2025-03-06 16:43:54,540 - __main__ - INFO - FRONTEND: 25 |  import NotFound from "./pages/NotFound";
+2025-03-06 16:43:54,540 - __main__ - INFO - FRONTEND: 26 |  function App() {
+2025-03-06 16:43:54,540 - __main__ - INFO - FRONTEND: at TransformPluginContext._formatLog (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:47835:41)
+2025-03-06 16:43:54,540 - __main__ - INFO - FRONTEND: at TransformPluginContext.error (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:47832:16)
+2025-03-06 16:43:54,540 - __main__ - INFO - FRONTEND: at normalizeUrl (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:45968:23)
+2025-03-06 16:43:54,540 - __main__ - INFO - FRONTEND: at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-03-06 16:43:54,540 - __main__ - INFO - FRONTEND: at async file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:46087:37
+2025-03-06 16:43:54,540 - __main__ - INFO - FRONTEND: at async Promise.all (index 10)
+2025-03-06 16:43:54,540 - __main__ - INFO - FRONTEND: at async TransformPluginContext.transform (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:46014:7)
+2025-03-06 16:43:54,540 - __main__ - INFO - FRONTEND: at async EnvironmentPluginContainer.transform (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:47630:18)
+2025-03-06 16:43:54,540 - __main__ - INFO - FRONTEND: at async loadAndTransform (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:41318:27)
+2025-03-06 16:43:54,540 - __main__ - INFO - FRONTEND: at async viteTransformMiddleware (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:42781:24)
+2025-03-06 16:43:54,552 - __main__ - INFO - FRONTEND: 4:43:54 PM [vite] (client) Pre-transform error: /home/runner/workspace/src/pages/NotFound.jsx: Identifier 'React' has already been declared. (21:7)
+2025-03-06 16:43:54,552 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:43:54,552 - __main__ - INFO - FRONTEND: 19 |
+2025-03-06 16:43:54,553 - __main__ - INFO - FRONTEND: 20 | export default NotFound;
+2025-03-06 16:43:54,553 - __main__ - INFO - FRONTEND: > 21 | import React from 'react';
+2025-03-06 16:43:54,553 - __main__ - INFO - FRONTEND: |        ^
+2025-03-06 16:43:54,553 - __main__ - INFO - FRONTEND: 22 | import { Link } from 'react-router-dom';
+2025-03-06 16:43:54,553 - __main__ - INFO - FRONTEND: 23 |
+2025-03-06 16:43:54,553 - __main__ - INFO - FRONTEND: 24 | const NotFound = () => {
+2025-03-06 16:43:54,553 - __main__ - INFO - FRONTEND: Plugin: vite:react-babel
+2025-03-06 16:43:54,553 - __main__ - INFO - FRONTEND: File: /home/runner/workspace/src/pages/NotFound.jsx:21:7
+2025-03-06 16:43:54,553 - __main__ - INFO - FRONTEND: 19 |
+2025-03-06 16:43:54,553 - __main__ - INFO - FRONTEND: 20 |  export default NotFound;
+2025-03-06 16:43:54,553 - __main__ - INFO - FRONTEND: 21 |  import React from 'react';
+2025-03-06 16:43:54,553 - __main__ - INFO - FRONTEND: |         ^
+2025-03-06 16:43:54,553 - __main__ - INFO - FRONTEND: 22 |  import { Link } from 'react-router-dom';
+2025-03-06 16:43:54,553 - __main__ - INFO - FRONTEND: 23 |
+2025-03-06 16:43:57,326 - __main__ - INFO - FRONTEND: 4:43:57 PM [vite] Internal server error: Failed to resolve import "./pages/SearchPage" from "src/App.jsx". Does the file exist?
+2025-03-06 16:43:57,327 - __main__ - INFO - FRONTEND: Plugin: vite:import-analysis
+2025-03-06 16:43:57,327 - __main__ - INFO - FRONTEND: File: /home/runner/workspace/src/App.jsx:12:23
+2025-03-06 16:43:57,327 - __main__ - INFO - FRONTEND: 22 |  import BillDetail from "./pages/BillDetail";
+2025-03-06 16:43:57,327 - __main__ - INFO - FRONTEND: 23 |  import UserPreferences from "./pages/UserPreferences";
+2025-03-06 16:43:57,327 - __main__ - INFO - FRONTEND: 24 |  import SearchPage from "./pages/SearchPage";
+2025-03-06 16:43:57,327 - __main__ - INFO - FRONTEND: |                          ^
+2025-03-06 16:43:57,327 - __main__ - INFO - FRONTEND: 25 |  import NotFound from "./pages/NotFound";
+2025-03-06 16:43:57,327 - __main__ - INFO - FRONTEND: 26 |  function App() {
+2025-03-06 16:43:57,327 - __main__ - INFO - FRONTEND: at TransformPluginContext._formatLog (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:47835:41)
+2025-03-06 16:43:57,327 - __main__ - INFO - FRONTEND: at TransformPluginContext.error (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:47832:16)
+2025-03-06 16:43:57,327 - __main__ - INFO - FRONTEND: at normalizeUrl (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:45968:23)
+2025-03-06 16:43:57,327 - __main__ - INFO - FRONTEND: at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-03-06 16:43:57,327 - __main__ - INFO - FRONTEND: at async file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:46087:37
+2025-03-06 16:43:57,327 - __main__ - INFO - FRONTEND: at async Promise.all (index 10)
+2025-03-06 16:43:57,327 - __main__ - INFO - FRONTEND: at async TransformPluginContext.transform (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:46014:7)
+2025-03-06 16:43:57,327 - __main__ - INFO - FRONTEND: at async EnvironmentPluginContainer.transform (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:47630:18)
+2025-03-06 16:43:57,327 - __main__ - INFO - FRONTEND: at async loadAndTransform (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:41318:27)
+2025-03-06 16:43:57,327 - __main__ - INFO - FRONTEND: at async viteTransformMiddleware (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:42781:24)
+2025-03-06 16:43:57,329 - __main__ - INFO - FRONTEND: 4:43:57 PM [vite] (client) Pre-transform error: /home/runner/workspace/src/pages/NotFound.jsx: Identifier 'React' has already been declared. (21:7)
+2025-03-06 16:43:57,330 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:43:57,330 - __main__ - INFO - FRONTEND: 19 |
+2025-03-06 16:43:57,330 - __main__ - INFO - FRONTEND: 20 | export default NotFound;
+2025-03-06 16:43:57,330 - __main__ - INFO - FRONTEND: > 21 | import React from 'react';
+2025-03-06 16:43:57,330 - __main__ - INFO - FRONTEND: |        ^
+2025-03-06 16:43:57,330 - __main__ - INFO - FRONTEND: 22 | import { Link } from 'react-router-dom';
+2025-03-06 16:43:57,330 - __main__ - INFO - FRONTEND: 23 |
+2025-03-06 16:43:57,330 - __main__ - INFO - FRONTEND: 24 | const NotFound = () => {
+2025-03-06 16:43:57,330 - __main__ - INFO - FRONTEND: Plugin: vite:react-babel
+2025-03-06 16:43:57,330 - __main__ - INFO - FRONTEND: File: /home/runner/workspace/src/pages/NotFound.jsx:21:7
+2025-03-06 16:43:57,330 - __main__ - INFO - FRONTEND: 19 |
+2025-03-06 16:43:57,330 - __main__ - INFO - FRONTEND: 20 |  export default NotFound;
+2025-03-06 16:43:57,330 - __main__ - INFO - FRONTEND: 21 |  import React from 'react';
+2025-03-06 16:43:57,330 - __main__ - INFO - FRONTEND: |         ^
+2025-03-06 16:43:57,330 - __main__ - INFO - FRONTEND: 22 |  import { Link } from 'react-router-dom';
+2025-03-06 16:43:57,330 - __main__ - INFO - FRONTEND: 23 |
