@@ -34,17 +34,17 @@ const StatusPage = () => {
   }, []);
 
   return (
-    <div className="status-page max-w-5xl mx-auto">
+    <div className="status-page max-w-5xl mx-auto p-8"> {/* Added padding */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-6">System Status</h1>
+        <h1 className="text-3xl font-bold mb-6 text-gray-800"> {/*Improved contrast */}System Status</h1>
         <p className="text-gray-600 mb-4">
           This page provides real-time information about the PolicyPulse API and its endpoints.
           Use this page to check the status of various services within the system.
         </p>
 
         <div className="api-overall-status mb-8">
-          <h2 className="text-xl font-semibold mb-2">API Health</h2>
-          <p className="mb-4">
+          <h2 className="text-xl font-semibold mb-2 text-gray-800"> {/*Improved contrast */}API Health</h2>
+          <p className="mb-4 text-gray-700"> {/*Improved contrast */}
             The current status of the PolicyPulse API system. This shows the overall health of the backend services.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -80,7 +80,7 @@ const StatusPage = () => {
       </div>
 
       <div className="api-endpoints-status">
-        <h2 className="text-xl font-semibold mb-4">API Endpoints Status</h2>
+        <h2 className="text-xl font-semibold mb-4 text-gray-800"> {/*Improved contrast */}API Endpoints Status</h2>
         <p className="text-gray-600 mb-6">
           Detailed status of individual API endpoints. This shows which specific endpoints are operational.
         </p>

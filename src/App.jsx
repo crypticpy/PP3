@@ -45,19 +45,19 @@ function App() {
     <Router>
       <div className="App">
         <header className="App-header">
-          <div className="container mx-auto flex justify-between items-center">
+          <div className="container mx-auto flex justify-between items-center px-4">
             <Link to="/" className="text-white no-underline">
               <h1 className="text-xl md:text-2xl font-bold">
-                <span className="text-blue-300">Policy</span>Pulse
+                <span className="text-purple-300">Policy</span>Pulse
               </h1>
             </Link>
-            <nav className="flex space-x-2">
-              <Link to="/" className="text-white hover:text-blue-200 transition">Home</Link>
-              <Link to="/dashboard" className="text-white hover:text-blue-200 transition">Dashboard</Link>
-              <Link to="/status" className="text-white hover:text-blue-200 transition">Status</Link>
+            <nav className="flex space-x-4">
+              <Link to="/" className="text-white hover:text-blue-200 transition px-3 py-2">Home</Link>
+              <Link to="/dashboard" className="text-white hover:text-blue-200 transition px-3 py-2">Dashboard</Link>
+              <Link to="/status" className="text-white hover:text-blue-200 transition px-3 py-2">Status</Link>
             </nav>
           </div>
-          <div className="api-status mt-2">
+          <div className="api-status mt-2 mx-4">
             <p>
               {apiStatus.isChecking ? 'Checking API status...' : (
                 <>
