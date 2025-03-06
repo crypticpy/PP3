@@ -11,6 +11,7 @@ const HealthCheck = () => {
       try {
         const response = await api.healthCheck();
         setStatus(`API is ${response.data.status}: ${response.data.message}`);
+        setError(null);
       } catch (err) {
         console.error('Health check failed:', err);
         setError(`Failed to connect to API: ${err.message}`);
@@ -19,6 +20,10 @@ const HealthCheck = () => {
     };
 
     checkHealth();
+    // Poll every 10 seconds to check if API connection is restored
+    const interval = setInterval(checkHealth, 10000);
+
+    return () => clearInterval(interval);
   }, []);
 
   return (
