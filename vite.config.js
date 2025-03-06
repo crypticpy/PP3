@@ -1,4 +1,3 @@
-
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
@@ -10,7 +9,7 @@ export default defineConfig({
     strictPort: false,
     proxy: {
       '/api': {
-        target: process.env.VITE_API_URL || 'http://0.0.0.0:8000',
+        target: process.env.VITE_API_URL || 'http://0.0.0.0:8001',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path,
@@ -19,7 +18,7 @@ export default defineConfig({
     cors: true,
     hmr: {
       // Simplified HMR config
-      port: 5173,
+      clientPort: 443,  // Add this for Replit
       host: '0.0.0.0',
     },
     watch: {
@@ -30,7 +29,12 @@ export default defineConfig({
       strict: false
     },
     // Allow all Replit hosts
-    allowedHosts: 'all'
+    allowedHosts: [
+      'picard.replit.dev', 
+      '2d81b13f-422b-4641-a71e-b98d13690b4c-00-25k3c676pm01w.picard.replit.dev',
+      '.replit.dev',
+      'all'
+    ]
   },
   // Add optimizeDeps to help with module resolution
   optimizeDeps: {

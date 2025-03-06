@@ -52,12 +52,12 @@ class ProxyHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         # Handle POST requests similarly
         if self.path.startswith('/api/'):
-            backend_url = f"http://localhost:{os.environ.get('BACKEND_PORT')}{self.path}"
+            backend_url = f"http://0.0.0.0:{os.environ.get('BACKEND_PORT')}{self.path}"  # Using 0.0.0.0 instead of localhost
             content_length = int(self.headers.get('Content-Length', 0))
             post_data = self.rfile.read(content_length)
             self.proxy_request(backend_url, method='POST', data=post_data)
         else:
-            frontend_url = f"http://localhost:{os.environ.get('FRONTEND_PORT')}{self.path}"
+            frontend_url = f"http://0.0.0.0:{os.environ.get('FRONTEND_PORT')}{self.path}"  # Using 0.0.0.0 instead of localhost
             content_length = int(self.headers.get('Content-Length', 0))
             post_data = self.rfile.read(content_length)
             self.proxy_request(frontend_url, method='POST', data=post_data)
@@ -68,23 +68,29 @@ class ProxyHandler(BaseHTTPRequestHandler):
             headers = {k: v for k, v in self.headers.items()}
 
             # Make the request to the target service
+            response = None  # Initialize with None to ensure it's always defined
             if method == 'GET':
-                response = requests.get(url, headers=headers)
+                response = requests.get(url, headers=headers, timeout=10)
             elif method == 'POST':
-                response = requests.post(url, headers=headers, data=data)
+                response = requests.post(url, headers=headers, data=data, timeout=10)
 
-            # Send the response back
-            self.send_response(response.status_code)
+            # Ensure response is not None before proceeding
+            if response is not None:
+                # Send the response back
+                self.send_response(response.status_code)
 
-            # Forward headers
-            for key, value in response.headers.items():
-                if key.lower() not in ('connection', 'keep-alive', 'transfer-encoding'):
-                    self.send_header(key, value)
+                # Forward headers
+                for key, value in response.headers.items():
+                    if key.lower() not in ('connection', 'keep-alive', 'transfer-encoding'):
+                        self.send_header(key, value)
 
-            self.end_headers()
+                self.end_headers()
 
-            # Send the content
-            self.wfile.write(response.content)
+                # Send the content
+                self.wfile.write(response.content)
+            else:
+                # Handle case where response is None
+                self.send_error(500, "Internal Server Error: No response received")
 
         except requests.RequestException as e:
             logger.error(f"Proxy error: {str(e)}")
@@ -110,11 +116,28 @@ def start_proxy(proxy_port):
     except Exception as e:
         logger.error(f"Error starting proxy: {e}")
 
+def wait_for_frontend(frontend_port, max_attempts=30):
+    """Wait until the frontend server is available."""
+    for attempt in range(max_attempts):
+        try:
+            response = requests.get(f"http://0.0.0.0:{frontend_port}/", timeout=2)
+            if response.status_code == 200:
+                logger.info(f"Frontend is ready after {attempt+1} attempts")
+                return True
+        except requests.RequestException:
+            pass
+
+        logger.info(f"Waiting for frontend to start (attempt {attempt+1}/{max_attempts})...")
+        time.sleep(1)
+
+    logger.warning("Frontend did not start in the expected time")
+    return False
+
 def start_frontend(frontend_port):
     """Start the frontend application using npm."""
     # Use the correct path to the project root
     project_root = Path(__file__).parent
-    
+
     logger.info(f"Starting frontend from project root: {project_root} on port {frontend_port}")
     os.chdir(project_root)
 
@@ -122,7 +145,7 @@ def start_frontend(frontend_port):
     env = os.environ.copy()
     env["PORT"] = str(frontend_port)
     env["VITE_API_URL"] = f"http://0.0.0.0:{os.environ.get('BACKEND_PORT')}"
-    
+
     # Run npm install with legacy-peer-deps flag to fix React version conflicts
     if not os.path.exists("node_modules") or os.path.getmtime("package.json") > os.path.getmtime("node_modules"):
         logger.info("Installing frontend dependencies with legacy-peer-deps...")
@@ -143,14 +166,20 @@ def start_frontend(frontend_port):
             bufsize=1
         )
 
-        # Log frontend output
-        for line in iter(process.stdout.readline, ''):
-            logger.info(f"FRONTEND: {line.strip()}")
+        # Safely log frontend output
+        if process and process.stdout:
+            for line in iter(process.stdout.readline, ''):
+                logger.info(f"FRONTEND: {line.strip()}")
 
-        process.stdout.close()
-        return_code = process.wait()
-        if return_code != 0:
-            logger.error(f"Frontend process exited with code {return_code}")
+            # Properly close stdout
+            process.stdout.close()
+
+            # Wait for process to complete
+            return_code = process.wait()
+            if return_code != 0:
+                logger.error(f"Frontend process exited with code {return_code}")
+        else:
+            logger.error("Frontend process or stdout is None")
     except Exception as e:
         logger.error(f"Error starting frontend: {e}")
 
@@ -181,7 +210,7 @@ def main():
         proxy_port = 3000      # Main application port
         frontend_port = 5173   # Vite default port
         backend_port = 8000    # FastAPI default port
-        
+
         # Make sure ports are free
         proxy_port = find_available_port(proxy_port)
         frontend_port = find_available_port(frontend_port)
@@ -190,13 +219,13 @@ def main():
         # Set environment variables
         os.environ["FRONTEND_PORT"] = str(frontend_port)
         os.environ["BACKEND_PORT"] = str(backend_port)
-        
+
         logger.info(f"Using ports - Proxy: {proxy_port}, Frontend: {frontend_port}, Backend: {backend_port}")
 
         # Start backend first to ensure API is available
         backend_thread = threading.Thread(target=start_backend, args=(backend_port,), daemon=True)
         backend_thread.start()
-        
+
         # Wait for backend to start
         time.sleep(3)
         logger.info("Backend started, now starting frontend...")
@@ -204,10 +233,12 @@ def main():
         # Start frontend with access to backend
         frontend_thread = threading.Thread(target=start_frontend, args=(frontend_port,), daemon=True)
         frontend_thread.start()
-        
-        # Wait for frontend to start
-        time.sleep(5)
-        logger.info("Frontend started, now starting proxy...")
+
+        # Wait for frontend to actually be ready instead of just sleeping
+        if wait_for_frontend(frontend_port):
+            logger.info("Frontend is ready, now starting proxy...")
+        else:
+            logger.warning("Frontend might not be fully ready, starting proxy anyway...")
 
         # Start the proxy last
         proxy_thread = threading.Thread(target=start_proxy, args=(proxy_port,))

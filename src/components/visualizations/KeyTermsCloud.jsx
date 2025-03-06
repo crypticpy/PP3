@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactWordcloud from 'react-wordcloud';
+import Cloud from 'react-d3-cloud';
 import { prepareWordCloudData } from '../../services/visualizationService';
 
 /**
@@ -11,23 +11,27 @@ import { prepareWordCloudData } from '../../services/visualizationService';
  */
 const KeyTermsCloud = ({ analysis }) => {
   const wordCloudData = prepareWordCloudData(analysis);
-  
+
+  // Transform data if needed - react-d3-cloud expects { text, value } format
+  const formattedData = wordCloudData.map(item => ({
+    text: item.text,
+    value: item.value || item.weight || 1 // Adjust based on your data structure
+  }));
+
+  const fontSizeMapper = word => Math.log2(word.value) * 5 + 12; // Scale font size (12-60)
+
+  // Configure cloud options
   const options = {
-    colors: ['#3b82f6', '#60a5fa', '#93c5fd', '#2563eb', '#1d4ed8'],
-    enableTooltip: true,
-    deterministic: false,
-    fontFamily: 'Inter, sans-serif',
-    fontSizes: [12, 60],
-    fontStyle: 'normal',
-    fontWeight: 'normal',
-    padding: 1,
-    rotations: 3,
-    rotationAngles: [0, 90],
-    scale: 'sqrt',
     spiral: 'archimedean',
-    transitionDuration: 1000,
+    random: () => 0.5, // Deterministic layout if needed
+    padding: 5,
+    rotationAngles: [0, 90],
+    rotations: 3,
+    fontFamily: 'Inter, sans-serif',
+    fontWeight: 'normal',
+    fontStyle: 'normal',
   };
-  
+
   if (!wordCloudData.length) {
     return (
       <div className="p-4 text-center text-gray-500 dark:text-gray-400">
@@ -42,7 +46,23 @@ const KeyTermsCloud = ({ analysis }) => {
         Key Terms Analysis
       </h3>
       <div className="h-64 w-full">
-        <ReactWordcloud words={wordCloudData} options={options} />
+        <Cloud
+          data={formattedData}
+          fontSizeMapper={fontSizeMapper}
+          fill={d => {
+            // Rotating through your color palette
+            const colors = ['#3b82f6', '#60a5fa', '#93c5fd', '#2563eb', '#1d4ed8'];
+            return colors[Math.floor(Math.random() * colors.length)];
+          }}
+          rotate={(word) => (word.value % 2) * 90} // Alternate between 0 and 90 degrees
+          padding={1}
+          font="Inter, sans-serif"
+          onWordClick={(word) => console.log(`Clicked on ${word.text}`)}
+          onWordMouseOver={(word) => console.log(`Mouse over ${word.text}`)}
+          onWordMouseOut={(word) => console.log(`Mouse out ${word.text}`)}
+          width={500} // Set width of SVG
+          height={250} // Set height of SVG
+        />
       </div>
       <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
         Word size indicates term relevance in the bill text
@@ -51,4 +71,4 @@ const KeyTermsCloud = ({ analysis }) => {
   );
 };
 
-export default KeyTermsCloud; 
+export default KeyTermsCloud;
