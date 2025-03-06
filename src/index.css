@@ -21,10 +21,11 @@ body {
 }
 
 .App-header {
-  background-color: #1e40af;
-  padding: 1rem 1.5rem;
+  background-color: #0a2463;
+  background-image: linear-gradient(to right, #0a2463, #1e3a8a);
+  padding: 1rem 2rem;
   color: white;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -34,37 +35,56 @@ body {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 700;
+  letter-spacing: 0.5px;
 }
 
 .App-header a {
   text-decoration: none;
 }
 
+.App-header nav a {
+  font-weight: 500;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.App-header nav a:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
 .api-status {
   margin-top: 0.5rem;
-  font-size: 0.875rem;
-  background-color: rgba(255, 255, 255, 0.1);
+  font-size: 0.75rem;
+  background-color: rgba(255, 255, 255, 0.08);
   padding: 0.25rem 0.75rem;
   border-radius: 4px;
   display: inline-block;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  font-weight: 500;
 }
 
 .status-online {
   color: #4caf50;
-  font-weight: bold;
+  font-weight: 600;
   margin-left: 0.5rem;
   padding: 0.1rem 0.5rem;
-  background-color: rgba(76, 175, 80, 0.2);
-  border-radius: 4px;
+  background-color: rgba(76, 175, 80, 0.15);
+  border-radius: 3px;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  font-size: 0.7rem;
 }
 
 .status-offline {
   color: #f44336;
-  font-weight: bold;
+  font-weight: 600;
   margin-left: 0.5rem;
   padding: 0.1rem 0.5rem;
-  background-color: rgba(244, 67, 54, 0.2);
-  border-radius: 4px;
+  background-color: rgba(244, 67, 54, 0.15);
+  border-radius: 3px;
+  border: 1px solid rgba(244, 67, 54, 0.3);
+  font-size: 0.7rem;
 }
 
 .App-content {
@@ -131,35 +151,128 @@ body {
 
 /* Landing Page Styles */
 .landing-page section {
-  padding: 4rem 0;
+  padding: 5rem 0;
 }
 
 .landing-page .hero {
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-  padding: 6rem 0;
+  background: linear-gradient(135deg, #0a2463 0%, #1e40af 70%, #3b82f6 100%);
+  padding: 7rem 0;
   color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-page .hero::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  z-index: 0;
+}
+
+.landing-page .hero-content {
+  position: relative;
+  z-index: 1;
 }
 
 .landing-page .hero h1 {
-  font-size: 3rem;
+  font-size: 3.5rem;
   font-weight: 800;
-  line-height: 1.2;
+  line-height: 1.1;
   margin-bottom: 1.5rem;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  letter-spacing: -0.5px;
 }
 
 .landing-page .hero p {
   font-size: 1.25rem;
-  margin-bottom: 2rem;
-  opacity: 0.9;
+  margin-bottom: 2.5rem;
+  opacity: 0.95;
+  max-width: 700px;
+  line-height: 1.6;
 }
 
 .landing-page .feature-card {
   height: 100%;
   transition: all 0.3s ease;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  padding: 2rem;
+  background-color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.03);
 }
 
 .landing-page .feature-card:hover {
   transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.07);
+  border-color: #d1d5db;
+}
+
+.landing-page .feature-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  background-color: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+  border-radius: 10px;
+  font-size: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.landing-page .feature-card h3 {
+  font-weight: 700;
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  color: #111827;
+}
+
+.landing-page .feature-card p {
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.cta-button {
+  display: inline-block;
+  background-color: #2563eb;
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(37, 99, 235, 0.15);
+}
+
+.cta-button:hover {
+  background-color: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 10px rgba(37, 99, 235, 0.2);
+}
+
+.cta-button-secondary {
+  display: inline-block;
+  background-color: white;
+  color: #2563eb;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border: 1px solid #d1d5db;
+  cursor: pointer;
+  margin-left: 1rem;
+}
+
+.cta-button-secondary:hover {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
 }
 
 /* Responsive adjustments */

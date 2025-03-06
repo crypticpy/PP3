@@ -47,9 +47,11 @@ function App() {
         <header className="App-header">
           <div className="container mx-auto flex justify-between items-center">
             <Link to="/" className="text-white no-underline">
-              <h1 className="text-xl md:text-2xl font-bold">PolicyPulse - The Legislative Tracker</h1>
+              <h1 className="text-xl md:text-2xl font-bold">
+                <span className="text-blue-300">Policy</span>Pulse
+              </h1>
             </Link>
-            <nav className="flex space-x-4">
+            <nav className="flex space-x-2">
               <Link to="/" className="text-white hover:text-blue-200 transition">Home</Link>
               <Link to="/dashboard" className="text-white hover:text-blue-200 transition">Dashboard</Link>
               <Link to="/status" className="text-white hover:text-blue-200 transition">Status</Link>
@@ -59,9 +61,9 @@ function App() {
             <p>
               {apiStatus.isChecking ? 'Checking API status...' : (
                 <>
-                  API Status: 
+                  SYSTEM STATUS 
                   <span className={apiStatus.isOnline ? 'status-online' : 'status-offline'}>
-                    {apiStatus.isOnline ? 'Online' : 'Offline'}
+                    {apiStatus.isOnline ? 'OPERATIONAL' : 'OFFLINE'}
                   </span>
                 </>
               )}
