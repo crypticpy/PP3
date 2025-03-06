@@ -40,6 +40,8 @@ export default defineConfig({
       host: '0.0.0.0',
       protocol: 'wss',
       timeout: 120000,
+      overlay: true,
+      reconnect: 10000, // Try to reconnect for longer
     },
     watch: {
       usePolling: true,

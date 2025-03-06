@@ -17,21 +17,37 @@ const api = axios.create({
 // Add request/response interceptors for better debugging
 api.interceptors.request.use(
   config => {
-    console.log(`Requesting ${config.method.toUpperCase()} ${config.url}`);
+    // Only log non-HMR requests to avoid console noise
+    if (!config.url.includes('__vite') && !config.url.includes('@vite')) {
+      console.log(`Requesting ${config.method.toUpperCase()} ${config.url}`);
+    }
     return config;
   },
   error => {
-    console.error('Request error:', error.message);
+    // Don't log HMR-related errors
+    if (!error.config || (!error.config.url.includes('__vite') && !error.config.url.includes('@vite'))) {
+      console.error('Request error:', error.message);
+    }
     return Promise.reject(error);
   }
 );
 
 api.interceptors.response.use(
   response => {
-    console.log(`Response from ${response.config.url}: Status ${response.status}`);
+    // Only log non-HMR responses
+    if (!response.config.url.includes('__vite') && !response.config.url.includes('@vite')) {
+      console.log(`Response from ${response.config.url}: Status ${response.status}`);
+    }
     return response;
   },
   error => {
+    // Skip logging for HMR-related errors or aborted requests
+    if (error.code === 'ERR_CANCELED' || 
+        error.message === 'canceled' || 
+        (error.config && (error.config.url.includes('__vite') || error.config.url.includes('@vite')))) {
+      return Promise.reject(error);
+    }
+
     // Get the request URL that failed
     const url = error.config ? error.config.url : 'unknown endpoint';
 

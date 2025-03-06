@@ -1,37 +1,45 @@
 
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
+// Script to remove stale WebSocket connections and clear cache
+console.log('Clearing WebSocket connections and cache...');
 
-console.log('Clearing Vite cache directories...');
-
-// Clear .vite cache directory if it exists
-const viteDir = path.join(__dirname, '.vite');
-if (fs.existsSync(viteDir)) {
-  console.log(`Removing ${viteDir}...`);
-  fs.rmSync(viteDir, { recursive: true, force: true });
-  console.log(`Successfully removed ${viteDir}`);
-} else {
-  console.log('.vite does not exist, skipping');
+// This will be executed in the browser console when needed
+function clearWsConnections() {
+  // Close any existing WebSocket connections
+  const wsKeys = Object.keys(window).filter(key => 
+    key.startsWith('ws') || 
+    (window[key] && window[key] instanceof WebSocket)
+  );
+  
+  wsKeys.forEach(key => {
+    try {
+      if (window[key] && window[key].close) {
+        window[key].close();
+        console.log(`Closed WebSocket: ${key}`);
+      }
+    } catch (e) {
+      console.error(`Error closing ${key}:`, e);
+    }
+  });
+  
+  // Clear cache if supported
+  if (window.caches) {
+    caches.keys().then(names => {
+      names.forEach(name => {
+        caches.delete(name);
+        console.log(`Deleted cache: ${name}`);
+      });
+    });
+  }
+  
+  console.log('WebSocket connections and cache cleared');
+  
+  // Reload the page after a brief delay
+  setTimeout(() => {
+    window.location.reload();
+  }, 500);
 }
 
-// Clear node_modules/.vite cache if it exists
-const nodeModulesVite = path.join(__dirname, 'node_modules', '.vite');
-if (fs.existsSync(nodeModulesVite)) {
-  console.log(`Removing node_modules/.vite...`);
-  fs.rmSync(nodeModulesVite, { recursive: true, force: true });
-  console.log(`Successfully removed node_modules/.vite`);
-} else {
-  console.log('node_modules/.vite does not exist, skipping');
+// Export the function so it can be used in the browser console
+if (typeof window !== 'undefined') {
+  window.clearWsConnections = clearWsConnections;
 }
-
-// Clean node_modules cache for React-related packages
-try {
-  console.log('Cleaning npm cache for React packages...');
-  execSync('npm cache clean --force react react-dom react-router-dom');
-  console.log('React cache cleaned');
-} catch (error) {
-  console.log('Error cleaning npm cache:', error.message);
-}
-
-console.log('Cache clearing complete!');
