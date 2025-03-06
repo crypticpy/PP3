@@ -38,11 +38,15 @@ class ProxyHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         # Forward API requests to the backend
         if self.path.startswith('/api/'):
-            backend_url = f"http://localhost:{os.environ.get('BACKEND_PORT')}{self.path}"
+            backend_url = f"http://0.0.0.0:{os.environ.get('BACKEND_PORT')}{self.path}"
             self.proxy_request(backend_url)
+        # Root path should serve the frontend
+        elif self.path == "/" or self.path == "":
+            frontend_url = f"http://0.0.0.0:{os.environ.get('FRONTEND_PORT')}/"
+            self.proxy_request(frontend_url)
         # All other requests go to the frontend
         else:
-            frontend_url = f"http://localhost:{os.environ.get('FRONTEND_PORT')}{self.path}"
+            frontend_url = f"http://0.0.0.0:{os.environ.get('FRONTEND_PORT')}{self.path}"
             self.proxy_request(frontend_url)
 
     def do_POST(self):
@@ -100,29 +104,25 @@ def start_proxy(proxy_port):
     try:
         server = HTTPServer(('0.0.0.0', proxy_port), ProxyHandler)
         logger.info(f"Starting proxy server on port {proxy_port}")
+        logger.info(f"Frontend URL: http://0.0.0.0:{os.environ.get('FRONTEND_PORT')}")
+        logger.info(f"Backend URL: http://0.0.0.0:{os.environ.get('BACKEND_PORT')}")
         server.serve_forever()
     except Exception as e:
         logger.error(f"Error starting proxy: {e}")
 
 def start_frontend(frontend_port):
     """Start the frontend application using npm."""
-    # Use the correct path to the src directory
-    frontend_dir = Path(__file__).parent / "src"
-    if not frontend_dir.exists():
-        logger.error(f"Frontend directory {frontend_dir} not found")
-        return
+    # Use the correct path to the project root
+    project_root = Path(__file__).parent
+    
+    logger.info(f"Starting frontend from project root: {project_root} on port {frontend_port}")
+    os.chdir(project_root)
 
-    logger.info(f"Starting frontend from directory {frontend_dir} on port {frontend_port}")
-    os.chdir(frontend_dir)
-
-    # Set environment variable for frontend port
+    # Set environment variables for frontend
     env = os.environ.copy()
     env["PORT"] = str(frontend_port)
-
-    # Move up to the root directory where package.json might be
-    os.chdir(Path(__file__).parent)
-    logger.info(f"Using project root: {os.getcwd()}")
-
+    env["VITE_API_URL"] = f"http://0.0.0.0:{os.environ.get('BACKEND_PORT')}"
+    
     # Run npm install with legacy-peer-deps flag to fix React version conflicts
     if not os.path.exists("node_modules") or os.path.getmtime("package.json") > os.path.getmtime("node_modules"):
         logger.info("Installing frontend dependencies with legacy-peer-deps...")
@@ -132,10 +132,10 @@ def start_frontend(frontend_port):
             logger.warning(f"npm install failed, trying with force: {e}")
             subprocess.run(["npm", "install", "--force"], check=True)
 
-    # Start npm in development mode
+    # Start npm in development mode with explicit host and port
     try:
         process = subprocess.Popen(
-            ["npm", "run", "dev", "--", "--port", str(frontend_port), "--host"],
+            ["npm", "run", "dev", "--", "--port", str(frontend_port), "--host", "0.0.0.0"],
             env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
@@ -177,29 +177,43 @@ def main():
     try:
         logger.info("Starting PolicyPulse application")
 
-        # Find available ports for services
-        proxy_port = 3000  # Keep this fixed for Replit
-        frontend_port = find_available_port(8000)  # Use a higher port for frontend
-        backend_port = find_available_port(8001)   # Use a higher port for backend
+        # Set fixed ports for better predictability on Replit
+        proxy_port = 3000      # Main application port
+        frontend_port = 5173   # Vite default port
+        backend_port = 8000    # FastAPI default port
+        
+        # Make sure ports are free
+        proxy_port = find_available_port(proxy_port)
+        frontend_port = find_available_port(frontend_port)
+        backend_port = find_available_port(backend_port)
 
         # Set environment variables
         os.environ["FRONTEND_PORT"] = str(frontend_port)
         os.environ["BACKEND_PORT"] = str(backend_port)
+        
+        logger.info(f"Using ports - Proxy: {proxy_port}, Frontend: {frontend_port}, Backend: {backend_port}")
 
-        # Start services in separate threads
-        frontend_thread = threading.Thread(target=start_frontend, args=(frontend_port,), daemon=True)
+        # Start backend first to ensure API is available
         backend_thread = threading.Thread(target=start_backend, args=(backend_port,), daemon=True)
-        proxy_thread = threading.Thread(target=start_proxy, args=(proxy_port,))
-
-        frontend_thread.start()
-        # Short delay to ensure frontend starts
-        time.sleep(2)
         backend_thread.start()
-        time.sleep(2)
+        
+        # Wait for backend to start
+        time.sleep(3)
+        logger.info("Backend started, now starting frontend...")
+
+        # Start frontend with access to backend
+        frontend_thread = threading.Thread(target=start_frontend, args=(frontend_port,), daemon=True)
+        frontend_thread.start()
+        
+        # Wait for frontend to start
+        time.sleep(5)
+        logger.info("Frontend started, now starting proxy...")
+
         # Start the proxy last
+        proxy_thread = threading.Thread(target=start_proxy, args=(proxy_port,))
         proxy_thread.start()
 
-        # Wait for the proxy thread to finish (which it won't unless there's an error)
+        # Wait for the proxy thread to finish
         proxy_thread.join()
 
     except KeyboardInterrupt:
