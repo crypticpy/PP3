@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
@@ -8,14 +9,7 @@ import NotFound from './pages/NotFound';
 import { UserPreferencesProvider } from './context/UserPreferencesContext';
 import { NotificationProvider } from './context/NotificationContext';
 import UserPreferences from './pages/UserPreferences';
-
-function HealthCheck() {
-  return (
-    <div>
-      <p>Checking backend health...</p> {/* Placeholder - Replace with actual health check */}
-    </div>
-  );
-}
+import HealthCheck from './components/HealthCheck';
 
 function App() {
   return (
