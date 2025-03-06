@@ -47,7 +47,7 @@ const HealthCheck = () => {
            status === 'checking' ? 'Checking Connection...' : 'Connection Error'}
         </span>
       </div>
-      
+
       {error && (
         <div className="error-details mt-2 p-3 bg-red-50 border border-red-200 rounded text-sm">
           <p className="font-bold mb-1">Error Details:</p>

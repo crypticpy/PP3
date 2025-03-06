@@ -1,14 +1,11 @@
 import axios from 'axios';
 
-// Get the API base URL from environment variables or default to the backend
+// Get API URL from environment variables
 const API_URL = import.meta.env.VITE_API_URL || 'http://0.0.0.0:8000';
 
-// Create axios instance with base configuration
+// Create a configured axios instance
 const apiClient = axios.create({
   baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
   timeout: 10000, // 10 seconds timeout
 });
 
@@ -17,8 +14,7 @@ const apiService = {
   // Health check
   healthCheck: async () => {
     try {
-      const response = await apiClient.get('/');
-      return { status: 'online', data: response.data };
+      return await apiClient.get('/health');
     } catch (error) {
       console.error('Health check failed:', error);
       throw error;
@@ -34,72 +30,16 @@ const apiService = {
     apiClient.get('/api/legislation/relevant', { params: { type, min_score: minScore, limit } }),
 
   // Analysis endpoints
-  getLegislationAnalysis: (id) => apiClient.get(`/api/analysis/${id}`),
-  requestAnalysis: (id) => apiClient.post(`/api/analysis/request/${id}`),
-
-  // User preferences
-  getUserPreferences: () => apiClient.get('/api/user/preferences'),
-  updateUserPreferences: (preferences) => apiClient.post('/api/user/preferences', preferences),
-
-  // Notifications
-  getNotifications: () => apiClient.get('/api/notifications'),
-  markNotificationRead: (id) => apiClient.post(`/api/notifications/${id}/read`),
-  markAllNotificationsRead: () => apiClient.post('/api/notifications/read-all'),
+  getAnalysis: (id) => apiClient.get(`/api/legislation/${id}/analysis`),
+  triggerAnalysis: (id, options) => apiClient.post(`/api/legislation/${id}/analysis`, options),
 
   // Dashboard data
-  getDashboardStats: () => apiClient.get('/api/dashboard/stats'),
-
-  // Mock data for development
-  getMockLegislation: () => {
-    console.warn('Using mock legislation data');
-    return Promise.resolve({
-      data: {
-        
-      }
-    });
-  },
-
-  getMockAnalysis: () => {
-    console.warn('Using mock analysis data');
-    return Promise.resolve({
-      data: {
-        
-      }
-    });
-  }
+  getDashboardStats: () => apiClient.get('/api/dashboard/stats')
 };
 
-// Bill service for bill-related API calls
+// Legacy service - can be removed if not used elsewhere
 const billService = {
-  getAllBills: async (params = {}) => {
-    try {
-      const response = await apiClient.get('/api/bills', { params });
-      return response.data;
-    } catch (error) {
-      console.error('Failed to fetch bills:', error);
-      throw error;
-    }
-  },
-
-  getBillById: async (billId) => {
-    try {
-      const response = await apiClient.get(`/api/bills/${billId}`);
-      return response.data;
-    } catch (error) {
-      console.error(`Failed to fetch bill ${billId}:`, error);
-      throw error;
-    }
-  },
-
-  getBillAnalysis: async (billId) => {
-    try {
-      const response = await apiClient.get(`/api/bills/${billId}/analysis`);
-      return response.data;
-    } catch (error) {
-      console.error(`Failed to fetch analysis for bill ${billId}:`, error);
-      throw error;
-    }
-  }
+  getBill: (id) => apiClient.get(`/bills/${id}`)
 };
 
 export { apiService, billService };
