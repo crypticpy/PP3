@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+// The base URL that matches the backend configuration
 const API_BASE_URL = '/api';
 
 // Complete list of endpoints from app/api.py
@@ -14,8 +15,8 @@ export const API_ENDPOINTS = [
 
   // Legislation endpoints
   { name: "Legislation List", path: "/legislation", method: "GET" },
-  { name: "Legislation Detail", path: "/legislation/1", method: "GET", expectedStatus: [200, 404] },
-  { name: "Legislation Search", path: "/legislation/search", method: "GET", expectedStatus: [200, 422], params: { keywords: "test" } },
+  { name: "Legislation Detail", path: "/legislation/1", method: "GET" },
+  { name: "Legislation Search", path: "/legislation/search", method: "GET", params: { keywords: "test" } },
 
   // Texas-specific endpoints
   { name: "Texas Health Legislation", path: "/texas/health-legislation", method: "GET" },
@@ -23,8 +24,8 @@ export const API_ENDPOINTS = [
 
   // Bills endpoints
   { name: "Bills List", path: "/bills/", method: "GET" },
-  { name: "Bill Detail", path: "/bills/1", method: "GET", expectedStatus: [200, 404] },
-  { name: "Bill Analysis", path: "/bills/1/analysis", method: "GET", expectedStatus: [200, 404] },
+  { name: "Bill Detail", path: "/bills/1", method: "GET" },
+  { name: "Bill Analysis", path: "/bills/1/analysis", method: "GET" },
 
   // States endpoint
   { name: "States List", path: "/states/", method: "GET" },
