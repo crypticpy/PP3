@@ -2196,10 +2196,16 @@ class BillStore:
     This class provides methods for storing and retrieving bills.
     """
     
-    def __init__(self):
-        """Initialize an empty bills store."""
+    def __init__(self, db_session=None):
+        """
+        Initialize a bills store.
+        
+        Args:
+            db_session: SQLAlchemy database session (optional)
+        """
         self.bills = {}
         self.next_id = 1
+        self.db_session = db_session
     
     def get_bills(self, state=None, keyword=None, limit=50, offset=0):
         """
