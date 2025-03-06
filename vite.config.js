@@ -14,16 +14,23 @@ export default defineConfig({
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, ''),
         configure: (proxy, options) => {
+          // Log all proxy errors with more detail
           proxy.on('error', (err, req, res) => {
-            console.error('Proxy error:', err);
+            console.error(`Proxy error for ${req.method} ${req.url}:`, err.message);
           });
+          
+          // Log outgoing proxy requests with full path
           proxy.on('proxyReq', (proxyReq, req, res) => {
-            console.log(`Proxying ${req.method} ${req.url} to ${proxyReq.host}${proxyReq.path}`);
+            console.log(`Proxying ${req.method} ${req.url} to http://0.0.0.0:8000${proxyReq.path}`);
           });
+          
+          // Log incoming proxy responses with status code
           proxy.on('proxyRes', (proxyRes, req, res) => {
-            console.log(`Received response from proxy: ${proxyRes.statusCode}`);
+            console.log(`Received response from proxy: ${proxyRes.statusCode} for ${req.method} ${req.url}`);
           });
-        }
+        },
+        // Increase timeout for slow responses
+        timeout: 30000
       },
     },
     cors: true,
