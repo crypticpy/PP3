@@ -1611,7 +1611,7 @@ def get_sync_status(
 @log_api_call
 def trigger_sync(
     force: bool = False,
-    background_tasks: Optional[BackgroundTasks] = None,
+    background_tasks: BackgroundTasks,
     api: LegiScanAPI = Depends(get_legiscan_api)
 ):
     """
@@ -1632,8 +1632,7 @@ def trigger_sync(
         DatabaseOperationError: status.HTTP_500_INTERNAL_SERVER_ERROR,
         Exception: status.HTTP_500_INTERNAL_SERVER_ERROR
     }):
-        # Run sync in background if background_tasks is available
-        if background_tasks:
+        # Run sync in background
             async def run_sync_task():
                 try:
                     api.run_sync(sync_type="manual")
