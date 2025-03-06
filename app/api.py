@@ -1341,8 +1341,8 @@ def advanced_search(
 @log_api_call
 def analyze_legislation_ai(
     leg_id: int,
+    background_tasks: BackgroundTasks,
     options: Optional[AnalysisOptions] = None,
-    background_tasks: BackgroundTasks, #Corrected
     analyzer: AIAnalysis = Depends(get_ai_analyzer),
     store: DataStore = Depends(get_data_store)
 ):
