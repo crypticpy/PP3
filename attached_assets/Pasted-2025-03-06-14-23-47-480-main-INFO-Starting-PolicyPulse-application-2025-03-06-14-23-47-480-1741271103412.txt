@@ -1,0 +1,178 @@
+2025-03-06 14:23:47,480 - __main__ - INFO - Starting PolicyPulse application
+2025-03-06 14:23:47,480 - __main__ - INFO - Port 3000 is available
+2025-03-06 14:23:47,480 - __main__ - INFO - Port 5173 is available
+2025-03-06 14:23:47,480 - __main__ - INFO - Port 8000 is available
+2025-03-06 14:23:47,480 - __main__ - INFO - Using ports - Proxy: 3000, Frontend: 5173, Backend: 8000
+2025-03-06 14:23:48,832 - __main__ - INFO - Starting backend on port 8000
+INFO:     Started server process [661]
+INFO:     Waiting for application startup.
+2025-03-06 14:23:50,175 - app.models - INFO - Database connection established successfully
+2025-03-06 14:23:50,481 - __main__ - INFO - Backend started, now starting frontend...
+2025-03-06 14:23:50,481 - __main__ - INFO - Starting frontend from project root: /home/runner/workspace on port 5173
+2025-03-06 14:23:50,485 - __main__ - INFO - Waiting for frontend to start (attempt 1/30)...
+2025-03-06 14:23:50,628 - __main__ - INFO - FRONTEND: 
+2025-03-06 14:23:50,628 - __main__ - INFO - FRONTEND: > legiscan-frontend@0.1.0 dev
+2025-03-06 14:23:50,628 - __main__ - INFO - FRONTEND: > vite --port 5173 --host 0.0.0.0
+2025-03-06 14:23:50,628 - __main__ - INFO - FRONTEND: 
+2025-03-06 14:23:50,868 - __main__ - INFO - FRONTEND: Forced re-optimization of dependencies
+2025-03-06 14:23:50,919 - __main__ - INFO - FRONTEND: 
+2025-03-06 14:23:50,919 - __main__ - INFO - FRONTEND: VITE v4.5.9  ready in 241 ms
+2025-03-06 14:23:50,919 - __main__ - INFO - FRONTEND: 
+2025-03-06 14:23:50,920 - app.models - INFO - Database schema created or verified successfully
+2025-03-06 14:23:50,920 - __main__ - INFO - FRONTEND: ➜  Local:   http://localhost:5173/
+2025-03-06 14:23:50,920 - __main__ - INFO - FRONTEND: ➜  Network: http://172.31.128.82:5173/
+2025-03-06 14:23:50,921 - __main__ - INFO - FRONTEND: ➜  press h to show help
+2025-03-06 14:23:51,002 - app.data_store - INFO - Database session established successfully.
+2025-03-06 14:23:51,002 - app.api - INFO - Services initialized on startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     172.31.128.82:53930 - "GET / HTTP/1.1" 200 OK
+2025-03-06 14:23:51,959 - __main__ - INFO - Frontend is ready after 2 attempts
+2025-03-06 14:23:51,959 - __main__ - INFO - Frontend is ready, now starting proxy...
+2025-03-06 14:23:51,960 - __main__ - INFO - Starting proxy server on port 3000
+2025-03-06 14:23:51,961 - __main__ - INFO - Frontend URL: http://0.0.0.0:5173
+2025-03-06 14:23:51,961 - __main__ - INFO - Backend URL: http://0.0.0.0:8000
+2025-03-06 14:23:51,961 - __main__ - INFO - Main application URL: http://0.0.0.0:3000
+
+==== PolicyPulse Application Started ====
+Access the application at: http://0.0.0.0:3000
+If you see connection issues in the browser, try accessing:
+  - Frontend directly: http://0.0.0.0:5173
+  - Backend directly: http://0.0.0.0:8000
+=========================================
+
+2025-03-06 14:23:52,508 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/
+2025-03-06 14:23:52,714 - __main__ - INFO - Received response: 304
+172.31.128.82 - - [06/Mar/2025 14:23:52] "GET / HTTP/1.1" 304 -
+2025-03-06 14:23:53,006 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/@vite/client
+2025-03-06 14:23:53,228 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:53] "GET /@vite/client HTTP/1.1" 200 -
+2025-03-06 14:23:53,229 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/src/main.jsx
+2025-03-06 14:23:53,626 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:53] "GET /src/main.jsx HTTP/1.1" 200 -
+2025-03-06 14:23:53,626 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/@react-refresh
+2025-03-06 14:23:53,642 - __main__ - INFO - Received response: 304
+172.31.128.82 - - [06/Mar/2025 14:23:53] "GET /@react-refresh HTTP/1.1" 304 -
+2025-03-06 14:23:53,643 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/node_modules/vite/dist/client/env.mjs
+2025-03-06 14:23:53,649 - __main__ - INFO - Received response: 304
+172.31.128.82 - - [06/Mar/2025 14:23:53] "GET /node_modules/vite/dist/client/env.mjs HTTP/1.1" 304 -
+2025-03-06 14:23:53,740 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=9db7a574
+2025-03-06 14:23:55,682 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:55] "GET /node_modules/.vite/deps/react_jsx-dev-runtime.js?v=9db7a574 HTTP/1.1" 200 -
+2025-03-06 14:23:55,682 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/node_modules/.vite/deps/react.js?v=9db7a574
+2025-03-06 14:23:55,700 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:55] "GET /node_modules/.vite/deps/react.js?v=9db7a574 HTTP/1.1" 200 -
+2025-03-06 14:23:55,701 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/node_modules/.vite/deps/react-dom_client.js?v=275060d4
+2025-03-06 14:23:55,762 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:55] "GET /node_modules/.vite/deps/react-dom_client.js?v=275060d4 HTTP/1.1" 200 -
+2025-03-06 14:23:55,763 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/node_modules/.vite/deps/react-router-dom.js?v=9db7a574
+2025-03-06 14:23:55,798 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:55] "GET /node_modules/.vite/deps/react-router-dom.js?v=9db7a574 HTTP/1.1" 200 -
+2025-03-06 14:23:55,799 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/src/index.css
+2025-03-06 14:23:55,867 - __main__ - INFO - Received response: 304
+172.31.128.82 - - [06/Mar/2025 14:23:55] "GET /src/index.css HTTP/1.1" 304 -
+2025-03-06 14:23:55,868 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/src/App.jsx
+2025-03-06 14:23:55,870 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:55] "GET /src/App.jsx HTTP/1.1" 200 -
+2025-03-06 14:23:55,871 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/node_modules/.vite/deps/chunk-K5YNGTCN.js?v=5f82c31c
+2025-03-06 14:23:55,872 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:55] "GET /node_modules/.vite/deps/chunk-K5YNGTCN.js?v=5f82c31c HTTP/1.1" 200 -
+2025-03-06 14:23:55,873 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/node_modules/.vite/deps/chunk-ZC22LKFR.js?v=5f82c31c
+2025-03-06 14:23:55,875 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:55] "GET /node_modules/.vite/deps/chunk-ZC22LKFR.js?v=5f82c31c HTTP/1.1" 200 -
+2025-03-06 14:23:55,964 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/node_modules/.vite/deps/chunk-LAV6FB6A.js?v=5f82c31c
+2025-03-06 14:23:55,971 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:55] "GET /node_modules/.vite/deps/chunk-LAV6FB6A.js?v=5f82c31c HTTP/1.1" 200 -
+2025-03-06 14:23:56,061 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/src/components/Layout.jsx
+2025-03-06 14:23:56,063 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /src/components/Layout.jsx HTTP/1.1" 200 -
+2025-03-06 14:23:56,064 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/src/pages/Dashboard.jsx
+2025-03-06 14:23:56,065 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /src/pages/Dashboard.jsx HTTP/1.1" 200 -
+2025-03-06 14:23:56,066 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/src/pages/BillList.jsx
+2025-03-06 14:23:56,067 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /src/pages/BillList.jsx HTTP/1.1" 200 -
+2025-03-06 14:23:56,171 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/src/pages/BillDetail.jsx
+2025-03-06 14:23:56,174 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /src/pages/BillDetail.jsx HTTP/1.1" 200 -
+2025-03-06 14:23:56,174 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/src/pages/NotFound.jsx
+2025-03-06 14:23:56,176 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /src/pages/NotFound.jsx HTTP/1.1" 200 -
+2025-03-06 14:23:56,180 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/src/context/UserPreferencesContext.jsx
+2025-03-06 14:23:56,182 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /src/context/UserPreferencesContext.jsx HTTP/1.1" 200 -
+2025-03-06 14:23:56,208 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/src/context/NotificationContext.jsx
+2025-03-06 14:23:56,210 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /src/context/NotificationContext.jsx HTTP/1.1" 200 -
+2025-03-06 14:23:56,250 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/src/pages/UserPreferences.jsx
+2025-03-06 14:23:56,252 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /src/pages/UserPreferences.jsx HTTP/1.1" 200 -
+2025-03-06 14:23:56,276 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/src/components/Header.jsx
+2025-03-06 14:23:56,277 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /src/components/Header.jsx HTTP/1.1" 200 -
+2025-03-06 14:23:56,290 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/src/components/Sidebar.jsx
+2025-03-06 14:23:56,291 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /src/components/Sidebar.jsx HTTP/1.1" 200 -
+2025-03-06 14:23:56,318 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/src/components/Footer.jsx
+2025-03-06 14:23:56,320 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /src/components/Footer.jsx HTTP/1.1" 200 -
+2025-03-06 14:23:56,351 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/src/services/api.js
+2025-03-06 14:23:56,353 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /src/services/api.js HTTP/1.1" 200 -
+2025-03-06 14:23:56,379 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/src/components/SearchBar.jsx
+2025-03-06 14:23:56,381 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /src/components/SearchBar.jsx HTTP/1.1" 200 -
+2025-03-06 14:23:56,395 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/src/components/BillSearchResults.jsx
+2025-03-06 14:23:56,397 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /src/components/BillSearchResults.jsx HTTP/1.1" 200 -
+2025-03-06 14:23:56,423 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/node_modules/.vite/deps/react-toastify.js?v=4e86c66f
+2025-03-06 14:23:56,425 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /node_modules/.vite/deps/react-toastify.js?v=4e86c66f HTTP/1.1" 200 -
+2025-03-06 14:23:56,451 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/node_modules/.vite/deps/react-icons_fa.js?v=9b470119
+2025-03-06 14:23:56,457 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /node_modules/.vite/deps/react-icons_fa.js?v=9b470119 HTTP/1.1" 200 -
+2025-03-06 14:23:56,467 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/src/components/notifications/NotificationPreferences.jsx
+2025-03-06 14:23:56,469 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /src/components/notifications/NotificationPreferences.jsx HTTP/1.1" 200 -
+2025-03-06 14:23:56,513 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/node_modules/.vite/deps/axios.js?v=a63fcfc4
+2025-03-06 14:23:56,514 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /node_modules/.vite/deps/axios.js?v=a63fcfc4 HTTP/1.1" 200 -
+2025-03-06 14:23:56,540 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/src/components/analysis/AnalysisDashboard.jsx
+2025-03-06 14:23:56,542 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /src/components/analysis/AnalysisDashboard.jsx HTTP/1.1" 200 -
+2025-03-06 14:23:56,579 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/src/components/visualizations/VisualizationDashboard.jsx
+2025-03-06 14:23:56,580 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /src/components/visualizations/VisualizationDashboard.jsx HTTP/1.1" 200 -
+2025-03-06 14:23:56,588 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/node_modules/.vite/deps/chunk-VWEXWPKA.js?v=5f82c31c
+2025-03-06 14:23:56,589 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /node_modules/.vite/deps/chunk-VWEXWPKA.js?v=5f82c31c HTTP/1.1" 200 -
+2025-03-06 14:23:56,661 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/src/components/analysis/AnalysisSummary.jsx
+2025-03-06 14:23:56,666 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /src/components/analysis/AnalysisSummary.jsx HTTP/1.1" 200 -
+2025-03-06 14:23:56,667 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/src/components/analysis/SentimentAnalysis.jsx
+2025-03-06 14:23:56,668 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /src/components/analysis/SentimentAnalysis.jsx HTTP/1.1" 200 -
+2025-03-06 14:23:56,669 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/src/components/analysis/TopicsAnalysis.jsx
+2025-03-06 14:23:56,675 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /src/components/analysis/TopicsAnalysis.jsx HTTP/1.1" 200 -
+2025-03-06 14:23:56,678 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/src/components/analysis/StakeholderImpact.jsx
+2025-03-06 14:23:56,680 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /src/components/analysis/StakeholderImpact.jsx HTTP/1.1" 200 -
+2025-03-06 14:23:56,685 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/node_modules/.vite/deps/@headlessui_react.js?v=61789fa4
+2025-03-06 14:23:56,688 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /node_modules/.vite/deps/@headlessui_react.js?v=61789fa4 HTTP/1.1" 200 -
+2025-03-06 14:23:56,778 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/node_modules/.vite/deps/@mui_material.js?v=d7e12eb1
+2025-03-06 14:23:56,787 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /node_modules/.vite/deps/@mui_material.js?v=d7e12eb1 HTTP/1.1" 200 -
+2025-03-06 14:23:56,789 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/src/components/analysis/AnalysisVisualization.jsx
+2025-03-06 14:23:56,791 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /src/components/analysis/AnalysisVisualization.jsx HTTP/1.1" 200 -
+2025-03-06 14:23:56,792 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/node_modules/.vite/deps/@mui_icons-material.js?v=ee9c7de1
+2025-03-06 14:23:56,810 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:56] "GET /node_modules/.vite/deps/@mui_icons-material.js?v=ee9c7de1 HTTP/1.1" 200 -
+2025-03-06 14:23:57,047 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/node_modules/.vite/deps/chunk-63LPHY32.js?v=5f82c31c
+2025-03-06 14:23:57,052 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:57] "GET /node_modules/.vite/deps/chunk-63LPHY32.js?v=5f82c31c HTTP/1.1" 200 -
+2025-03-06 14:23:57,052 - __main__ - INFO - Proxying GET request to: http://0.0.0.0:5173/node_modules/.vite/deps/chunk-TOXUORXJ.js?v=5f82c31c
+2025-03-06 14:23:57,054 - __main__ - INFO - Received response: 200
+172.31.128.82 - - [06/Mar/2025 14:23:57] "GET /node_modules/.vite/deps/chunk-TOXUORXJ.js?v=5f82c31c HTTP/1.1" 200 -
