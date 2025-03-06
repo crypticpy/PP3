@@ -42,7 +42,7 @@ from contextlib import asynccontextmanager
 
 # 1) Import your custom modules
 from data_store import DataStore, ConnectionError, ValidationError, DatabaseOperationError, BillStore
-from ai_analysis import AIAnalysis, analyze_bill
+from app.ai_analysis.analyzer import AIAnalysis # Changed import statement
 from legiscan_api import LegiScanAPI
 from models import (
     BillStatusEnum,
@@ -80,7 +80,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         if not data_store.db_session:
             raise ValueError("Database session is not initialized")
 
-        ai_analyzer = AIAnalysis(db_session=data_store.db_session)
+        # ai_analyzer = AIAnalysis(db_session=data_store.db_session)  Commented out to make AIAnalysis on-demand
         legiscan_api = LegiScanAPI(db_session=data_store.db_session, api_key=os.getenv("LEGISCAN_API_KEY"))
         logger.info("Services initialized on startup.")
     except Exception as e:
@@ -1344,7 +1344,6 @@ def analyze_legislation_ai(
     leg_id: int,
     background_tasks: BackgroundTasks,
     options: Optional[AnalysisOptions] = None,
-    analyzer: AIAnalysis = Depends(get_ai_analyzer),
     store: DataStore = Depends(get_data_store)
 ):
     """
@@ -1354,7 +1353,6 @@ def analyze_legislation_ai(
         leg_id: Legislation ID to analyze
         options: Optional analysis parameters
         background_tasks: FastAPI background tasks for async processing
-        analyzer: AIAnalysis instance
         store: DataStore instance
 
     Returns:
@@ -1391,11 +1389,14 @@ def analyze_legislation_ai(
         if options is None:
             options = AnalysisOptions(deep_analysis=False, texas_focus=True, focus_areas=None, model_name=None)
 
+        # Create AIAnalysis instance on demand
+        ai_analyzer = AIAnalysis(db_session=store.db_session)
+
         # Asynchronous processing if requested and background_tasks available
         if options.deep_analysis:
             async def run_analysis_task():
                 try:
-                    analyzer.analyze_legislation(legislation_id=leg_id)
+                    ai_analyzer.analyze_legislation(legislation_id=leg_id)
                 except Exception as e:
                     logger.error(f"Error in background analysis task for legislation ID={leg_id}: {e}", exc_info=True)
 
@@ -1412,10 +1413,10 @@ def analyze_legislation_ai(
         try:
             # Set model parameters if needed
             if hasattr(options, "model_name") and options.model_name:
-                analyzer.model_name = options.get("model_name", "default_model") if isinstance(options, dict) else "default_model"  # type: ignore
+                ai_analyzer.model_name = options.get("model_name", "default_model") if isinstance(options, dict) else "default_model"  # type: ignore
 
             # Run analysis
-            analysis_obj = analyzer.analyze_legislation(legislation_id=leg_id)
+            analysis_obj = ai_analyzer.analyze_legislation(legislation_id=leg_id)
 
             return {
                 "status": "completed",
@@ -1706,7 +1707,7 @@ async def get_bill(bill_id: int):
         raise HTTPException(status_code=500, detail=f"Error retrieving bill: {str(e)}")
 
 @app.get("/bills/{bill_id}/analysis", response_model=AnalysisResult)
-async def get_bill_analysis(bill_id: int):
+async def get_bill_analysis(bill_id: int, store: DataStore = Depends(get_data_store)):
     """
     Get AI analysis for a specific bill.
     """
@@ -1731,8 +1732,11 @@ async def get_bill_analysis(bill_id: int):
                 logger.error(f"Error fetching bill text from LegiScan: {str(e)}")
                 raise HTTPException(status_code=404, detail="Bill text not available")
 
+        # Create AIAnalysis instance on demand
+        ai_analyzer = AIAnalysis(db_session=store.db_session)
+
         # Analyze the bill
-        analysis = analyze_bill(
+        analysis = ai_analyzer.analyze_bill(
             bill_text=bill["text"],
             bill_title=bill.get("title"),
             state=bill.get("state")
@@ -1775,7 +1779,6 @@ async def refresh_data(state: Optional[str] = None):
 async def analyze_legislation_ai_async(
     leg_id: int,
     options: Optional[AnalysisOptions] = None,
-    analyzer: AIAnalysis = Depends(get_ai_analyzer),
     store: DataStore = Depends(get_data_store)
 ):
     """
@@ -1784,7 +1787,6 @@ async def analyze_legislation_ai_async(
     Args:
         leg_id: Legislation ID to analyze
         options: Optional analysis parameters
-        analyzer: AIAnalysis instance
         store: DataStore = Depends(get_data_store)
 
     Returns:
@@ -1816,12 +1818,15 @@ async def analyze_legislation_ai_async(
                 model_name=None
             )
 
+        # Create AIAnalysis instance on demand
+        ai_analyzer = AIAnalysis(db_session=store.db_session)
+
         try:
             if hasattr(options, "model_name") and options.model_name:
-                analyzer.model_name = options.get("model_name", "default_model") if isinstance(options, dict) else "default_model"  # type: ignore
+                ai_analyzer.model_name = options.get("model_name", "default_model") if isinstance(options, dict) else "default_model"  # type: ignore
 
             # Run analysis asynchronously
-            analysis_obj = await analyzer.analyze_legislation_async(legislation_id=leg_id)
+            analysis_obj = await ai_analyzer.analyze_legislation_async(legislation_id=leg_id)
 
             return {
                 "status": "completed",
@@ -1841,7 +1846,7 @@ async def analyze_legislation_ai_async(
 async def batch_analyze_legislation(
     legislation_ids: List[int], 
     max_concurrent: int = Query(5, ge=1, le=10, description="Maximum number of concurrent analyses"),
-    analyzer: AIAnalysis = Depends(get_ai_analyzer)
+    store: DataStore = Depends(get_data_store)
 ):
     """
     Analyze multiple pieces of legislation in parallel.
@@ -1849,7 +1854,7 @@ async def batch_analyze_legislation(
     Args:
         legislation_ids: List of legislation IDs to analyze
         max_concurrent: Maximum number of concurrent analyses
-        analyzer: AIAnalysis instance
+        store: DataStore instance
 
     Returns:
         Results of batch analysis
@@ -1865,9 +1870,12 @@ async def batch_analyze_legislation(
         if len(legislation_ids) > 50:  # Set a reasonable limit
             raise ValidationError("Too many legislation IDs (maximum 50)")
 
+        # Create AIAnalysis instance on demand
+        ai_analyzer = AIAnalysis(db_session=store.db_session)
+
         # Run batch analysis
         try:
-            results = await analyzer.batch_analyze_async(legislation_ids, max_concurrent)
+            results = await ai_analyzer.batch_analyze_async(legislation_ids, max_concurrent)
             return results
         except Exception as e:
             logger.error(f"Error in batch analysis: {e}", exc_info=True)

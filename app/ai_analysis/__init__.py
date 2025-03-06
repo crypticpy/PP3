@@ -66,7 +66,8 @@ def analyze_legislation(legislation_id: int):
 
 def analyze_bill(bill_text: str,
                  bill_title: Optional[str] = None,
-                 state: Optional[str] = None) -> Dict[str, Any]:
+                 state: Optional[str] = None,
+                 db_session=None) -> Dict[str, Any]:
     """
     Convenience function to analyze a bill.
 
@@ -74,14 +75,26 @@ def analyze_bill(bill_text: str,
         bill_text (str): The text content of the bill
         bill_title (str, optional): The title of the bill
         state (str, optional): The state where the bill was introduced
+        db_session (Session, optional): Database session to use
 
     Returns:
         dict: Analysis results
     """
-    if not analyzer:
-        raise AIAnalysisError(
-            "AIAnalysis singleton not initialized. Create an instance first.")
-    return analyzer.analyze_bill(bill_text, bill_title, state)
+    # Create a new analyzer instance just for this analysis
+    # rather than relying on a global singleton
+    from app.models import init_db
+    if not db_session:
+        db_session_factory = init_db()
+        db_session = db_session_factory()
+    
+    try:
+        from .analyzer import AIAnalysis
+        temp_analyzer = AIAnalysis(db_session=db_session)
+        return temp_analyzer.analyze_bill(bill_text, bill_title, state)
+    finally:
+        # Don't close the session if it was passed in
+        if db_session and not db_session.is_active and not locals().get('db_session'):
+            db_session.close()
 
 
 # New async convenience functions

@@ -1,36 +1,48 @@
-#!/usr/bin/env python
-"""
-PolicyPulse main run script.
-Initializes and runs the API server for the PolicyPulse application.
-"""
 
 import os
+import sys
 import logging
-import argparse
-from app.run_api import start_api_server
-from app.scheduler import PolicyPulseScheduler
+import uvicorn
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 
 # Configure logging
 logging.basicConfig(level=logging.INFO,
-                   format='%(asctime)s [%(levelname)s] %(name)s - %(message)s')
+                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 def main():
-    """Main entry point for the PolicyPulse application."""
-    parser = argparse.ArgumentParser(description="Run the PolicyPulse application.")
-    parser.add_argument('--port', type=int, default=3000, help='Port to run the API server on')
-    parser.add_argument('--host', type=str, default='0.0.0.0', help='Host to run the API server on')
-    parser.add_argument('--scheduler', action='store_true', help='Run with background scheduler')
-
-    args = parser.parse_args()
-
-    if args.scheduler:
-        logger.info("Starting PolicyPulse with background scheduler")
-        scheduler = PolicyPulseScheduler()
-        scheduler.start()
-
-    logger.info(f"Starting PolicyPulse API server on {args.host}:{args.port}")
-    start_api_server(host=args.host, port=args.port)
+    try:
+        logger.info("Starting PolicyPulse application")
+        
+        # Import app only after logging is configured
+        from app.api import app
+        
+        # Add CORS middleware
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],  # In production, specify your frontend domain
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+        
+        # Mount static files if needed
+        try:
+            app.mount("/static", StaticFiles(directory="static"), name="static")
+        except:
+            logger.warning("No static directory found, skipping static file mounting")
+        
+        # Start the server
+        host = os.environ.get("HOST", "0.0.0.0")
+        port = int(os.environ.get("PORT", 3000))
+        
+        logger.info(f"Starting server on {host}:{port}")
+        uvicorn.run(app, host=host, port=port)
+    except Exception as e:
+        logger.error(f"Error starting application: {e}", exc_info=True)
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
