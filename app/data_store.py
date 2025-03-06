@@ -32,7 +32,7 @@ from sqlalchemy import or_, and_, text, func, desc, asc
 from sqlalchemy.orm import Session, joinedload
 
 # Import models and DB initialization function
-from models import (
+from app.models import (
     init_db,
     User,
     UserPreference,
@@ -50,13 +50,13 @@ from models import (
 )
 
 try:
-    from models import LegislationPriority
+    from app.models import LegislationPriority
     HAS_PRIORITY_MODEL = True
 except ImportError:
     HAS_PRIORITY_MODEL = False
 
 try:
-    from models import ImpactRating, ImplementationRequirement
+    from app.models import ImpactRating, ImplementationRequirement
     HAS_IMPACT_MODELS = True
 except ImportError:
     HAS_IMPACT_MODELS = False
