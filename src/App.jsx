@@ -6,6 +6,8 @@ import { healthCheck } from './services/api';
 import LandingPage from './components/LandingPage';
 import StatusPage from './components/StatusPage';
 import ApiEndpointsStatus from './components/ApiEndpointsStatus';
+import Dashboard from './components/Dashboard';
+import BillsPage from './components/BillsPage';
 
 function App() {
   const [apiStatus, setApiStatus] = useState({
@@ -54,6 +56,7 @@ function App() {
             <nav className="flex space-x-4">
               <Link to="/" className="text-white hover:text-blue-200 transition px-3 py-2">Home</Link>
               <Link to="/dashboard" className="text-white hover:text-blue-200 transition px-3 py-2">Dashboard</Link>
+              <Link to="/bills" className="text-white hover:text-blue-200 transition px-3 py-2">Bills</Link>
               <Link to="/status" className="text-white hover:text-blue-200 transition px-3 py-2">Status</Link>
             </nav>
           </div>
@@ -76,15 +79,17 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/status" element={<StatusPage />} />
             <Route path="/dashboard" element={
-              apiStatus.isOnline ? (
-                <div className="mt-8 p-4 bg-white rounded-lg shadow">
-                  <h2 className="text-2xl font-bold mb-4">API Dashboard</h2>
-                  <p className="mb-4">Welcome to the Policy Pulse Legislative Tracker. Below you can see the status of all API endpoints.</p>
-                  <ApiEndpointsStatus />
-                </div>
-              ) : (
+              apiStatus.isOnline ? <Dashboard /> : (
                 <div className="mt-8 p-4 bg-red-50 rounded-lg shadow border border-red-200">
-                  <h2 className="text-2xl font-bold mb-4">API Dashboard - Offline</h2>
+                  <h2 className="text-2xl font-bold mb-4">Dashboard - API Offline</h2>
+                  <p className="text-red-600 mb-4">The API is currently offline. Please try again later.</p>
+                </div>
+              )
+            } />
+            <Route path="/bills" element={
+              apiStatus.isOnline ? <BillsPage /> : (
+                <div className="mt-8 p-4 bg-red-50 rounded-lg shadow border border-red-200">
+                  <h2 className="text-2xl font-bold mb-4">Bills - API Offline</h2>
                   <p className="text-red-600 mb-4">The API is currently offline. Please try again later.</p>
                 </div>
               )

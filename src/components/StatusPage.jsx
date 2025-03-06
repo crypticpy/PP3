@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import ApiEndpointsStatus from './ApiEndpointsStatus';
-import { healthCheck } from '../services/api';
 
+import React, { useState, useEffect } from 'react';
+import { healthCheck } from '../services/api';
+import ApiEndpointsStatus from './ApiEndpointsStatus';
 
 const StatusPage = () => {
   const [apiStatus, setApiStatus] = useState({
@@ -34,58 +34,57 @@ const StatusPage = () => {
   }, []);
 
   return (
-    <div className="status-page max-w-5xl mx-auto p-8"> {/* Added padding */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-6 text-gray-800"> {/*Improved contrast */}System Status</h1>
-        <p className="text-gray-600 mb-4">
-          This page provides real-time information about the PolicyPulse API and its endpoints.
-          Use this page to check the status of various services within the system.
-        </p>
-
-        <div className="api-overall-status mb-8">
-          <h2 className="text-xl font-semibold mb-2 text-gray-800"> {/*Improved contrast */}API Health</h2>
-          <p className="mb-4 text-gray-700"> {/*Improved contrast */}
-            The current status of the PolicyPulse API system. This shows the overall health of the backend services.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white p-6 rounded-lg shadow border border-gray-100">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-500 font-medium">Core API</span>
-                <span className={`px-2 py-1 rounded-md text-sm font-medium ${apiStatus.coreApi.isOnline ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                  {apiStatus.coreApi.isOnline ? 'Operational' : 'Degraded'}
-                </span>
-              </div>
-              <div className="mt-2 text-sm text-gray-500">Last updated: {apiStatus.coreApi.lastChecked?.toLocaleTimeString()}</div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow border border-gray-100">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-500 font-medium">Database</span>
-                <span className={`px-2 py-1 rounded-md text-sm font-medium ${apiStatus.database.isOnline ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                  {apiStatus.database.isOnline ? 'Operational' : 'Degraded'}
-                </span>
-              </div>
-              <div className="mt-2 text-sm text-gray-500">Last updated: {apiStatus.database.lastChecked?.toLocaleTimeString()}</div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow border border-gray-100">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-500 font-medium">Data Pipeline</span>
-                <span className={`px-2 py-1 rounded-md text-sm font-medium ${apiStatus.dataPipeline.isOnline ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                  {apiStatus.dataPipeline.isOnline ? 'Operational' : 'Degraded'}
-                </span>
-              </div>
-              <div className="mt-2 text-sm text-gray-500">Last updated: {apiStatus.dataPipeline.lastChecked?.toLocaleTimeString()}</div>
-            </div>
-          </div>
-        </div>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-8">System Status</h1>
+      
+      <div className="grid md:grid-cols-3 gap-6 mb-10">
+        <StatusCard 
+          title="Core API" 
+          status={apiStatus.coreApi.isOnline} 
+          lastChecked={apiStatus.coreApi.lastChecked} 
+          description="Main API services for policy tracking and analysis"
+        />
+        <StatusCard 
+          title="Database" 
+          status={apiStatus.database.isOnline} 
+          lastChecked={apiStatus.database.lastChecked} 
+          description="Storage system for legislative data"
+        />
+        <StatusCard 
+          title="Data Pipeline" 
+          status={apiStatus.dataPipeline.isOnline} 
+          lastChecked={apiStatus.dataPipeline.lastChecked} 
+          description="Data collection and processing system"
+        />
       </div>
 
-      <div className="api-endpoints-status">
-        <h2 className="text-xl font-semibold mb-4 text-gray-800"> {/*Improved contrast */}API Endpoints Status</h2>
-        <p className="text-gray-600 mb-6">
-          Detailed status of individual API endpoints. This shows which specific endpoints are operational.
-        </p>
+      <div className="bg-white rounded-lg shadow p-6 mb-8">
+        <h2 className="text-2xl font-bold mb-4">API Endpoints Status</h2>
+        <p className="mb-6">Detailed status of individual API endpoints that power the Policy Pulse platform.</p>
         <ApiEndpointsStatus />
       </div>
+    </div>
+  );
+};
+
+const StatusCard = ({ title, status, lastChecked, description }) => {
+  return (
+    <div className="bg-white rounded-lg shadow p-6">
+      <div className="flex justify-between items-start mb-4">
+        <h3 className="text-xl font-bold">{title}</h3>
+        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+          status === null ? 'bg-gray-200 text-gray-700' :
+          status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+        }`}>
+          {status === null ? 'Checking...' : status ? 'Operational' : 'Offline'}
+        </span>
+      </div>
+      <p className="text-gray-600 mb-4">{description}</p>
+      {lastChecked && (
+        <p className="text-sm text-gray-500">
+          Last checked: {lastChecked.toLocaleTimeString()}
+        </p>
+      )}
     </div>
   );
 };
