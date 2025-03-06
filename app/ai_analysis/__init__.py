@@ -17,7 +17,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Import key components for external use - use absolute imports
-from app.ai_analysis.analyzer import AIAnalysis
+from .analyzer import AIAnalysis
 from app.ai_analysis.errors import AIAnalysisError, DatabaseError, APIError, RateLimitError
 from app.ai_analysis.config import AIAnalysisConfig
 from app.ai_analysis.utils import TokenCounter
