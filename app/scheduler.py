@@ -31,8 +31,8 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.models import init_db, SyncMetadata, SyncError as DBSyncError, SyncStatusEnum
 from app.models import Legislation, LegislationText, LegislationAnalysis
-from legiscan_api import LegiScanAPI
-from ai_analysis import AIAnalysis
+from app.legiscan_api import LegiScanAPI
+from app.ai_analysis import AIAnalysis
 
 # Try to import optional models
 try:
