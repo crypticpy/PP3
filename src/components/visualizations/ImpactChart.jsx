@@ -9,75 +9,75 @@ const ImpactChart = ({ impactData }) => {
 
   useEffect(() => {
     if (!impactData) return;
+
+    const { labels, values } = prepareImpactData(impactData);
     
-    const formattedData = prepareImpactData(impactData);
-    
+    if (!labels || !values || labels.length === 0) {
+      return;
+    }
+
+    // Clean up previous chart instance
     if (chartInstance.current) {
       chartInstance.current.destroy();
     }
-    
+
+    // Create new chart
     const ctx = chartRef.current.getContext('2d');
-    
     chartInstance.current = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: formattedData.categories,
-        datasets: [{
-          label: 'Impact Score',
-          data: formattedData.values,
-          backgroundColor: [
-            'rgba(75, 192, 192, 0.6)',
-            'rgba(54, 162, 235, 0.6)',
-            'rgba(153, 102, 255, 0.6)',
-            'rgba(255, 159, 64, 0.6)',
-            'rgba(255, 99, 132, 0.6)',
-          ],
-          borderColor: [
-            'rgba(75, 192, 192, 1)',
-            'rgba(54, 162, 235, 1)',
-            'rgba(153, 102, 255, 1)',
-            'rgba(255, 159, 64, 1)',
-            'rgba(255, 99, 132, 1)',
-          ],
-          borderWidth: 1
-        }]
+        labels: labels,
+        datasets: [
+          {
+            label: 'Impact Score',
+            data: values,
+            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1,
+          },
+        ],
       },
       options: {
         responsive: true,
-        plugins: {
-          legend: {
-            position: 'top',
-          },
-          title: {
-            display: true,
-            text: 'Stakeholder Impact Analysis'
-          },
-          tooltip: {
-            callbacks: {
-              label: function(context) {
-                return `Impact: ${context.raw}`;
-              }
-            }
-          }
-        },
+        maintainAspectRatio: false,
         scales: {
           y: {
             beginAtZero: true,
             title: {
               display: true,
-              text: 'Impact Level'
-            }
+              text: 'Impact Score',
+            },
           },
           x: {
             title: {
               display: true,
-              text: 'Stakeholder Category'
-            }
-          }
-        }
-      }
+              text: 'Impact Areas',
+            },
+          },
+        },
+        plugins: {
+          title: {
+            display: true,
+            text: 'Legislative Impact Assessment',
+            font: {
+              size: 16,
+            },
+          },
+          legend: {
+            display: false,
+          },
+          tooltip: {
+            callbacks: {
+              label: (context) => {
+                return `Impact: ${context.parsed.y}`;
+              },
+            },
+          },
+        },
+      },
     });
-    
+
+    // Clean up on unmount
     return () => {
       if (chartInstance.current) {
         chartInstance.current.destroy();
@@ -86,15 +86,13 @@ const ImpactChart = ({ impactData }) => {
   }, [impactData]);
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md">
-      <h3 className="text-lg font-semibold mb-4">Impact Analysis</h3>
-      <div className="aspect-w-16 aspect-h-9">
-        <canvas ref={chartRef} />
-      </div>
-      {!impactData && (
-        <div className="text-center py-4 text-gray-500">
-          No impact data available
+    <div className="impact-chart-container" style={{ height: '300px', width: '100%' }}>
+      {!impactData ? (
+        <div className="flex justify-center items-center h-full">
+          <p className="text-gray-500">No impact data available</p>
         </div>
+      ) : (
+        <canvas ref={chartRef} />
       )}
     </div>
   );
