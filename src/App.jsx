@@ -1,35 +1,61 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+
+import React, { useState, useEffect } from 'react';
 import './index.css';
-import Header from './components/Header';
-import Footer from './components/Footer';
-import Sidebar from './components/Sidebar';
-import Dashboard from './pages/Dashboard';
-import BillList from './pages/BillList';
-import BillDetail from './pages/BillDetail';
-import UserPreferences from './pages/UserPreferences';
-import NotFound from './pages/NotFound';
+import { healthCheck } from './services/api';
 
 function App() {
+  const [apiStatus, setApiStatus] = useState({
+    isChecking: true,
+    isOnline: false,
+    message: 'Checking API status...'
+  });
+
+  useEffect(() => {
+    const checkApiHealth = async () => {
+      try {
+        console.log('Checking API health...');
+        const response = await healthCheck();
+        console.log('API health check successful:', response.data);
+        setApiStatus({
+          isChecking: false,
+          isOnline: true,
+          message: response.data.message || 'API is online'
+        });
+      } catch (error) {
+        console.error('API health check failed:', error);
+        setApiStatus({
+          isChecking: false,
+          isOnline: false,
+          message: 'API is offline or unreachable'
+        });
+      }
+    };
+
+    checkApiHealth();
+    // Set interval to check every 30 seconds
+    const interval = setInterval(checkApiHealth, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <Router>
-      <div className="flex flex-col min-h-screen">
-        <Header />
-        <div className="flex flex-1">
-          <Sidebar />
-          <main className="flex-1 p-4 overflow-auto">
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/bills" element={<BillList />} />
-              <Route path="/bills/:id" element={<BillDetail />} />
-              <Route path="/preferences" element={<UserPreferences />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </main>
+    <div className="App">
+      <header className="App-header">
+        <h1>Texas Legislative Tracker</h1>
+        <div className="api-status">
+          <p>
+            {apiStatus.isChecking ? 'Checking API status...' : (
+              <>
+                API Status: 
+                <span className={apiStatus.isOnline ? 'status-online' : 'status-offline'}>
+                  {apiStatus.isOnline ? 'Online' : 'Offline'}
+                </span>
+              </>
+            )}
+          </p>
+          <p>{apiStatus.message}</p>
         </div>
-        <Footer />
-      </div>
-    </Router>
+      </header>
+    </div>
   );
 }
 
