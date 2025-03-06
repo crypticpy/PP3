@@ -2,44 +2,42 @@
 import os
 import sys
 import logging
-import uvicorn
-from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from fastapi.middleware.cors import CORSMiddleware
+from pathlib import Path
 
-# Configure logging
-logging.basicConfig(level=logging.INFO,
-                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# Configure logging before importing any app modules
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 def main():
     try:
+        # Add the parent directory to the path to allow proper imports
+        parent_dir = str(Path(__file__).parent.absolute())
+        if parent_dir not in sys.path:
+            sys.path.insert(0, parent_dir)
+            
         logger.info("Starting PolicyPulse application")
         
-        # Import app only after logging is configured
+        # Set environment variables needed for the app
+        os.environ.setdefault("PORT", "3000")
+        os.environ.setdefault("HOST", "0.0.0.0")
+        
+        # Import and run the API
+        import uvicorn
+        
+        # Import the app from api.py to ensure proper initialization
+        # This will not start AIAnalysis immediately with the new changes
         from app.api import app
         
-        # Add CORS middleware
-        app.add_middleware(
-            CORSMiddleware,
-            allow_origins=["*"],  # In production, specify your frontend domain
-            allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"],
-        )
-        
-        # Mount static files if needed
-        try:
-            app.mount("/static", StaticFiles(directory="static"), name="static")
-        except:
-            logger.warning("No static directory found, skipping static file mounting")
-        
-        # Start the server
+        # Get the port and host from environment variables
         host = os.environ.get("HOST", "0.0.0.0")
         port = int(os.environ.get("PORT", 3000))
         
         logger.info(f"Starting server on {host}:{port}")
         uvicorn.run(app, host=host, port=port)
+        
     except Exception as e:
         logger.error(f"Error starting application: {e}", exc_info=True)
         sys.exit(1)
