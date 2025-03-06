@@ -1,102 +1,40 @@
-/**
- * Utility functions for preparing data for visualizations
- */
+// visualizationService.js
+import * as d3 from 'd3';
 
 /**
- * Prepares word frequency data for word cloud visualization
- * @param {Object} analysisData - Analysis data
- * @returns {Array} - Formatted data for word cloud visualization
+ * Prepares data for a word cloud visualization
+ * @param {Object} analysisData - The analysis data from the API
+ * @returns {Array} - Data formatted for react-d3-cloud
  */
 export const prepareWordCloudData = (analysisData) => {
   if (!analysisData || !analysisData.key_terms) {
     return [];
   }
 
-  // Convert the key terms to the format expected by the word cloud
-  return Object.entries(analysisData.key_terms).map(([text, value]) => ({
-    text,
-    value: typeof value === 'number' ? value : 1,
+  // For react-d3-cloud, we need an array of {text, value} objects
+  return analysisData.key_terms.map(term => ({
+    text: term.term,
+    value: term.score * 100 // Scale the value appropriately
   }));
 };
 
 /**
- * Prepares impact data for visualization
- * @param {Object} analysisData - Raw analysis data
- * @returns {Object} - Formatted data for impact visualization
+ * Prepares data for a timeline visualization
+ * @param {Object} billData - The bill data from the API
+ * @returns {Array} - Data formatted for timeline visualization
  */
-export const prepareImpactData = (analysisData) => {
-  if (!analysisData || !analysisData.impact_areas) {
-    return { labels: [], values: [] };
-  }
-
-  const impactAreas = analysisData.impact_areas || {};
-
-  // Convert impact areas to chart data format
-  const labels = Object.keys(impactAreas);
-  const values = labels.map(label => impactAreas[label]);
-
-  return {
-    labels,
-    values,
-  };
-};
-
-/**
- * Prepares sentiment data for visualization
- * @param {Object} analysisData - Raw analysis data
- * @returns {Object} - Formatted data for sentiment visualization
- */
-export const prepareSentimentData = (analysisData) => {
-  if (!analysisData || typeof analysisData.sentiment !== 'number') {
-    return { value: 0, category: 'neutral' };
-  }
-
-  const sentiment = analysisData.sentiment;
-
-  // Determine sentiment category
-  let category = 'neutral';
-  if (sentiment > 0.33) {
-    category = 'positive';
-  } else if (sentiment < -0.33) {
-    category = 'negative';
-  }
-
-  return {
-    value: sentiment,
-    category,
-    percentage: ((sentiment + 1) / 2) * 100, // Convert -1 to 1 scale to 0-100%
-  };
-};
-
-/**
- * Prepares timeline data for bill progress visualization
- * @param {Object} billData - Bill data with history
- * @returns {Object} - Formatted data for timeline visualization
- */
-export const prepareBillTimelineData = (billData) => {
+export const prepareTimelineData = (billData) => {
   if (!billData || !billData.history) {
-    return { dates: [], events: [] };
+    return [];
   }
 
-  const history = billData.history || [];
-
-  // Sort events chronologically
-  const sortedEvents = [...history].sort((a, b) => {
-    return new Date(a.date) - new Date(b.date);
-  });
-
-  return {
-    dates: sortedEvents.map(event => event.date),
-    events: sortedEvents.map(event => ({
-      date: event.date,
-      action: event.action,
-      chamber: event.chamber,
-      description: event.description,
-    })),
-  };
+  return billData.history.map(event => ({
+    date: new Date(event.date),
+    title: event.action,
+    description: event.description || '',
+    icon: determineIcon(event.action)
+  }));
 };
-
-//import * as d3 from 'd3';
 
 /**
  * Determines the appropriate icon for a timeline event
@@ -122,6 +60,23 @@ const determineIcon = (action) => {
 };
 
 /**
+ * Prepares data for impact assessment visualization
+ * @param {Object} analysisData - The analysis data from the API
+ * @returns {Array} - Data formatted for radar/spider chart
+ */
+export const prepareImpactData = (analysisData) => {
+  if (!analysisData || !analysisData.impact_assessment) {
+    return [];
+  }
+
+  // Convert impact assessment object to array format for visualization
+  return Object.entries(analysisData.impact_assessment).map(([category, value]) => ({
+    category: formatCategoryName(category),
+    value: value
+  }));
+};
+
+/**
  * Formats a category name for display (converts snake_case to Title Case)
  * @param {string} category - The category name in snake_case
  * @returns {string} - Formatted category name
@@ -133,12 +88,27 @@ const formatCategoryName = (category) => {
     .join(' ');
 };
 
+/**
+ * Prepares colors for visualization based on impact levels
+ * @param {Array} data - The prepared impact data
+ * @returns {Object} - Color configuration for visualizations
+ */
+export const getImpactColors = (data) => {
+  const colorScale = d3.scaleLinear()
+    .domain([0, 50, 100])
+    .range(['#4caf50', '#ff9800', '#f44336']);
+
+  return {
+    scale: colorScale,
+    byCategory: Object.fromEntries(
+      data.map(item => [item.category, colorScale(item.value)])
+    )
+  };
+};
 
 export default {
   prepareWordCloudData,
   prepareTimelineData,
   prepareImpactData,
-  getImpactColors,
-  prepareBillTimelineData,
-  prepareSentimentData
+  getImpactColors
 };
