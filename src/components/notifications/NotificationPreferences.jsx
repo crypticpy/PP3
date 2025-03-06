@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useUserPreferences } from '../../contexts/UserPreferencesContext';
+import { useUserPreferences } from '../../context/UserPreferencesContext';
 
 const NotificationPreferences = () => {
   const { preferences, updatePreferences } = useUserPreferences();
