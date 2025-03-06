@@ -1,98 +1,97 @@
-/**
- * API service for interacting with the backend
- */
-
 import axios from 'axios';
 
-// Base URL for API requests
-const API_BASE_URL = '/api';
+// Create API configuration with proper base URL
+const API_URL = window.location.hostname === 'localhost' ? 
+  'http://localhost:8000' : 
+  `${window.location.protocol}//${window.location.host}/api`;
 
-// Create axios instance with common config
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+// Create an axios instance with appropriate config
+const api = axios.create({
+  baseURL: API_URL,
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
-  },
+    'Accept': 'application/json'
+  }
 });
 
-// Handle response interceptor for error handling
-apiClient.interceptors.response.use(
+// Add request interceptor for handling auth tokens if needed
+api.interceptors.request.use(
+  (config) => {
+    // You can add auth token logic here if needed
+    return config;
+  },
+  (error) => {
+    console.error('API request error:', error);
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor for common error handling
+api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle global error cases here
-    const { response } = error;
+    console.error('API response error:', error.response || error);
 
-    if (response && response.status === 401) {
-      // Handle unauthorized access
-      console.error('Unauthorized access');
-      // Could redirect to login page if needed
+    // Handle specific error status codes
+    if (error.response) {
+      switch (error.response.status) {
+        case 401:
+          // Handle unauthorized
+          break;
+        case 404:
+          // Handle not found
+          break;
+        case 500:
+          // Handle server error
+          break;
+        default:
+          // Handle other errors
+          break;
+      }
     }
 
     return Promise.reject(error);
   }
 );
 
-/**
- * API Services for all endpoints
- */
+// Export API methods
 const apiService = {
-  // Health Check
-  checkHealth: () => apiClient.get('/health'),
+  // Legislation methods
+  getLegislation: (limit = 50, offset = 0) => 
+    api.get(`/legislation?limit=${limit}&offset=${offset}`),
 
-  // Bills / Legislation
-  getBills: (params) => apiClient.get('/bills/', { params }),
-  getBillDetails: (billId) => apiClient.get(`/bills/${billId}`),
-  getBillAnalysis: (billId) => apiClient.get(`/bills/${billId}/analysis`),
+  getLegislationDetail: (id) => 
+    api.get(`/legislation/${id}`),
 
-  // Legislation endpoints
-  getLegislation: (params) => apiClient.get('/legislation', { params }),
-  getLegislationDetails: (legId) => apiClient.get(`/legislation/${legId}`),
+  searchLegislation: (keywords) => 
+    api.get(`/legislation/search?keywords=${encodeURIComponent(keywords)}`),
 
-  // Analysis endpoints
-  requestAnalysis: (legId, options) => apiClient.post(`/legislation/${legId}/analysis`, options),
-  getAnalysisHistory: (legId) => apiClient.get(`/legislation/${legId}/analysis/history`),
-  requestAsyncAnalysis: (legId, options) => apiClient.post(`/legislation/${legId}/analysis/async`, options),
-  batchAnalyze: (legislationIds, maxConcurrent = 5) => 
-    apiClient.post('/legislation/batch-analyze', { legislation_ids: legislationIds, max_concurrent: maxConcurrent }),
+  // Analysis methods
+  analyzeLegislation: (id, options = {}) => 
+    api.post(`/legislation/${id}/analysis`, options),
 
-  // Search Functionality
-  searchBills: (query, filters) => apiClient.get('/legislation/search', { params: { keywords: query, ...filters } }),
-  advancedSearch: (searchParams) => apiClient.post('/search/advanced', searchParams),
+  getAnalysisHistory: (id) => 
+    api.get(`/legislation/${id}/analysis/history`),
 
-  // Texas Specific Endpoints
-  getTexasHealthLegislation: (params) => apiClient.get('/texas/health-legislation', { params }),
-  getTexasLocalGovtLegislation: (params) => apiClient.get('/texas/local-govt-legislation', { params }),
+  // Texas-specific methods
+  getTexasHealthLegislation: (params = {}) => 
+    api.get('/texas/health-legislation', { params }),
 
-  // Dashboard Analytics
-  getImpactSummary: (params) => apiClient.get('/dashboard/impact-summary', { params }),
-  getRecentActivity: (params) => apiClient.get('/dashboard/recent-activity', { params }),
+  getTexasLocalGovtLegislation: (params = {}) => 
+    api.get('/texas/local-govt-legislation', { params }),
 
-  // User Preferences
-  getUserPreferences: (email) => apiClient.get(`/users/${email}/preferences`),
-  updateUserPreferences: (email, prefsData) => apiClient.post(`/users/${email}/preferences`, prefsData),
-
-  // Search History
-  getSearchHistory: (email) => apiClient.get(`/users/${email}/search`),
-  addSearchHistory: (email, searchData) => apiClient.post(`/users/${email}/search`, searchData),
-
-  // Priority Management
-  updatePriority: (legId, priorityData) => apiClient.post(`/legislation/${legId}/priority`, priorityData),
-
-  // Sync Operations
-  getSyncStatus: () => apiClient.get('/sync/status'),
-  triggerSync: (force = false, background = true) => apiClient.post('/sync/trigger', { force, background }),
-
-  // General utility methods
-  getStates: () => apiClient.get('/states/'),
-  refreshData: (state = null) => apiClient.post('/refresh/', { state }),
+  // Health check
+  healthCheck: () => api.get('/health')
 };
+
 
 // Export the billService for components that specifically need it
 export const billService = {
-  getAllBills: apiService.getBills,
-  getBillDetails: apiService.getBillDetails,
-  searchBills: (params) => apiService.getBills(params),
-  getBillAnalysis: apiService.getBillAnalysis,
+  getAllBills: apiService.getLegislation, // Adjusted to use the new getLegislation
+  getBillDetails: apiService.getLegislationDetail, // Adjusted to use the new getLegislationDetail
+  searchBills: (params) => apiService.searchLegislation(params.keywords), // Adjusted to use the new searchLegislation
+  getBillAnalysis: apiService.analyzeLegislation, // Adjusted to use the new analyzeLegislation
 };
 
 export default apiService;

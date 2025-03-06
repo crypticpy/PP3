@@ -9,19 +9,37 @@ import { UserPreferencesProvider } from './context/UserPreferencesContext';
 import { NotificationProvider } from './context/NotificationContext';
 import UserPreferences from './pages/UserPreferences';
 
+function HealthCheck() {
+  return (
+    <div>
+      <p>Checking backend health...</p> {/* Placeholder - Replace with actual health check */}
+    </div>
+  );
+}
+
 function App() {
   return (
     <UserPreferencesProvider>
       <NotificationProvider>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="bills" element={<BillList />} />
-            <Route path="bills/:billId" element={<BillDetail />} />
-            <Route path="preferences" element={<UserPreferences />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
+        <div className="App">
+          <header className="bg-blue-600 text-white p-4">
+            <h1 className="text-2xl font-bold">PolicyPulse</h1>
+            <p>Texas Legislative Analysis Platform</p>
+          </header>
+
+          <main className="container mx-auto p-4">
+            <HealthCheck />
+            <Routes>
+              <Route path="/" element={<Layout />}>
+                <Route index element={<Dashboard />} />
+                <Route path="bills" element={<BillList />} />
+                <Route path="bills/:billId" element={<BillDetail />} />
+                <Route path="preferences" element={<UserPreferences />} />
+                <Route path="*" element={<NotFound />} />
+              </Route>
+            </Routes>
+          </main>
+        </div>
       </NotificationProvider>
     </UserPreferencesProvider>
   );

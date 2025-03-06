@@ -66,6 +66,9 @@ class ProxyHandler(BaseHTTPRequestHandler):
         try:
             # Copy headers from original request
             headers = {k: v for k, v in self.headers.items()}
+            
+            # Log the proxy request for debugging
+            logger.info(f"Proxying {method} request to: {url}")
 
             # Make the request to the target service
             response = None  # Initialize with None to ensure it's always defined
@@ -76,6 +79,9 @@ class ProxyHandler(BaseHTTPRequestHandler):
 
             # Ensure response is not None before proceeding
             if response is not None:
+                # Log response status for debugging
+                logger.info(f"Received response: {response.status_code}")
+                
                 # Send the response back
                 self.send_response(response.status_code)
 
@@ -112,9 +118,27 @@ def start_proxy(proxy_port):
         logger.info(f"Starting proxy server on port {proxy_port}")
         logger.info(f"Frontend URL: http://0.0.0.0:{os.environ.get('FRONTEND_PORT')}")
         logger.info(f"Backend URL: http://0.0.0.0:{os.environ.get('BACKEND_PORT')}")
+        logger.info(f"Main application URL: http://0.0.0.0:{proxy_port}")
+        
+        # Print debug info for users
+        print(f"\n==== PolicyPulse Application Started ====")
+        print(f"Access the application at: http://0.0.0.0:{proxy_port}")
+        print(f"If you see connection issues in the browser, try accessing:")
+        print(f"  - Frontend directly: http://0.0.0.0:{os.environ.get('FRONTEND_PORT')}")
+        print(f"  - Backend directly: http://0.0.0.0:{os.environ.get('BACKEND_PORT')}")
+        print(f"=========================================\n")
+        
         server.serve_forever()
+    except OSError as e:
+        if e.errno == 98:  # Address already in use
+            logger.error(f"Proxy port {proxy_port} is already in use. Please try a different port.")
+            sys.exit(1)
+        else:
+            logger.error(f"Error starting proxy: {e}")
+            sys.exit(1)
     except Exception as e:
         logger.error(f"Error starting proxy: {e}")
+        sys.exit(1)
 
 def wait_for_frontend(frontend_port, max_attempts=30):
     """Wait until the frontend server is available."""
@@ -144,7 +168,8 @@ def start_frontend(frontend_port):
     # Set environment variables for frontend
     env = os.environ.copy()
     env["PORT"] = str(frontend_port)
-    env["VITE_API_URL"] = f"http://0.0.0.0:{os.environ.get('BACKEND_PORT')}"
+    env["VITE_API_URL"] = f"/api"  # Use relative URL through proxy
+    env["VITE_BACKEND_PORT"] = str(os.environ.get('BACKEND_PORT'))
 
     # Run npm install with legacy-peer-deps flag to fix React version conflicts
     if not os.path.exists("node_modules") or os.path.getmtime("package.json") > os.path.getmtime("node_modules"):
