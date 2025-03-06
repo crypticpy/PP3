@@ -1,0 +1,51 @@
+2025-03-06 16:45:59,880 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:45:59,880 - __main__ - INFO - FRONTEND: > legiscan-frontend@0.1.0 dev
+2025-03-06 16:45:59,880 - __main__ - INFO - FRONTEND: > vite --port 5173 --host 0.0.0.0
+2025-03-06 16:45:59,880 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:46:00,115 - __main__ - INFO - FRONTEND: The CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.
+2025-03-06 16:46:00,190 - __main__ - INFO - FRONTEND: 4:46:00 PM [vite] (client) Forced re-optimization of dependencies
+2025-03-06 16:46:00,244 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:46:00,244 - __main__ - INFO - FRONTEND: VITE v6.2.0  ready in 287 ms
+2025-03-06 16:46:00,244 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:46:00,244 - __main__ - INFO - FRONTEND: ➜  Local:   http://localhost:5173/
+2025-03-06 16:46:00,244 - __main__ - INFO - FRONTEND: ➜  Network: http://172.31.128.44:5173/
+2025-03-06 16:46:00,244 - __main__ - INFO - FRONTEND: ➜  press h + enter to show help
+2025-03-06 16:46:00,923 - app.models - INFO - Database connection established successfully
+2025-03-06 16:46:01,877 - app.models - INFO - Database schema created or verified successfully
+2025-03-06 16:46:02,000 - app.data_store - INFO - Database session established successfully.
+2025-03-06 16:46:02,000 - app.api - INFO - Services initialized on startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     172.31.128.44:44168 - "GET / HTTP/1.1" 200 OK
+2025-03-06 16:46:04,732 - __main__ - INFO - FRONTEND: Error:   Failed to scan for dependencies from entries:
+2025-03-06 16:46:04,733 - __main__ - INFO - FRONTEND: /home/runner/workspace/index.html
+2025-03-06 16:46:04,733 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:46:04,733 - __main__ - INFO - FRONTEND: ✘ [ERROR] No matching export in "src/services/visualizationService.js" for import "prepareBillTimelineData"
+2025-03-06 16:46:04,733 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:46:04,733 - __main__ - INFO - FRONTEND: src/components/visualizations/BillTimeline.jsx:2:9:
+2025-03-06 16:46:04,733 - __main__ - INFO - FRONTEND:       2 │ import { prepareBillTimelineData } from '../../services/visualizati...
+2025-03-06 16:46:04,733 - __main__ - INFO - FRONTEND: ╵          ~~~~~~~~~~~~~~~~~~~~~~~
+2025-03-06 16:46:04,733 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:46:04,733 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:46:04,733 - __main__ - INFO - FRONTEND: ✘ [ERROR] No matching export in "src/services/api.js" for import "billService"
+2025-03-06 16:46:04,733 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:46:04,733 - __main__ - INFO - FRONTEND: src/pages/BillDetail.jsx:3:9:
+2025-03-06 16:46:04,734 - __main__ - INFO - FRONTEND:       3 │ import { billService } from '../services/api';
+2025-03-06 16:46:04,734 - __main__ - INFO - FRONTEND: ╵          ~~~~~~~~~~~
+2025-03-06 16:46:04,734 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:46:04,734 - __main__ - INFO - FRONTEND: 
+2025-03-06 16:46:04,734 - __main__ - INFO - FRONTEND: at failureErrorWithLog (/home/runner/workspace/node_modules/esbuild/lib/main.js:1477:15)
+2025-03-06 16:46:04,734 - __main__ - INFO - FRONTEND: at /home/runner/workspace/node_modules/esbuild/lib/main.js:946:25
+2025-03-06 16:46:04,734 - __main__ - INFO - FRONTEND: at runOnEndCallbacks (/home/runner/workspace/node_modules/esbuild/lib/main.js:1317:45)
+2025-03-06 16:46:04,734 - __main__ - INFO - FRONTEND: at buildResponseToResult (/home/runner/workspace/node_modules/esbuild/lib/main.js:944:7)
+2025-03-06 16:46:04,734 - __main__ - INFO - FRONTEND: at /home/runner/workspace/node_modules/esbuild/lib/main.js:956:9
+2025-03-06 16:46:04,734 - __main__ - INFO - FRONTEND: at new Promise (<anonymous>)
+2025-03-06 16:46:04,734 - __main__ - INFO - FRONTEND: at requestCallbacks.on-end (/home/runner/workspace/node_modules/esbuild/lib/main.js:955:54)
+2025-03-06 16:46:04,734 - __main__ - INFO - FRONTEND: at handleRequest (/home/runner/workspace/node_modules/esbuild/lib/main.js:648:17)
+2025-03-06 16:46:04,734 - __main__ - INFO - FRONTEND: at handleIncomingPacket (/home/runner/workspace/node_modules/esbuild/lib/main.js:673:7)
+2025-03-06 16:46:04,734 - __main__ - INFO - FRONTEND: at Socket.readFromStdout (/home/runner/workspace/node_modules/esbuild/lib/main.js:601:7)
+2025-03-06 16:46:04,734 - __main__ - INFO - FRONTEND: at Socket.emit (node:events:518:28)
+2025-03-06 16:46:04,734 - __main__ - INFO - FRONTEND: at addChunk (node:internal/streams/readable:561:12)
+2025-03-06 16:46:04,734 - __main__ - INFO - FRONTEND: at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+2025-03-06 16:46:04,734 - __main__ - INFO - FRONTEND: at Readable.push (node:internal/streams/readable:392:5)
+2025-03-06 16:46:04,734 - __main__ - INFO - FRONTEND: at Pipe.onStreamRead (node:internal/stream_base_commons:191:23)
