@@ -9,10 +9,10 @@ export default defineConfig({
     strictPort: false,
     proxy: {
       '/api': {
-        target: process.env.VITE_API_URL || 'http://0.0.0.0:8002',
+        target: 'http://0.0.0.0:8000',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path,
+        rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
     cors: true,

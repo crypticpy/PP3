@@ -62,12 +62,11 @@ def start_frontend(frontend_port, backend_port):
     env = os.environ.copy()
     env["PORT"] = str(frontend_port)
     
-    # In Replit, we need to use the hostname rather than 0.0.0.0
+    # In Replit, we need to use the public URL without a port for HTTPS connections
     replit_hostname = os.environ.get('REPL_SLUG', '')
     if replit_hostname:
-        replit_id = os.environ.get('REPL_ID', '')
-        hostname = f"{replit_id}.id.repl.co" if replit_id else "0.0.0.0"
-        env["VITE_API_URL"] = f"https://{hostname}:{backend_port}"
+        # For Replit, use the relative URL which will work both in development and production
+        env["VITE_API_URL"] = "/api"  # Use relative API path that will be proxied by Vite
     else:
         env["VITE_API_URL"] = f"http://0.0.0.0:{backend_port}"  # Direct connection to backend
     
