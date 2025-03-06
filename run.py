@@ -30,7 +30,7 @@ def main():
         
         # Get the port and host from environment variables
         host = os.environ.get("HOST", "0.0.0.0")
-        port = int(os.environ.get("PORT", 3000))
+        port = int(os.environ.get("PORT", 3002))
         
         logger.info(f"Starting server on {host}:{port}")
         uvicorn.run(app, host=host, port=port)
