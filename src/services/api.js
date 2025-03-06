@@ -1,9 +1,13 @@
-
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
-// Base URL for API requests
-const API_URL = import.meta.env.VITE_API_URL || 'http://0.0.0.0:8000';
+// Determine the API URL based on the environment
+const API_URL = import.meta.env.VITE_API_URL || 
+               (window.location.hostname === 'localhost' || window.location.hostname === '0.0.0.0' 
+                ? 'http://0.0.0.0:8000' 
+                : `${window.location.protocol}//${window.location.hostname}:8000`);
+
+console.log('Using API URL:', API_URL);
 
 // Create axios instance with base URL
 const apiClient = axios.create({
@@ -34,7 +38,7 @@ apiClient.interceptors.response.use(
   },
   (error) => {
     const { response } = error;
-    
+
     if (response) {
       // Handle specific error status codes
       switch (response.status) {
@@ -62,7 +66,7 @@ apiClient.interceptors.response.use(
       // Handle network errors
       toast.error('Network error. Please check your connection.');
     }
-    
+
     return Promise.reject(error);
   }
 );

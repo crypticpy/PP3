@@ -1,165 +1,114 @@
+// visualizationService.js
+import * as d3 from 'd3';
 
 /**
- * Visualization Service
- * 
- * This service contains utility functions for data transformation and preparation
- * for various data visualizations used in the application.
+ * Prepares data for a word cloud visualization
+ * @param {Object} analysisData - The analysis data from the API
+ * @returns {Array} - Data formatted for react-d3-cloud
  */
-
-/**
- * Prepare data for word cloud visualization from bill analysis
- * 
- * @param {Object} analysis - Analysis data containing key terms
- * @returns {Array} - Formatted data for react-d3-cloud
- */
-export const prepareWordCloudData = (analysis) => {
-  // Handle case when analysis is undefined or doesn't have key_terms
-  if (!analysis || !analysis.key_terms) {
+export const prepareWordCloudData = (analysisData) => {
+  if (!analysisData || !analysisData.key_terms) {
     return [];
   }
 
-  let terms = [];
-
-  // Handle different possible formats of key_terms
-  if (Array.isArray(analysis.key_terms)) {
-    // If key_terms is already an array of objects with text/value properties
-    if (analysis.key_terms.length > 0 && typeof analysis.key_terms[0] === 'object') {
-      terms = analysis.key_terms.map(term => ({
-        text: term.text || term.term || term.word || '',
-        value: term.value || term.weight || term.score || term.frequency || 1
-      }));
-    } 
-    // If key_terms is an array of strings
-    else if (analysis.key_terms.length > 0 && typeof analysis.key_terms[0] === 'string') {
-      terms = analysis.key_terms.map((term, index) => ({
-        text: term,
-        value: 100 - (index * 5) // Assign decreasing importance based on array position
-      }));
-    }
-  } 
-  // If key_terms is an object with term:score pairs
-  else if (typeof analysis.key_terms === 'object') {
-    terms = Object.entries(analysis.key_terms).map(([term, value]) => ({
-      text: term,
-      value: typeof value === 'number' ? value : 1
-    }));
-  }
-
-  // Filter out any empty text values and sort by value
-  return terms
-    .filter(term => term.text && term.text.trim() !== '')
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 100); // Limit to top 100 terms for performance
+  // For react-d3-cloud, we need an array of {text, value} objects
+  return analysisData.key_terms.map(term => ({
+    text: term.term,
+    value: term.score * 100 // Scale the value appropriately
+  }));
 };
 
 /**
- * Prepare data for timeline visualization
- * 
- * @param {Object} bill - Bill data containing history/events
- * @returns {Array} - Formatted timeline data
+ * Prepares data for a timeline visualization
+ * @param {Object} billData - The bill data from the API
+ * @returns {Array} - Data formatted for timeline visualization
  */
-export const prepareTimelineData = (bill) => {
-  if (!bill || (!bill.history && !bill.events)) {
+export const prepareTimelineData = (billData) => {
+  if (!billData || !billData.history) {
     return [];
   }
 
-  const events = bill.history || bill.events || [];
-  
-  return events.map((event, index) => ({
-    id: index,
+  return billData.history.map(event => ({
     date: new Date(event.date),
-    title: event.action || event.title || 'Event',
-    description: event.description || event.action || '',
-    icon: getEventIcon(event),
-    category: getEventCategory(event)
-  })).sort((a, b) => a.date - b.date);
+    title: event.action,
+    description: event.description || '',
+    icon: determineIcon(event.action)
+  }));
 };
 
 /**
- * Helper function to determine appropriate icon for timeline event
+ * Determines the appropriate icon for a timeline event
+ * @param {string} action - The action text
+ * @returns {string} - Icon identifier
  */
-const getEventIcon = (event) => {
-  const action = (event.action || '').toLowerCase();
-  
-  if (action.includes('introduc') || action.includes('filed')) {
-    return 'CREATE';
-  } else if (action.includes('committee') || action.includes('refer')) {
-    return 'COMMITTEE';
-  } else if (action.includes('pass') || action.includes('approve')) {
-    return 'PASS';
-  } else if (action.includes('fail') || action.includes('reject') || action.includes('veto')) {
-    return 'FAIL';
-  } else if (action.includes('amend')) {
-    return 'AMENDMENT';
-  } else if (action.includes('sign') && action.includes('governor')) {
-    return 'SIGN';
-  } else {
-    return 'EVENT';
-  }
-};
+const determineIcon = (action) => {
+  const actionLower = action.toLowerCase();
 
-/**
- * Helper function to categorize timeline events
- */
-const getEventCategory = (event) => {
-  const action = (event.action || '').toLowerCase();
-  
-  if (action.includes('house')) {
-    return 'house';
-  } else if (action.includes('senate')) {
-    return 'senate';
-  } else if (action.includes('governor') || action.includes('executive')) {
-    return 'executive';
-  } else if (action.includes('committee')) {
+  if (actionLower.includes('introduced') || actionLower.includes('filed')) {
+    return 'new';
+  } else if (actionLower.includes('committee')) {
     return 'committee';
+  } else if (actionLower.includes('passed') || actionLower.includes('approved')) {
+    return 'passed';
+  } else if (actionLower.includes('signed')) {
+    return 'signed';
+  } else if (actionLower.includes('vetoed')) {
+    return 'vetoed';
   } else {
-    return 'other';
+    return 'default';
   }
 };
 
 /**
- * Format stakeholder data for network visualization
+ * Prepares data for impact assessment visualization
+ * @param {Object} analysisData - The analysis data from the API
+ * @returns {Array} - Data formatted for radar/spider chart
  */
-export const prepareStakeholderData = (analysis) => {
-  if (!analysis || !analysis.stakeholders) {
-    return { nodes: [], links: [] };
+export const prepareImpactData = (analysisData) => {
+  if (!analysisData || !analysisData.impact_assessment) {
+    return [];
   }
 
-  const nodes = [];
-  const links = [];
-  const billNode = { id: 'bill', name: 'Bill', type: 'bill', value: 100 };
-  nodes.push(billNode);
+  // Convert impact assessment object to array format for visualization
+  return Object.entries(analysisData.impact_assessment).map(([category, value]) => ({
+    category: formatCategoryName(category),
+    value: value
+  }));
+};
 
-  // Process stakeholders
-  if (Array.isArray(analysis.stakeholders)) {
-    analysis.stakeholders.forEach((stakeholder, index) => {
-      const id = `stakeholder-${index}`;
-      const name = stakeholder.name || stakeholder.organization || `Stakeholder ${index + 1}`;
-      const type = stakeholder.type || stakeholder.position || 'other';
-      const impact = stakeholder.impact || stakeholder.stance || 'neutral';
-      
-      nodes.push({
-        id,
-        name,
-        type,
-        impact,
-        value: 60
-      });
-      
-      links.push({
-        source: 'bill',
-        target: id,
-        value: 10,
-        type: impact
-      });
-    });
-  }
+/**
+ * Formats a category name for display (converts snake_case to Title Case)
+ * @param {string} category - The category name in snake_case
+ * @returns {string} - Formatted category name
+ */
+const formatCategoryName = (category) => {
+  return category
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
 
-  return { nodes, links };
+/**
+ * Prepares colors for visualization based on impact levels
+ * @param {Array} data - The prepared impact data
+ * @returns {Object} - Color configuration for visualizations
+ */
+export const getImpactColors = (data) => {
+  const colorScale = d3.scaleLinear()
+    .domain([0, 50, 100])
+    .range(['#4caf50', '#ff9800', '#f44336']);
+
+  return {
+    scale: colorScale,
+    byCategory: Object.fromEntries(
+      data.map(item => [item.category, colorScale(item.value)])
+    )
+  };
 };
 
 export default {
   prepareWordCloudData,
   prepareTimelineData,
-  prepareStakeholderData
+  prepareImpactData,
+  getImpactColors
 };

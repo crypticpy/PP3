@@ -1,57 +1,57 @@
-import React from 'react';
-import Cloud from 'react-d3-cloud';
+
+import React, { useState, useEffect } from 'react';
+import WordCloud from 'react-d3-cloud';
 import { prepareWordCloudData } from '../../services/visualizationService';
 
-/**
- * Key Terms Word Cloud Component
- * 
- * Displays a word cloud visualization of key terms from bill analysis
- * 
- * @param {Object} analysis - The bill analysis data containing key terms
- */
-const KeyTermsCloud = ({ analysis }) => {
-  const wordCloudData = prepareWordCloudData(analysis);
+const KeyTermsCloud = ({ analysisData, height = 300, width = 500 }) => {
+  const [wordCloudData, setWordCloudData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Transform data if needed - react-d3-cloud expects { text, value } format
-  const formattedData = wordCloudData.map(item => ({
-    text: item.text,
-    value: item.value || item.weight || 1 // Adjust based on your data structure
-  }));
+  useEffect(() => {
+    if (analysisData) {
+      try {
+        const data = prepareWordCloudData(analysisData);
+        setWordCloudData(data);
+      } catch (error) {
+        console.error('Error preparing word cloud data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  }, [analysisData]);
 
-  const fontSizeMapper = word => Math.log2(word.value) * 5 + 12; // Scale font size (12-60)
+  // Custom font size calculator
+  const fontSizeMapper = word => Math.log2(word.value) * 5 + 16;
+  
+  // Custom rotation
+  const rotate = word => (word.value % 2) * 90;
 
-  if (!wordCloudData.length) {
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-64">Loading key terms...</div>;
+  }
+
+  if (!wordCloudData || wordCloudData.length === 0) {
     return (
-      <div className="p-4 text-center text-gray-500 dark:text-gray-400">
-        No key terms data available for this bill.
+      <div className="flex justify-center items-center h-64 text-gray-500">
+        No key terms data available
       </div>
     );
   }
 
   return (
-    <div className="key-terms-cloud mt-4 bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-      <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">
-        Key Terms Analysis
-      </h3>
-      <div className="h-64 w-full">
-        <Cloud
-          data={formattedData}
+    <div className="bg-white rounded-lg shadow p-4 h-full">
+      <h3 className="text-lg font-semibold mb-4">Key Terms</h3>
+      <div className="h-[300px] w-full">
+        <WordCloud
+          data={wordCloudData}
+          width={width}
+          height={height}
+          font="Impact"
           fontSizeMapper={fontSizeMapper}
-          fill={d => {
-            // Rotating through your color palette
-            const colors = ['#3b82f6', '#60a5fa', '#93c5fd', '#2563eb', '#1d4ed8'];
-            return colors[Math.floor(Math.random() * colors.length)];
-          }}
-          rotate={(word) => (word.value % 2) * 90} // Alternate between 0 and 90 degrees
+          rotate={rotate}
           padding={2}
-          font="Inter, sans-serif"
-          width={500} // Set width of SVG
-          height={250} // Set height of SVG
         />
       </div>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-        Word size indicates term relevance in the bill text
-      </p>
     </div>
   );
 };

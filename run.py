@@ -61,8 +61,19 @@ def start_frontend(frontend_port, backend_port):
     # Set environment variables for frontend
     env = os.environ.copy()
     env["PORT"] = str(frontend_port)
-    env["VITE_API_URL"] = f"http://0.0.0.0:{backend_port}"  # Direct connection to backend
+    
+    # In Replit, we need to use the hostname rather than 0.0.0.0
+    replit_hostname = os.environ.get('REPL_SLUG', '')
+    if replit_hostname:
+        replit_id = os.environ.get('REPL_ID', '')
+        hostname = f"{replit_id}.id.repl.co" if replit_id else "0.0.0.0"
+        env["VITE_API_URL"] = f"https://{hostname}:{backend_port}"
+    else:
+        env["VITE_API_URL"] = f"http://0.0.0.0:{backend_port}"  # Direct connection to backend
+    
     env["VITE_BACKEND_PORT"] = str(backend_port)
+    
+    logger.info(f"Setting frontend API URL to: {env['VITE_API_URL']}")
 
     # Make sure node_modules exists
     if not os.path.exists("node_modules"):
