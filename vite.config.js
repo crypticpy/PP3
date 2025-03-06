@@ -19,10 +19,7 @@ export default defineConfig({
     cors: true,
     hmr: {
       clientPort: 443,
-      timeout: 15000,
-      port: 443,
       host: 'replit.dev',
-      protocol: 'wss'
     },
     watch: {
       usePolling: true,
@@ -30,6 +27,8 @@ export default defineConfig({
     },
     fs: {
       strict: false
-    }
+    },
+    // Add allowedHosts to fix the blocked host issue
+    allowedHosts: ['.replit.dev', '.replit.app', '.replit.com']
   },
 });
