@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import apiService from '../services/api';
+import { healthCheck } from '../services/api';
 
 const HealthCheck = () => {
   const [status, setStatus] = useState('checking');
@@ -9,12 +9,12 @@ const HealthCheck = () => {
 
   useEffect(() => {
     // Get the API URL from environment or config for display purposes
-    const displayUrl = import.meta.env.VITE_API_URL || 'http://0.0.0.0:8001';
+    const displayUrl = import.meta.env.VITE_API_URL || 'http://0.0.0.0:8002';
     setApiUrl(displayUrl);
 
     const checkHealth = async () => {
       try {
-        const response = await apiService.healthCheck();
+        const response = await healthCheck();
         if (response && response.status === 200) {
           setStatus('online');
         } else {
@@ -48,16 +48,17 @@ const HealthCheck = () => {
         </span>
       </div>
 
-      {status === 'offline' && error && (
-        <div className="error-details mt-2 p-3 bg-red-50 border border-red-200 rounded text-sm">
-          <p className="font-bold mb-1">Error Details:</p>
-          <p className="text-red-700">{error}</p>
+      {status === 'online' ? (
+        <p className="text-green-600">Connected to API at: {apiUrl}</p>
+      ) : (
+        <div className="error-details mt-2">
+          <p className="text-red-600">Cannot connect to API at: {apiUrl}</p>
+          {error && <p className="text-red-500 text-sm mt-1">Error: {error}</p>}
+          <p className="text-sm mt-2">
+            Please ensure the backend server is running and accessible.
+          </p>
         </div>
       )}
-      
-      <div className="text-sm text-gray-500">
-        API URL: {apiUrl}
-      </div>
     </div>
   );
 };

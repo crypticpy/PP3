@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // Get the API base URL from environment variables or use the backend port from run.py
-const API_URL = import.meta.env.VITE_API_URL || 'http://0.0.0.0:8001';
+const API_URL = import.meta.env.VITE_API_URL || 'http://0.0.0.0:8002';
 
 // Create axios instance with base configuration
 const apiClient = axios.create({
@@ -26,25 +26,61 @@ apiClient.interceptors.request.use(
   }
 );
 
-// API service methods
-const apiService = {
-  // Health check endpoint for system status
-  healthCheck: () => apiClient.get('/health'),
-
-  // Legislation endpoints
-  getLegislation: (id) => apiClient.get(`/api/legislation/${id}`),
-  searchLegislation: (params) => apiClient.get('/api/legislation/search', { params }),
-  getRecentLegislation: () => apiClient.get('/api/legislation/recent'),
-  getTrendingLegislation: () => apiClient.get('/api/legislation/trending'),
-  getRelevantLegislation: (type = 'health', minScore = 50, limit = 10) => 
-    apiClient.get('/api/legislation/relevant', { params: { type, min_score: minScore, limit } }),
-
-  // Analysis endpoints
-  getAnalysis: (id) => apiClient.get(`/api/legislation/${id}/analysis`),
-  triggerAnalysis: (id, options) => apiClient.post(`/api/legislation/${id}/analysis`, options),
-
-  // Dashboard data
-  getDashboardStats: () => apiClient.get('/api/dashboard/stats')
+// Health check function
+const healthCheck = async () => {
+  try {
+    const response = await apiClient.get('/health');
+    return response;
+  } catch (error) {
+    console.error('Health check failed:', error);
+    throw error;
+  }
 };
 
-export default apiService;
+// Bill service functions
+const billService = {
+  // Get all bills
+  getBills: async () => {
+    try {
+      const response = await apiClient.get('/api/legislation');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching bills:', error);
+      throw error;
+    }
+  },
+  
+  // Get a specific bill by ID
+  getBillById: async (id) => {
+    try {
+      const response = await apiClient.get(`/api/legislation/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching bill ${id}:`, error);
+      throw error;
+    }
+  },
+  
+  // Get bill analysis
+  getBillAnalysis: async (id) => {
+    try {
+      const response = await apiClient.get(`/api/legislation/${id}/analysis`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching analysis for bill ${id}:`, error);
+      throw error;
+    }
+  }
+};
+
+// Export all services
+export { 
+  apiClient,
+  healthCheck,
+  billService
+};
+
+export default {
+  healthCheck,
+  billService
+};
