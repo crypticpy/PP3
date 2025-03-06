@@ -41,7 +41,7 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>Texas Legislative Tracker</h1>
+        <h1>Policy Pulse - The Legislative Tracker</h1>
         <div className="api-status">
           <p>
             {apiStatus.isChecking ? 'Checking API status...' : (
@@ -61,7 +61,7 @@ function App() {
         {apiStatus.isOnline && 
           <div className="mt-8 p-4 bg-white rounded-lg shadow">
             <h2 className="text-2xl font-bold mb-4">API Dashboard</h2>
-            <p className="mb-4">Welcome to the Texas Legislative Tracker. Below you can see the status of all API endpoints.</p>
+            <p className="mb-4">Welcome to the Policy Pulse Legislative Tracker. Below you can see the status of all API endpoints.</p>
             <ApiEndpointsStatus />
           </div>
         }
