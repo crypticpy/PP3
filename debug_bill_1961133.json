@@ -1,0 +1,272 @@
+{
+  "bill_id": 1961133,
+  "change_hash": "4d6837be2e79fc52e3892c765fdd88f0",
+  "session_id": 2199,
+  "session": {
+    "session_id": 2199,
+    "state_id": 52,
+    "year_start": 2025,
+    "year_end": 2026,
+    "prefile": 0,
+    "sine_die": 0,
+    "prior": 0,
+    "special": 0,
+    "session_tag": "Regular Session",
+    "session_title": "2025-2026 Regular Session",
+    "session_name": "119th Congress"
+  },
+  "url": "https://legiscan.com/US/bill/HB1049/2025",
+  "state_link": "https://www.congress.gov/bill/119th-congress/house-bill/1049/all-info",
+  "completed": 0,
+  "status": 1,
+  "status_date": "2025-02-06",
+  "progress": [
+    {
+      "date": "2025-02-06",
+      "event": 1
+    },
+    {
+      "date": "2025-02-06",
+      "event": 9
+    },
+    {
+      "date": "2025-02-12",
+      "event": 10
+    }
+  ],
+  "state": "US",
+  "state_id": 52,
+  "bill_number": "HB1049",
+  "bill_type": "B",
+  "bill_type_id": "1",
+  "body": "H",
+  "body_id": 114,
+  "current_body": "H",
+  "current_body_id": 114,
+  "title": "Transparency in Reporting of Adversarial Contributions to Education Act",
+  "description": "To ensure that parents are aware of foreign influence in their child's public school, and for other purposes.",
+  "pending_committee_id": 0,
+  "committee": [],
+  "referrals": [
+    {
+      "date": "2025-02-06",
+      "committee_id": 4977,
+      "chamber": "H",
+      "chamber_id": 114,
+      "name": "Education and Workforce"
+    }
+  ],
+  "history": [
+    {
+      "date": "2025-02-06",
+      "action": "Introduced in House",
+      "chamber": "H",
+      "chamber_id": 114,
+      "importance": 0
+    },
+    {
+      "date": "2025-02-06",
+      "action": "Referred to the House Committee on Education and Workforce.",
+      "chamber": "H",
+      "chamber_id": 114,
+      "importance": 1
+    },
+    {
+      "date": "2025-02-12",
+      "action": "Committee Consideration and Mark-up Session Held",
+      "chamber": "H",
+      "chamber_id": 114,
+      "importance": 0
+    },
+    {
+      "date": "2025-02-12",
+      "action": "Ordered to be Reported in the Nature of a Substitute (Amended) by the Yeas and Nays: 20 - 13.",
+      "chamber": "H",
+      "chamber_id": 114,
+      "importance": 1
+    },
+    {
+      "date": "2025-03-05",
+      "action": "Reported (Amended) by the Committee on Education and Workforce. H. Rept. 119-13.",
+      "chamber": "H",
+      "chamber_id": 114,
+      "importance": 0
+    },
+    {
+      "date": "2025-03-05",
+      "action": "Placed on the Union Calendar, Calendar No. 7.",
+      "chamber": "H",
+      "chamber_id": 114,
+      "importance": 0
+    }
+  ],
+  "sponsors": [
+    {
+      "people_id": 23998,
+      "person_hash": "69pyyv23",
+      "party_id": "2",
+      "state_id": 52,
+      "party": "R",
+      "role_id": 1,
+      "role": "Rep",
+      "name": "Aaron Bean",
+      "first_name": "Aaron",
+      "middle_name": "",
+      "last_name": "Bean",
+      "suffix": "",
+      "nickname": "",
+      "district": "HD-FL-4",
+      "ftm_eid": 0,
+      "votesmart_id": 53932,
+      "opensecrets_id": "",
+      "knowwho_pid": 0,
+      "ballotpedia": "Aaron_Bean",
+      "bioguide_id": "B001314",
+      "sponsor_type_id": 1,
+      "sponsor_order": 1,
+      "committee_sponsor": 0,
+      "committee_id": 0,
+      "state_federal": 15774
+    },
+    {
+      "people_id": 25919,
+      "person_hash": "qarvl1kr",
+      "party_id": "2",
+      "state_id": 52,
+      "party": "R",
+      "role_id": 1,
+      "role": "Rep",
+      "name": "Ryan Mackenzie",
+      "first_name": "Ryan",
+      "middle_name": "",
+      "last_name": "Mackenzie",
+      "suffix": "",
+      "nickname": "",
+      "district": "HD-PA-7",
+      "ftm_eid": 0,
+      "votesmart_id": 136465,
+      "opensecrets_id": "",
+      "knowwho_pid": 0,
+      "ballotpedia": "Ryan_Mackenzie",
+      "bioguide_id": "M001230",
+      "sponsor_type_id": 2,
+      "sponsor_order": 2,
+      "committee_sponsor": 0,
+      "committee_id": 0,
+      "state_federal": 13960
+    },
+    {
+      "people_id": 15051,
+      "person_hash": "hme4jiwz",
+      "party_id": "2",
+      "state_id": 52,
+      "party": "R",
+      "role_id": 1,
+      "role": "Rep",
+      "name": "Garland Barr",
+      "first_name": "Garland",
+      "middle_name": "",
+      "last_name": "Barr",
+      "suffix": "",
+      "nickname": "Andy",
+      "district": "HD-KY-6",
+      "ftm_eid": 9192076,
+      "votesmart_id": 117290,
+      "opensecrets_id": "N00031233",
+      "knowwho_pid": 284674,
+      "ballotpedia": "Andy_Barr",
+      "bioguide_id": "B001282",
+      "sponsor_type_id": 2,
+      "sponsor_order": 3,
+      "committee_sponsor": 0,
+      "committee_id": 0,
+      "state_federal": 0
+    },
+    {
+      "people_id": 24023,
+      "person_hash": "cn8ra6ur",
+      "party_id": "2",
+      "state_id": 52,
+      "party": "R",
+      "role_id": 1,
+      "role": "Rep",
+      "name": "Erin Houchin",
+      "first_name": "Erin",
+      "middle_name": "",
+      "last_name": "Houchin",
+      "suffix": "",
+      "nickname": "",
+      "district": "HD-IN-9",
+      "ftm_eid": 0,
+      "votesmart_id": 149614,
+      "opensecrets_id": "",
+      "knowwho_pid": 0,
+      "ballotpedia": "Erin_Houchin",
+      "bioguide_id": "H001093",
+      "sponsor_type_id": 2,
+      "sponsor_order": 4,
+      "committee_sponsor": 0,
+      "committee_id": 0,
+      "state_federal": 16533
+    }
+  ],
+  "sasts": [],
+  "subjects": [
+    {
+      "subject_id": 13329,
+      "subject_name": "Education"
+    }
+  ],
+  "texts": [
+    {
+      "doc_id": 3110071,
+      "date": "2025-02-08",
+      "type": "Introduced",
+      "type_id": 1,
+      "mime": "application/pdf",
+      "mime_id": 2,
+      "url": "https://legiscan.com/US/text/HB1049/id/3110071",
+      "state_link": "https://www.congress.gov/119/bills/hr1049/BILLS-119hr1049ih.pdf",
+      "text_size": 235265,
+      "text_hash": "dce2d14e7dd162723dd700745f66cb8d",
+      "alt_bill_text": 0,
+      "alt_mime": "",
+      "alt_mime_id": 0,
+      "alt_state_link": "",
+      "alt_text_size": 0,
+      "alt_text_hash": ""
+    },
+    {
+      "doc_id": 3155859,
+      "date": "2025-03-06",
+      "type": "Introduced",
+      "type_id": 1,
+      "mime": "application/pdf",
+      "mime_id": 2,
+      "url": "https://legiscan.com/US/text/HB1049/id/3155859",
+      "state_link": "https://www.congress.gov/119/bills/hr1049/BILLS-119hr1049rh.pdf",
+      "text_size": 239786,
+      "text_hash": "a4f45cb39ecbb68216fb98d46a8d151c",
+      "alt_bill_text": 0,
+      "alt_mime": "",
+      "alt_mime_id": 0,
+      "alt_state_link": "",
+      "alt_text_size": 0,
+      "alt_text_hash": ""
+    }
+  ],
+  "votes": [],
+  "amendments": [],
+  "supplements": [],
+  "calendar": [
+    {
+      "type_id": 1,
+      "event_hash": "6de68771",
+      "type": "Hearing",
+      "date": "2025-02-12",
+      "time": "10:15",
+      "location": "2175 RHOB",
+      "description": "House Committee on Education and Workforce Hearing"
+    }
+  ]
+}

@@ -1,0 +1,261 @@
+{
+  "bill_id": 1955910,
+  "change_hash": "9e6f4b73e6f1eebfc9dd6e412573f747",
+  "session_id": 2199,
+  "session": {
+    "session_id": 2199,
+    "state_id": 52,
+    "year_start": 2025,
+    "year_end": 2026,
+    "prefile": 0,
+    "sine_die": 0,
+    "prior": 0,
+    "special": 0,
+    "session_tag": "Regular Session",
+    "session_title": "2025-2026 Regular Session",
+    "session_name": "119th Congress"
+  },
+  "url": "https://legiscan.com/US/bill/HB919/2025",
+  "state_link": "https://www.congress.gov/bill/119th-congress/house-bill/919/all-info",
+  "completed": 0,
+  "status": 2,
+  "status_date": "2025-03-05",
+  "progress": [
+    {
+      "date": "2025-02-04",
+      "event": 1
+    },
+    {
+      "date": "2025-02-04",
+      "event": 9
+    },
+    {
+      "date": "2025-03-05",
+      "event": 2
+    }
+  ],
+  "state": "US",
+  "state_id": 52,
+  "bill_number": "HB919",
+  "bill_type": "B",
+  "bill_type_id": "1",
+  "body": "H",
+  "body_id": 114,
+  "current_body": "S",
+  "current_body_id": 115,
+  "title": "Chronic Disease Flexible Coverage Act",
+  "description": "To codify Internal Revenue Service guidance relating to treatment of certain services and items for chronic conditions as meeting the preventive care deductible safe harbor for purposes of high deductible health plans in connection with health savings accounts.",
+  "pending_committee_id": 2326,
+  "committee": {
+    "committee_id": 2326,
+    "chamber": "S",
+    "chamber_id": 115,
+    "name": "Finance"
+  },
+  "referrals": [
+    {
+      "date": "2025-02-04",
+      "committee_id": 2317,
+      "chamber": "H",
+      "chamber_id": 114,
+      "name": "Ways And Means"
+    },
+    {
+      "date": "2025-03-05",
+      "committee_id": 2326,
+      "chamber": "S",
+      "chamber_id": 115,
+      "name": "Finance"
+    }
+  ],
+  "history": [
+    {
+      "date": "2025-02-04",
+      "action": "Introduced in House",
+      "chamber": "H",
+      "chamber_id": 114,
+      "importance": 0
+    },
+    {
+      "date": "2025-02-04",
+      "action": "Referred to the House Committee on Ways and Means.",
+      "chamber": "H",
+      "chamber_id": 114,
+      "importance": 1
+    },
+    {
+      "date": "2025-03-04",
+      "action": "Mr. Smith (MO) moved to suspend the rules and pass the bill.",
+      "chamber": "H",
+      "chamber_id": 114,
+      "importance": 0
+    },
+    {
+      "date": "2025-03-04",
+      "action": "Considered under suspension of the rules. (consideration: CR H964-966)",
+      "chamber": "H",
+      "chamber_id": 114,
+      "importance": 0
+    },
+    {
+      "date": "2025-03-04",
+      "action": "DEBATE - The House proceeded with forty minutes of debate on H.R. 919.",
+      "chamber": "H",
+      "chamber_id": 114,
+      "importance": 0
+    },
+    {
+      "date": "2025-03-04",
+      "action": "On motion to suspend the rules and pass the bill Agreed to by voice vote. (text: CR H964)",
+      "chamber": "H",
+      "chamber_id": 114,
+      "importance": 0
+    },
+    {
+      "date": "2025-03-04",
+      "action": "Motion to reconsider laid on the table Agreed to without objection.",
+      "chamber": "H",
+      "chamber_id": 114,
+      "importance": 0
+    },
+    {
+      "date": "2025-03-05",
+      "action": "Received in the Senate and Read twice and referred to the Committee on Finance.",
+      "chamber": "S",
+      "chamber_id": 115,
+      "importance": 1
+    }
+  ],
+  "sponsors": [
+    {
+      "people_id": 9175,
+      "person_hash": "gmwmkrf2",
+      "party_id": "2",
+      "state_id": 52,
+      "party": "R",
+      "role_id": 1,
+      "role": "Rep",
+      "name": "Vern Buchanan",
+      "first_name": "Vern",
+      "middle_name": "",
+      "last_name": "Buchanan",
+      "suffix": "",
+      "nickname": "",
+      "district": "HD-FL-16",
+      "ftm_eid": 17658661,
+      "votesmart_id": 66247,
+      "opensecrets_id": "N00027626",
+      "knowwho_pid": 250707,
+      "ballotpedia": "Vern_Buchanan",
+      "bioguide_id": "B001260",
+      "sponsor_type_id": 1,
+      "sponsor_order": 1,
+      "committee_sponsor": 0,
+      "committee_id": 0,
+      "state_federal": 0
+    },
+    {
+      "people_id": 18326,
+      "person_hash": "wwhiv48t",
+      "party_id": "1",
+      "state_id": 52,
+      "party": "D",
+      "role_id": 1,
+      "role": "Rep",
+      "name": "Jimmy Panetta",
+      "first_name": "Jimmy",
+      "middle_name": "",
+      "last_name": "Panetta",
+      "suffix": "",
+      "nickname": "",
+      "district": "HD-CA-19",
+      "ftm_eid": 35018515,
+      "votesmart_id": 169078,
+      "opensecrets_id": "N00038601",
+      "knowwho_pid": 561057,
+      "ballotpedia": "Jimmy_Panetta",
+      "bioguide_id": "P000613",
+      "sponsor_type_id": 2,
+      "sponsor_order": 2,
+      "committee_sponsor": 0,
+      "committee_id": 0,
+      "state_federal": 0
+    },
+    {
+      "people_id": 18335,
+      "person_hash": "xaopd1td",
+      "party_id": "2",
+      "state_id": 52,
+      "party": "R",
+      "role_id": 1,
+      "role": "Rep",
+      "name": "Claudia Tenney",
+      "first_name": "Claudia",
+      "middle_name": "",
+      "last_name": "Tenney",
+      "suffix": "",
+      "nickname": "",
+      "district": "HD-NY-24",
+      "ftm_eid": 4644381,
+      "votesmart_id": 127668,
+      "opensecrets_id": "N00036351",
+      "knowwho_pid": 216162,
+      "ballotpedia": "Claudia_Tenney",
+      "bioguide_id": "T000478",
+      "sponsor_type_id": 2,
+      "sponsor_order": 3,
+      "committee_sponsor": 0,
+      "committee_id": 0,
+      "state_federal": 11330
+    }
+  ],
+  "sasts": [],
+  "subjects": [
+    {
+      "subject_id": 13338,
+      "subject_name": "Taxation"
+    }
+  ],
+  "texts": [
+    {
+      "doc_id": 3151329,
+      "date": "2025-03-04",
+      "type": "Introduced",
+      "type_id": 1,
+      "mime": "application/pdf",
+      "mime_id": 2,
+      "url": "https://legiscan.com/US/text/HB919/id/3151329",
+      "state_link": "https://www.congress.gov/119/bills/hr919/BILLS-119hr919ih.pdf",
+      "text_size": 230851,
+      "text_hash": "0f7810649ecad2ad860501cf94a30e1e",
+      "alt_bill_text": 0,
+      "alt_mime": "",
+      "alt_mime_id": 0,
+      "alt_state_link": "",
+      "alt_text_size": 0,
+      "alt_text_hash": ""
+    },
+    {
+      "doc_id": 3155662,
+      "date": "2025-03-05",
+      "type": "Engrossed",
+      "type_id": 4,
+      "mime": "application/pdf",
+      "mime_id": 2,
+      "url": "https://legiscan.com/US/text/HB919/id/3155662",
+      "state_link": "https://www.congress.gov/119/bills/hr919/BILLS-119hr919eh.pdf",
+      "text_size": 103815,
+      "text_hash": "f337a45b76b2f3a8ff1798bcb797f50e",
+      "alt_bill_text": 0,
+      "alt_mime": "",
+      "alt_mime_id": 0,
+      "alt_state_link": "",
+      "alt_text_size": 0,
+      "alt_text_hash": ""
+    }
+  ],
+  "votes": [],
+  "amendments": [],
+  "supplements": [],
+  "calendar": []
+}
