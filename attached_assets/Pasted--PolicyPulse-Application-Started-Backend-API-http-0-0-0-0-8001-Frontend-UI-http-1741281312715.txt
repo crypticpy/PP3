@@ -1,0 +1,33 @@
+==== PolicyPulse Application Started ====
+  - Backend API: http://0.0.0.0:8001
+  - Frontend UI: http://0.0.0.0:5174
+For external access, use your Replit domain with these ports
+=========================================
+2025-03-06 17:14:34,496 - __main__ - INFO - Setting frontend API URL to: /api
+
+2025-03-06 17:14:34,647 - __main__ - INFO - FRONTEND: 
+2025-03-06 17:14:34,647 - __main__ - INFO - FRONTEND: > legiscan-frontend@0.1.0 dev
+2025-03-06 17:14:34,647 - __main__ - INFO - FRONTEND: > vite --port 5174 --host 0.0.0.0
+2025-03-06 17:14:34,647 - __main__ - INFO - FRONTEND: 
+2025-03-06 17:14:34,827 - __main__ - INFO - FRONTEND: The CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.
+2025-03-06 17:14:34,891 - __main__ - INFO - FRONTEND: 5:14:34 PM [vite] (client) Forced re-optimization of dependencies
+2025-03-06 17:14:34,920 - __main__ - INFO - FRONTEND: 
+2025-03-06 17:14:34,920 - __main__ - INFO - FRONTEND: VITE v6.2.0  ready in 220 ms
+2025-03-06 17:14:34,920 - __main__ - INFO - FRONTEND: 
+2025-03-06 17:14:34,921 - __main__ - INFO - FRONTEND: ➜  Local:   http://localhost:5174/
+2025-03-06 17:14:34,921 - __main__ - INFO - FRONTEND: ➜  Network: http://172.31.128.44:5174/
+2025-03-06 17:14:34,921 - __main__ - INFO - FRONTEND: ➜  press h + enter to show help
+2025-03-06 17:14:35,175 - app.models - INFO - Database schema created or verified successfully
+2025-03-06 17:14:35,270 - app.data_store - INFO - Database session established successfully.
+2025-03-06 17:14:35,271 - app.api - INFO - Services initialized on startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     172.31.128.44:42398 - "GET / HTTP/1.1" 200 OK
+2025-03-06 17:14:38,158 - __main__ - INFO - FRONTEND: Proxying GET /health to http://0.0.0.0:8000/health
+2025-03-06 17:14:38,159 - __main__ - INFO - FRONTEND: Proxying GET /health to http://0.0.0.0:8000/health
+2025-03-06 17:14:38,160 - __main__ - INFO - FRONTEND: Proxy error for GET /health: connect ECONNREFUSED 0.0.0.0:8000
+2025-03-06 17:14:38,161 - __main__ - INFO - FRONTEND: 5:14:38 PM [vite] http proxy error: /health
+2025-03-06 17:14:38,161 - __main__ - INFO - FRONTEND: Error: connect ECONNREFUSED 0.0.0.0:8000
+2025-03-06 17:14:38,161 - __main__ - INFO - FRONTEND: at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+2025-03-06 17:14:38,162 - __main__ - INFO - FRONTEND: Proxy error for GET /health: connect ECONNREFUSED 0.0.0.0:8000
+2025-03-06 17:14:38,162 - __main__ - INFO - FRONTEND: 5:14:38 PM [vite] http proxy error: /health
