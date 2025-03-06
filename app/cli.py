@@ -20,10 +20,10 @@ import logging
 from datetime import datetime
 from typing import Any
 
-from models import init_db, Legislation, LegislationAnalysis, SyncMetadata
-from legiscan_api import LegiScanAPI
-from ai_analysis import AIAnalysis
-from scheduler import LegislationSyncManager, PolicyPulseScheduler
+from app.models import init_db, Legislation, LegislationAnalysis, SyncMetadata
+from app.legiscan_api import LegiScanAPI
+from app.ai_analysis import AIAnalysis
+from app.scheduler import LegislationSyncManager, PolicyPulseScheduler
 
 # Set up logging
 logging.basicConfig(

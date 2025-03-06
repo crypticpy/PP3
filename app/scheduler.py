@@ -29,8 +29,8 @@ from sqlalchemy import and_, or_, not_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 
-from models import init_db, SyncMetadata, SyncError as DBSyncError, SyncStatusEnum
-from models import Legislation, LegislationText, LegislationAnalysis
+from app.models import init_db, SyncMetadata, SyncError as DBSyncError, SyncStatusEnum
+from app.models import Legislation, LegislationText, LegislationAnalysis
 from legiscan_api import LegiScanAPI
 from ai_analysis import AIAnalysis
 
