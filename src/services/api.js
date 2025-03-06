@@ -1,20 +1,31 @@
 import axios from 'axios';
 
-// Get the API URL from environment or use a default
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
-// Create an axios instance with the base URL
 const api = axios.create({
   baseURL: API_URL,
+  timeout: 10000,
   headers: {
-    'Content-Type': 'application/json'
-  },
-  timeout: 10000 // 10 seconds timeout
+    'Content-Type': 'application/json',
+  }
 });
 
-// Health check endpoint
-export const healthCheck = () => {
-  return api.get('/health');
+// Add response interceptor for better error handling
+api.interceptors.response.use(
+  response => response,
+  error => {
+    console.error('API Error:', error.message);
+    return Promise.reject(error);
+  }
+);
+
+export const healthCheck = async () => {
+  try {
+    return await api.get('/health');
+  } catch (error) {
+    console.error('Health check error:', error);
+    throw error;
+  }
 };
 
 // Bill-related endpoints

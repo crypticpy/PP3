@@ -16,6 +16,7 @@ const HealthCheck = () => {
         const response = await healthCheck();
         if (response && response.status === 200) {
           setStatus('online');
+          console.log('API health check successful:', response.data);
         } else {
           setStatus('offline');
           setError('Invalid API response format');
@@ -27,7 +28,14 @@ const HealthCheck = () => {
       }
     };
 
+    // Initial check
     checkHealth();
+    
+    // Set up periodic health checks
+    const intervalId = setInterval(checkHealth, 30000); // Check every 30 seconds
+    
+    // Clean up interval on component unmount
+    return () => clearInterval(intervalId);
   }, []);
 
   return (

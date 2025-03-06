@@ -13,6 +13,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, ''),
+        onError: (err, req, res) => {
+          console.error('Proxy error:', err);
+        },
+        onProxyReq: (proxyReq, req, res) => {
+          console.log(`Proxying ${req.method} ${req.url} to ${proxyReq.path}`);
+        }
       },
     },
     cors: true,
