@@ -15,7 +15,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from pydantic import ValidationError
 
-from app.ai_analysis.errors import (AIAnalysisError, TokenLimitError, APIError,
+from .errors import (AIAnalysisError, TokenLimitError, APIError,
                                     DatabaseError)
 from app.ai_analysis.models import LegislationAnalysisResult
 from app.ai_analysis.config import AIAnalysisConfig
