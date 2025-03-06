@@ -28,6 +28,10 @@ from .utils import (TokenCounter, create_analysis_instructions,
                                    calculate_priority_scores)
 
 # Import required models
+import sys
+import os
+# Add parent directory to path to make app imports work
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 from app.models import (Legislation, LegislationAnalysis, LegislationPriority,
                         ImpactCategoryEnum, ImpactLevelEnum)
 
