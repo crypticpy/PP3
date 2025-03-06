@@ -10,18 +10,20 @@ import logging
 import asyncio
 from typing import Optional, Dict, Any, List
 
+
+
+# Import key components for external use - use absolute imports
+from .analyzer import AIAnalysis
+from .errors import AIAnalysisError, DatabaseError, APIError, RateLimitError
+from .config import AIAnalysisConfig
+from .utils import TokenCounter
+from .models import LegislationAnalysisResult
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
-
-# Import key components for external use - use absolute imports
-from .analyzer import AIAnalysis
-from app.ai_analysis.errors import AIAnalysisError, DatabaseError, APIError, RateLimitError
-from app.ai_analysis.config import AIAnalysisConfig
-from app.ai_analysis.utils import TokenCounter
-from app.ai_analysis.models import LegislationAnalysisResult
 
 # Import database session if available
 try:

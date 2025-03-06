@@ -27,7 +27,7 @@ try:
 except ImportError:
     HAS_SQLALCHEMY = False
 
-from app.ai_analysis.errors import APIError, RateLimitError, AIAnalysisError, DatabaseError
+from .errors import APIError, RateLimitError, AIAnalysisError, DatabaseError
 
 logger = logging.getLogger(__name__)
 
