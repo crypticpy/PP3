@@ -378,7 +378,7 @@ class UserPrefsPayload(BaseModel):
         return [item.strip() for item in v]
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "keywords": ["healthcare", "funding", "education"],
                 "health_focus": ["mental health", "preventative care"],
@@ -394,7 +394,7 @@ class UserSearchPayload(BaseModel):
     results: Dict[str, Any] = Field(default_factory=dict, description="Search result metadata")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "query": "healthcare funding",
                 "results": {"total_hits": 42, "search_time_ms": 156}
@@ -418,7 +418,7 @@ class AIAnalysisPayload(BaseModel):
         return v
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "model_name": "gpt-4o",
                 "focus_areas": ["public health", "local government"],
@@ -562,7 +562,7 @@ class BillSearchQuery(BaseModel):
         return v
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "query": "healthcare funding",
                 "filters": {
@@ -605,7 +605,7 @@ class SetPriorityPayload(BaseModel):
         return self
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "public_health_relevance": 85,
                 "local_govt_relevance": 70,
