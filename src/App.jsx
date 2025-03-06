@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import './index.css';
 import { healthCheck } from './services/api';
+import ApiEndpointsStatus from './components/ApiEndpointsStatus';
 
 function App() {
   const [apiStatus, setApiStatus] = useState({
@@ -55,6 +56,10 @@ function App() {
           <p>{apiStatus.message}</p>
         </div>
       </header>
+      
+      <main className="App-content">
+        {apiStatus.isOnline && <ApiEndpointsStatus />}
+      </main>
     </div>
   );
 }
