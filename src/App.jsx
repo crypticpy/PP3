@@ -1,24 +1,35 @@
-import React, { useState, useEffect } from 'react';
-import HealthCheck from './components/HealthCheck';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import './index.css';
+import Header from './components/Header';
+import Footer from './components/Footer';
+import Sidebar from './components/Sidebar';
+import Dashboard from './pages/Dashboard';
+import BillList from './pages/BillList';
+import BillDetail from './pages/BillDetail';
+import UserPreferences from './pages/UserPreferences';
+import NotFound from './pages/NotFound';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header p-6 bg-gray-100 min-h-screen">
-        <h1 className="text-3xl font-bold mb-4">Texas Legislative Tracker</h1>
-        <p className="mb-6">Hello World! This is our new frontend.</p>
-
-        <HealthCheck />
-
-        <div className="mt-8">
-          <h2 className="text-xl font-semibold mb-4">Getting Started</h2>
-          <p>
-            Once the API is connected, you'll be able to browse and track Texas legislation
-            relevant to public health and local governments.
-          </p>
+    <Router>
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <div className="flex flex-1">
+          <Sidebar />
+          <main className="flex-1 p-4 overflow-auto">
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/bills" element={<BillList />} />
+              <Route path="/bills/:id" element={<BillDetail />} />
+              <Route path="/preferences" element={<UserPreferences />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </main>
         </div>
-      </header>
-    </div>
+        <Footer />
+      </div>
+    </Router>
   );
 }
 
