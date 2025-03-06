@@ -17,11 +17,11 @@ from pydantic import ValidationError
 
 from .errors import (AIAnalysisError, TokenLimitError, APIError,
                                     DatabaseError)
-from app.ai_analysis.models import LegislationAnalysisResult
-from app.ai_analysis.config import AIAnalysisConfig
-from app.ai_analysis.openai_client import OpenAIClient
-from app.ai_analysis.chunking import TextChunker
-from app.ai_analysis.utils import (TokenCounter, create_analysis_instructions,
+from .models import LegislationAnalysisResult
+from .config import AIAnalysisConfig
+from .openai_client import OpenAIClient
+from .chunking import TextChunker
+from .utils import (TokenCounter, create_analysis_instructions,
                                    get_analysis_json_schema,
                                    create_user_prompt, merge_analyses,
                                    create_chunk_prompt,
