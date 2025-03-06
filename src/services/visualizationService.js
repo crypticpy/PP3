@@ -106,9 +106,38 @@ export const getImpactColors = (data) => {
   };
 };
 
+export const prepareKeyTermsData = (analysisData) => {
+  if (!analysisData || !analysisData.key_terms) {
+    return [];
+  }
+
+  // Convert the key terms object to an array format usable by the word cloud
+  return Object.entries(analysisData.key_terms).map(([text, value]) => ({
+    text,
+    value: value * 100, // Scale the value for better visualization
+  }));
+};
+
+export const prepareBillTimelineData = (billData) => {
+  if (!billData || !billData.history) {
+    return [];
+  }
+
+  // Convert bill history into timeline data
+  return billData.history.map((event, index) => ({
+    id: index,
+    date: new Date(event.date).toLocaleDateString(),
+    action: event.action || 'Unknown action',
+    description: event.description || '',
+    chamber: event.chamber || 'Unknown'
+  }));
+};
+
 export default {
   prepareWordCloudData,
   prepareTimelineData,
   prepareImpactData,
-  getImpactColors
+  getImpactColors,
+  prepareKeyTermsData,
+  prepareBillTimelineData
 };
