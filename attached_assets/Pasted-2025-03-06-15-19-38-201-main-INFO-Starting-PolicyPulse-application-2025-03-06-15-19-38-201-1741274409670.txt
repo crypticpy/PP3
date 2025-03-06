@@ -1,0 +1,65 @@
+2025-03-06 15:19:38,201 - __main__ - INFO - Starting PolicyPulse application
+2025-03-06 15:19:38,201 - __main__ - WARNING - Port 5173 is in use, trying next port
+2025-03-06 15:19:38,201 - __main__ - WARNING - Port 5174 is in use, trying next port
+2025-03-06 15:19:38,201 - __main__ - INFO - Port 5175 is available
+2025-03-06 15:19:38,201 - __main__ - WARNING - Port 8000 is in use, trying next port
+2025-03-06 15:19:38,201 - __main__ - WARNING - Port 8001 is in use, trying next port
+2025-03-06 15:19:38,202 - __main__ - INFO - Port 8002 is available
+2025-03-06 15:19:38,202 - __main__ - INFO - Using ports - Frontend: 5175, Backend: 8002
+2025-03-06 15:19:41,203 - __main__ - INFO - Backend started, now starting frontend...
+2025-03-06 15:19:41,203 - __main__ - INFO - Starting frontend from project root: /home/runner/workspace on port 5175
+
+==== PolicyPulse Application Started ====
+  - Backend API: http://0.0.0.0:8002
+  - Frontend UI: http://0.0.0.0:5175
+For external access, use your Replit domain with these ports
+=========================================
+
+2025-03-06 15:19:41,283 - __main__ - INFO - Starting backend on port 8002
+INFO:     Started server process [3572]
+INFO:     Waiting for application startup.
+2025-03-06 15:19:41,371 - __main__ - INFO - FRONTEND: 
+2025-03-06 15:19:41,371 - __main__ - INFO - FRONTEND: > legiscan-frontend@0.1.0 dev
+2025-03-06 15:19:41,371 - __main__ - INFO - FRONTEND: > vite --port 5175 --host 0.0.0.0
+2025-03-06 15:19:41,371 - __main__ - INFO - FRONTEND: 
+2025-03-06 15:19:41,649 - __main__ - INFO - FRONTEND: Forced re-optimization of dependencies
+2025-03-06 15:19:41,667 - __main__ - INFO - FRONTEND: 
+2025-03-06 15:19:41,667 - __main__ - INFO - FRONTEND: VITE v4.5.9  ready in 228 ms
+2025-03-06 15:19:41,667 - __main__ - INFO - FRONTEND: 
+2025-03-06 15:19:41,667 - __main__ - INFO - FRONTEND: ➜  Local:   http://localhost:5175/
+2025-03-06 15:19:41,667 - __main__ - INFO - FRONTEND: ➜  Network: http://172.31.128.82:5175/
+2025-03-06 15:19:41,668 - __main__ - INFO - FRONTEND: ➜  press h to show help
+2025-03-06 15:19:42,139 - app.models - INFO - Database connection established successfully
+2025-03-06 15:19:43,057 - app.models - INFO - Database schema created or verified successfully
+2025-03-06 15:19:43,143 - app.data_store - INFO - Database session established successfully.
+2025-03-06 15:19:43,143 - app.api - INFO - Services initialized on startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8002 (Press CTRL+C to quit)
+2025-03-06 15:19:43,995 - __main__ - INFO - FRONTEND: Error:   Failed to scan for dependencies from entries:
+2025-03-06 15:19:43,995 - __main__ - INFO - FRONTEND: /home/runner/workspace/index.html
+2025-03-06 15:19:43,995 - __main__ - INFO - FRONTEND: 
+2025-03-06 15:19:43,995 - __main__ - INFO - FRONTEND: ✘ [ERROR] No matching export in "src/services/api.js" for import "billService"
+2025-03-06 15:19:43,995 - __main__ - INFO - FRONTEND: 
+2025-03-06 15:19:43,995 - __main__ - INFO - FRONTEND: src/pages/BillDetail.jsx:3:9:
+2025-03-06 15:19:43,995 - __main__ - INFO - FRONTEND:       3 │ import { billService } from '../services/api';
+2025-03-06 15:19:43,995 - __main__ - INFO - FRONTEND: ╵          ~~~~~~~~~~~
+2025-03-06 15:19:43,995 - __main__ - INFO - FRONTEND: 
+2025-03-06 15:19:43,996 - __main__ - INFO - FRONTEND: 
+2025-03-06 15:19:43,996 - __main__ - INFO - FRONTEND: ✘ [ERROR] No matching export in "src/services/api.js" for import "billService"
+2025-03-06 15:19:43,996 - __main__ - INFO - FRONTEND: 
+2025-03-06 15:19:43,996 - __main__ - INFO - FRONTEND: src/pages/BillList.jsx:3:9:
+2025-03-06 15:19:43,996 - __main__ - INFO - FRONTEND:       3 │ import { billService } from '../services/api';
+2025-03-06 15:19:43,996 - __main__ - INFO - FRONTEND: ╵          ~~~~~~~~~~~
+2025-03-06 15:19:43,997 - __main__ - INFO - FRONTEND: 
+2025-03-06 15:19:43,997 - __main__ - INFO - FRONTEND: 
+2025-03-06 15:19:43,997 - __main__ - INFO - FRONTEND: at failureErrorWithLog (/home/runner/workspace/node_modules/esbuild/lib/main.js:1649:15)
+2025-03-06 15:19:43,997 - __main__ - INFO - FRONTEND: at /home/runner/workspace/node_modules/esbuild/lib/main.js:1058:25
+2025-03-06 15:19:43,997 - __main__ - INFO - FRONTEND: at runOnEndCallbacks (/home/runner/workspace/node_modules/esbuild/lib/main.js:1484:45)
+2025-03-06 15:19:43,997 - __main__ - INFO - FRONTEND: at buildResponseToResult (/home/runner/workspace/node_modules/esbuild/lib/main.js:1056:7)
+2025-03-06 15:19:43,997 - __main__ - INFO - FRONTEND: at /home/runner/workspace/node_modules/esbuild/lib/main.js:1068:9
+2025-03-06 15:19:43,997 - __main__ - INFO - FRONTEND: at new Promise (<anonymous>)
+2025-03-06 15:19:43,997 - __main__ - INFO - FRONTEND: at requestCallbacks.on-end (/home/runner/workspace/node_modules/esbuild/lib/main.js:1067:54)
+2025-03-06 15:19:43,997 - __main__ - INFO - FRONTEND: at handleRequest (/home/runner/workspace/node_modules/esbuild/lib/main.js:729:19)
+2025-03-06 15:19:43,997 - __main__ - INFO - FRONTEND: at handleIncomingPacket (/home/runner/workspace/node_modules/esbuild/lib/main.js:755:7)
+2025-03-06 15:19:43,997 - __main__ - INFO - FRONTEND: at Socket.readFromStdout (/home/runner/workspace/node_modules/esbuild/lib/main.js:679:7)
+INFO:     172.31.128.82:39908 - "GET / HTTP/1.1" 200 OK

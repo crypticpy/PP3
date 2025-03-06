@@ -9,7 +9,7 @@ const HealthCheck = () => {
 
   useEffect(() => {
     // Get the API URL from environment or config for display purposes
-    const displayUrl = import.meta.env.VITE_API_URL || 'http://0.0.0.0:8000';
+    const displayUrl = import.meta.env.VITE_API_URL || 'http://0.0.0.0:8001';
     setApiUrl(displayUrl);
 
     const checkHealth = async () => {
@@ -52,9 +52,12 @@ const HealthCheck = () => {
         <div className="error-details mt-2 p-3 bg-red-50 border border-red-200 rounded text-sm">
           <p className="font-bold mb-1">Error Details:</p>
           <p className="text-red-700">{error}</p>
-          <p className="mt-2 text-gray-600">API URL: {apiUrl}</p>
         </div>
       )}
+      
+      <div className="text-sm text-gray-500">
+        API URL: {apiUrl}
+      </div>
     </div>
   );
 };
