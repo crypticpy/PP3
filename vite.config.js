@@ -18,12 +18,18 @@ export default defineConfig({
     },
     cors: true,
     hmr: {
-      host: '0.0.0.0',
       clientPort: 443,
-      protocol: 'wss',
-      path: '/hmr/',
-      overlay: true
+      timeout: 15000,
+      port: 443,
+      host: 'replit.dev',
+      protocol: 'wss'
     },
-    allowedHosts: ['2d81b13f-422b-4641-a71e-b98d13690b4c-00-25k3c676pm01w.picard.replit.dev', '.replit.dev']
+    watch: {
+      usePolling: true,
+      interval: 1000,
+    },
+    fs: {
+      strict: false
+    }
   },
 });
