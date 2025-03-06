@@ -1,0 +1,108 @@
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     172.31.128.44:34238 - "GET / HTTP/1.1" 200 OK
+2025-03-06 17:08:26,770 - __main__ - INFO - FRONTEND: 5:08:26 PM [vite] (client) Pre-transform error: Failed to resolve import "./ImpactChart" from "src/components/visualizations/VisualizationDashboard.jsx". Does the file exist?
+2025-03-06 17:08:26,770 - __main__ - INFO - FRONTEND: Plugin: vite:import-analysis
+2025-03-06 17:08:26,770 - __main__ - INFO - FRONTEND: File: /home/runner/workspace/src/components/visualizations/VisualizationDashboard.jsx:4:24
+2025-03-06 17:08:26,770 - __main__ - INFO - FRONTEND: 18 |  import React, { useState } from "react";
+2025-03-06 17:08:26,770 - __main__ - INFO - FRONTEND: 19 |  import KeyTermsCloud from "./KeyTermsCloud";
+2025-03-06 17:08:26,770 - __main__ - INFO - FRONTEND: 20 |  import ImpactChart from "./ImpactChart";
+2025-03-06 17:08:26,770 - __main__ - INFO - FRONTEND: |                           ^
+2025-03-06 17:08:26,770 - __main__ - INFO - FRONTEND: 21 |  import BillTimeline from "./BillTimeline";
+2025-03-06 17:08:26,770 - __main__ - INFO - FRONTEND: 22 |  const VisualizationDashboard = ({ billData, analysisData }) => {
+2025-03-06 17:08:26,965 - __main__ - INFO - FRONTEND: Error:   Failed to scan for dependencies from entries:
+2025-03-06 17:08:26,965 - __main__ - INFO - FRONTEND: /home/runner/workspace/index.html
+2025-03-06 17:08:26,965 - __main__ - INFO - FRONTEND: 
+2025-03-06 17:08:26,965 - __main__ - INFO - FRONTEND: ✘ [ERROR] No matching export in "src/services/visualizationService.js" for import "prepareBillTimelineData"
+2025-03-06 17:08:26,966 - __main__ - INFO - FRONTEND: 
+2025-03-06 17:08:26,966 - __main__ - INFO - FRONTEND: src/components/visualizations/BillTimeline.jsx:2:9:
+2025-03-06 17:08:26,966 - __main__ - INFO - FRONTEND:       2 │ import { prepareBillTimelineData } from '../../services/visualizati...
+2025-03-06 17:08:26,966 - __main__ - INFO - FRONTEND: ╵          ~~~~~~~~~~~~~~~~~~~~~~~
+2025-03-06 17:08:26,966 - __main__ - INFO - FRONTEND: 
+2025-03-06 17:08:26,966 - __main__ - INFO - FRONTEND: 
+2025-03-06 17:08:26,966 - __main__ - INFO - FRONTEND: ✘ [ERROR] No matching export in "src/services/api.js" for import "billService"
+2025-03-06 17:08:26,966 - __main__ - INFO - FRONTEND: 
+2025-03-06 17:08:26,966 - __main__ - INFO - FRONTEND: src/pages/BillDetail.jsx:3:9:
+2025-03-06 17:08:26,966 - __main__ - INFO - FRONTEND:       3 │ import { billService } from '../services/api';
+2025-03-06 17:08:26,966 - __main__ - INFO - FRONTEND: ╵          ~~~~~~~~~~~
+2025-03-06 17:08:26,966 - __main__ - INFO - FRONTEND: 
+2025-03-06 17:08:26,966 - __main__ - INFO - FRONTEND: 
+2025-03-06 17:08:26,966 - __main__ - INFO - FRONTEND: ✘ [ERROR] No matching export in "src/services/api.js" for import "billService"
+2025-03-06 17:08:26,966 - __main__ - INFO - FRONTEND: 
+2025-03-06 17:08:26,966 - __main__ - INFO - FRONTEND: src/pages/BillList.jsx:3:9:
+2025-03-06 17:08:26,966 - __main__ - INFO - FRONTEND:       3 │ import { billService } from '../services/api';
+2025-03-06 17:08:26,966 - __main__ - INFO - FRONTEND: ╵          ~~~~~~~~~~~
+2025-03-06 17:08:26,966 - __main__ - INFO - FRONTEND: 
+2025-03-06 17:08:26,967 - __main__ - INFO - FRONTEND: 
+2025-03-06 17:08:26,967 - __main__ - INFO - FRONTEND: at failureErrorWithLog (/home/runner/workspace/node_modules/esbuild/lib/main.js:1477:15)
+2025-03-06 17:08:26,967 - __main__ - INFO - FRONTEND: at /home/runner/workspace/node_modules/esbuild/lib/main.js:946:25
+2025-03-06 17:08:26,967 - __main__ - INFO - FRONTEND: at runOnEndCallbacks (/home/runner/workspace/node_modules/esbuild/lib/main.js:1317:45)
+2025-03-06 17:08:26,967 - __main__ - INFO - FRONTEND: at buildResponseToResult (/home/runner/workspace/node_modules/esbuild/lib/main.js:944:7)
+2025-03-06 17:08:26,967 - __main__ - INFO - FRONTEND: at /home/runner/workspace/node_modules/esbuild/lib/main.js:956:9
+2025-03-06 17:08:26,967 - __main__ - INFO - FRONTEND: at new Promise (<anonymous>)
+2025-03-06 17:08:26,967 - __main__ - INFO - FRONTEND: at requestCallbacks.on-end (/home/runner/workspace/node_modules/esbuild/lib/main.js:955:54)
+2025-03-06 17:08:26,967 - __main__ - INFO - FRONTEND: at handleRequest (/home/runner/workspace/node_modules/esbuild/lib/main.js:648:17)
+2025-03-06 17:08:26,967 - __main__ - INFO - FRONTEND: at handleIncomingPacket (/home/runner/workspace/node_modules/esbuild/lib/main.js:673:7)
+2025-03-06 17:08:26,967 - __main__ - INFO - FRONTEND: at Socket.readFromStdout (/home/runner/workspace/node_modules/esbuild/lib/main.js:601:7)
+2025-03-06 17:08:26,967 - __main__ - INFO - FRONTEND: at Socket.emit (node:events:518:28)
+2025-03-06 17:08:26,967 - __main__ - INFO - FRONTEND: at addChunk (node:internal/streams/readable:561:12)
+2025-03-06 17:08:26,967 - __main__ - INFO - FRONTEND: at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+2025-03-06 17:08:26,967 - __main__ - INFO - FRONTEND: at Readable.push (node:internal/streams/readable:392:5)
+2025-03-06 17:08:26,967 - __main__ - INFO - FRONTEND: at Pipe.onStreamRead (node:internal/stream_base_commons:191:23)
+2025-03-06 17:08:30,446 - __main__ - INFO - FRONTEND: 5:08:30 PM [vite] Internal server error: Failed to resolve import "./ImpactChart" from "src/components/visualizations/VisualizationDashboard.jsx". Does the file exist?
+2025-03-06 17:08:30,446 - __main__ - INFO - FRONTEND: Plugin: vite:import-analysis
+2025-03-06 17:08:30,446 - __main__ - INFO - FRONTEND: File: /home/runner/workspace/src/components/visualizations/VisualizationDashboard.jsx:4:24
+2025-03-06 17:08:30,446 - __main__ - INFO - FRONTEND: 18 |  import React, { useState } from "react";
+2025-03-06 17:08:30,446 - __main__ - INFO - FRONTEND: 19 |  import KeyTermsCloud from "./KeyTermsCloud";
+2025-03-06 17:08:30,446 - __main__ - INFO - FRONTEND: 20 |  import ImpactChart from "./ImpactChart";
+2025-03-06 17:08:30,446 - __main__ - INFO - FRONTEND: |                           ^
+2025-03-06 17:08:30,446 - __main__ - INFO - FRONTEND: 21 |  import BillTimeline from "./BillTimeline";
+2025-03-06 17:08:30,446 - __main__ - INFO - FRONTEND: 22 |  const VisualizationDashboard = ({ billData, analysisData }) => {
+2025-03-06 17:08:30,446 - __main__ - INFO - FRONTEND: at TransformPluginContext._formatLog (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:47835:41)
+2025-03-06 17:08:30,446 - __main__ - INFO - FRONTEND: at TransformPluginContext.error (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:47832:16)
+2025-03-06 17:08:30,446 - __main__ - INFO - FRONTEND: at normalizeUrl (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:45968:23)
+2025-03-06 17:08:30,446 - __main__ - INFO - FRONTEND: at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-03-06 17:08:30,446 - __main__ - INFO - FRONTEND: at async file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:46087:37
+2025-03-06 17:08:30,446 - __main__ - INFO - FRONTEND: at async Promise.all (index 5)
+2025-03-06 17:08:30,446 - __main__ - INFO - FRONTEND: at async TransformPluginContext.transform (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:46014:7)
+2025-03-06 17:08:30,446 - __main__ - INFO - FRONTEND: at async EnvironmentPluginContainer.transform (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:47630:18)
+2025-03-06 17:08:30,446 - __main__ - INFO - FRONTEND: at async loadAndTransform (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:41318:27)
+2025-03-06 17:08:30,446 - __main__ - INFO - FRONTEND: at async viteTransformMiddleware (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:42781:24)
+2025-03-06 17:08:30,601 - __main__ - INFO - FRONTEND: 5:08:30 PM [vite] Internal server error: Failed to resolve import "./ImpactChart" from "src/components/visualizations/VisualizationDashboard.jsx". Does the file exist?
+2025-03-06 17:08:30,601 - __main__ - INFO - FRONTEND: Plugin: vite:import-analysis
+2025-03-06 17:08:30,602 - __main__ - INFO - FRONTEND: File: /home/runner/workspace/src/components/visualizations/VisualizationDashboard.jsx:4:24
+2025-03-06 17:08:30,602 - __main__ - INFO - FRONTEND: 18 |  import React, { useState } from "react";
+2025-03-06 17:08:30,602 - __main__ - INFO - FRONTEND: 19 |  import KeyTermsCloud from "./KeyTermsCloud";
+2025-03-06 17:08:30,602 - __main__ - INFO - FRONTEND: 20 |  import ImpactChart from "./ImpactChart";
+2025-03-06 17:08:30,602 - __main__ - INFO - FRONTEND: |                           ^
+2025-03-06 17:08:30,602 - __main__ - INFO - FRONTEND: 21 |  import BillTimeline from "./BillTimeline";
+2025-03-06 17:08:30,602 - __main__ - INFO - FRONTEND: 22 |  const VisualizationDashboard = ({ billData, analysisData }) => {
+2025-03-06 17:08:30,602 - __main__ - INFO - FRONTEND: at TransformPluginContext._formatLog (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:47835:41)
+2025-03-06 17:08:30,602 - __main__ - INFO - FRONTEND: at TransformPluginContext.error (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:47832:16)
+2025-03-06 17:08:30,602 - __main__ - INFO - FRONTEND: at normalizeUrl (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:45968:23)
+2025-03-06 17:08:30,602 - __main__ - INFO - FRONTEND: at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-03-06 17:08:30,602 - __main__ - INFO - FRONTEND: at async file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:46087:37
+2025-03-06 17:08:30,602 - __main__ - INFO - FRONTEND: at async Promise.all (index 5)
+2025-03-06 17:08:30,602 - __main__ - INFO - FRONTEND: at async TransformPluginContext.transform (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:46014:7)
+2025-03-06 17:08:30,602 - __main__ - INFO - FRONTEND: at async EnvironmentPluginContainer.transform (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:47630:18)
+2025-03-06 17:08:30,602 - __main__ - INFO - FRONTEND: at async loadAndTransform (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:41318:27)
+2025-03-06 17:08:30,602 - __main__ - INFO - FRONTEND: at async viteTransformMiddleware (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:42781:24)
+2025-03-06 17:08:30,858 - __main__ - INFO - FRONTEND: 5:08:30 PM [vite] Internal server error: Failed to resolve import "./ImpactChart" from "src/components/visualizations/VisualizationDashboard.jsx". Does the file exist?
+2025-03-06 17:08:30,858 - __main__ - INFO - FRONTEND: Plugin: vite:import-analysis
+2025-03-06 17:08:30,858 - __main__ - INFO - FRONTEND: File: /home/runner/workspace/src/components/visualizations/VisualizationDashboard.jsx:4:24
+2025-03-06 17:08:30,858 - __main__ - INFO - FRONTEND: 18 |  import React, { useState } from "react";
+2025-03-06 17:08:30,858 - __main__ - INFO - FRONTEND: 19 |  import KeyTermsCloud from "./KeyTermsCloud";
+2025-03-06 17:08:30,858 - __main__ - INFO - FRONTEND: 20 |  import ImpactChart from "./ImpactChart";
+2025-03-06 17:08:30,858 - __main__ - INFO - FRONTEND: |                           ^
+2025-03-06 17:08:30,858 - __main__ - INFO - FRONTEND: 21 |  import BillTimeline from "./BillTimeline";
+2025-03-06 17:08:30,858 - __main__ - INFO - FRONTEND: 22 |  const VisualizationDashboard = ({ billData, analysisData }) => {
+2025-03-06 17:08:30,858 - __main__ - INFO - FRONTEND: at TransformPluginContext._formatLog (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:47835:41)
+2025-03-06 17:08:30,858 - __main__ - INFO - FRONTEND: at TransformPluginContext.error (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:47832:16)
+2025-03-06 17:08:30,858 - __main__ - INFO - FRONTEND: at normalizeUrl (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:45968:23)
+2025-03-06 17:08:30,858 - __main__ - INFO - FRONTEND: at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-03-06 17:08:30,858 - __main__ - INFO - FRONTEND: at async file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:46087:37
+2025-03-06 17:08:30,858 - __main__ - INFO - FRONTEND: at async Promise.all (index 5)
+2025-03-06 17:08:30,858 - __main__ - INFO - FRONTEND: at async TransformPluginContext.transform (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:46014:7)
+2025-03-06 17:08:30,858 - __main__ - INFO - FRONTEND: at async EnvironmentPluginContainer.transform (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:47630:18)
+2025-03-06 17:08:30,859 - __main__ - INFO - FRONTEND: at async loadAndTransform (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:41318:27)
+2025-03-06 17:08:30,859 - __main__ - INFO - FRONTEND: at async viteTransformMiddleware (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-ByPKlqZ5.js:42781:24)
