@@ -17,9 +17,11 @@ export default defineConfig({
     },
     cors: true,
     hmr: {
-      // Simplified HMR config
-      clientPort: 443,  // Add this for Replit
+      // Enhanced HMR config for Replit
+      clientPort: 443,  // For Replit
       host: '0.0.0.0',
+      protocol: 'wss',
+      timeout: 120000,
     },
     watch: {
       usePolling: true,
