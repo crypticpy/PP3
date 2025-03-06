@@ -13,10 +13,10 @@ logger = logging.getLogger(__name__)
 
 def main():
     try:
-        # Add the parent directory to the path to allow proper imports
-        parent_dir = str(Path(__file__).parent.absolute())
-        if parent_dir not in sys.path:
-            sys.path.insert(0, parent_dir)
+        # Add the current directory to the path to allow proper imports
+        current_dir = str(Path(__file__).parent.absolute())
+        if current_dir not in sys.path:
+            sys.path.insert(0, current_dir)
             
         logger.info("Starting PolicyPulse application")
         
@@ -26,9 +26,6 @@ def main():
         
         # Import and run the API
         import uvicorn
-        
-        # Import the app from api.py to ensure proper initialization
-        # This will not start AIAnalysis immediately with the new changes
         from app.api import app
         
         # Get the port and host from environment variables
