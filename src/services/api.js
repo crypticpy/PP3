@@ -84,3 +84,56 @@ export default {
   healthCheck,
   billService
 };
+import axios from 'axios';
+
+// Get the API URL from environment variables or use a fallback
+const API_URL = import.meta.env.VITE_API_URL || 'http://0.0.0.0:8000';
+
+// Create axios instance with default configuration
+const api = axios.create({
+  baseURL: API_URL,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  }
+});
+
+// Add response interceptor for error handling
+api.interceptors.response.use(
+  response => response,
+  error => {
+    console.error('API Error:', error);
+    return Promise.reject(error);
+  }
+);
+
+// API health check
+export const healthCheck = async () => {
+  try {
+    const response = await api.get('/health');
+    return { status: 200, data: response.data };
+  } catch (error) {
+    console.error('Health check failed:', error);
+    return { status: 'error', error };
+  }
+};
+
+// Get bills list
+export const getBills = async (params = {}) => {
+  const response = await api.get('/bills', { params });
+  return response.data;
+};
+
+// Get single bill details
+export const getBillById = async (id) => {
+  const response = await api.get(`/bills/${id}`);
+  return response.data;
+};
+
+// Get bill analysis
+export const getBillAnalysis = async (id) => {
+  const response = await api.get(`/bills/${id}/analysis`);
+  return response.data;
+};
+
+export default api;

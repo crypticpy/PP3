@@ -1,35 +1,20 @@
-
 import React, { useState, useEffect } from 'react';
+import HealthCheck from './components/HealthCheck';
 
 function App() {
-  const [apiStatus, setApiStatus] = useState('checking');
-  
-  useEffect(() => {
-    // Simple health check to verify backend connection
-    fetch('/api/health')
-      .then(response => {
-        if (response.ok) {
-          setApiStatus('online');
-        } else {
-          setApiStatus('offline');
-        }
-      })
-      .catch(error => {
-        console.error('Health check failed:', error);
-        setApiStatus('offline');
-      });
-  }, []);
-
   return (
     <div className="App">
-      <header className="App-header">
-        <h1>Texas Legislative Tracker</h1>
-        <p>Hello World! This is our new frontend.</p>
-        <div className="api-status">
-          <p>API Status: 
-            <span className={apiStatus === 'online' ? 'status-online' : 'status-offline'}>
-              {apiStatus === 'checking' ? 'Checking...' : apiStatus}
-            </span>
+      <header className="App-header p-6 bg-gray-100 min-h-screen">
+        <h1 className="text-3xl font-bold mb-4">Texas Legislative Tracker</h1>
+        <p className="mb-6">Hello World! This is our new frontend.</p>
+
+        <HealthCheck />
+
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold mb-4">Getting Started</h2>
+          <p>
+            Once the API is connected, you'll be able to browse and track Texas legislation
+            relevant to public health and local governments.
           </p>
         </div>
       </header>
