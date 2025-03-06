@@ -1,28 +1,24 @@
-import React, { useState } from 'react';
-import BillTimeline from './BillTimeline';
-import KeyTermsCloud from './KeyTermsCloud';
-import ComparativeAnalysis from './ComparativeAnalysis';
-import StakeholderNetwork from './StakeholderNetwork';
-import { Tab } from '@headlessui/react';
 
-/**
- * Visualization Dashboard Component
- * 
- * A tabbed interface that organizes and displays various data visualizations
- * related to bill analysis
- * 
- * @param {Object} bill - The bill data
- * @param {Object} analysis - The bill analysis data
- * @param {Array} similarBills - Array of similar bills for comparison
- */
-const VisualizationDashboard = ({ bill, analysis, similarBills = [] }) => {
+import React, { useState } from 'react';
+import { Tab } from '@headlessui/react';
+import { useUserPreferences } from '../../context/UserPreferencesContext';
+
+// Import visualization components here
+// This is a placeholder - you'll need to create or import actual visualization components
+const BillTimeline = () => <div>Bill Timeline Visualization</div>;
+const KeyTermsCloud = () => <div>Key Terms Word Cloud</div>;
+const ComparativeAnalysis = () => <div>Comparative Analysis</div>;
+const StakeholderNetwork = () => <div>Stakeholder Network</div>;
+
+const VisualizationDashboard = ({ analysisData }) => {
   const [selectedTab, setSelectedTab] = useState(0);
+  const { preferences } = useUserPreferences();
   
   const tabs = [
-    { name: 'Timeline', component: <BillTimeline bill={bill} /> },
-    { name: 'Key Terms', component: <KeyTermsCloud analysis={analysis} /> },
-    { name: 'Comparative Analysis', component: <ComparativeAnalysis similarBills={similarBills} currentBill={bill} /> },
-    { name: 'Stakeholder Network', component: <StakeholderNetwork analysis={analysis} /> }
+    { name: 'Timeline', component: <BillTimeline data={analysisData} /> },
+    { name: 'Key Terms', component: <KeyTermsCloud data={analysisData} /> },
+    { name: 'Comparative', component: <ComparativeAnalysis data={analysisData} /> },
+    { name: 'Stakeholders', component: <StakeholderNetwork data={analysisData} /> }
   ];
 
   return (
@@ -64,4 +60,4 @@ const VisualizationDashboard = ({ bill, analysis, similarBills = [] }) => {
   );
 };
 
-export default VisualizationDashboard; 
+export default VisualizationDashboard;

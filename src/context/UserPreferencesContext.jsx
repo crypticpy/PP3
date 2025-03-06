@@ -122,3 +122,67 @@ export const useUserPreferences = () => {
   }
   return context;
 }; 
+import React, { createContext, useContext, useState, useEffect } from 'react';
+
+// Default preferences
+const defaultPreferences = {
+  theme: 'light', // 'light' or 'dark'
+  fontSize: 'medium', // 'small', 'medium', or 'large'
+  notificationsEnabled: true,
+  dataRefreshInterval: 30, // minutes
+};
+
+// Create context
+const UserPreferencesContext = createContext();
+
+export const UserPreferencesProvider = ({ children }) => {
+  // Initialize state from localStorage or use defaults
+  const [preferences, setPreferences] = useState(() => {
+    const savedPreferences = localStorage.getItem('userPreferences');
+    return savedPreferences ? JSON.parse(savedPreferences) : defaultPreferences;
+  });
+
+  // Save preferences to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('userPreferences', JSON.stringify(preferences));
+    
+    // Apply theme to body
+    if (preferences.theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [preferences]);
+
+  // Update individual preference
+  const updatePreference = (key, value) => {
+    setPreferences(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+  // Reset preferences to defaults
+  const resetPreferences = () => {
+    setPreferences(defaultPreferences);
+  };
+
+  return (
+    <UserPreferencesContext.Provider value={{ 
+      preferences, 
+      updatePreference,
+      resetPreferences
+    }}>
+      {children}
+    </UserPreferencesContext.Provider>
+  );
+};
+
+// Custom hook for using preferences
+export const useUserPreferences = () => {
+  const context = useContext(UserPreferencesContext);
+  if (!context) {
+    throw new Error('useUserPreferences must be used within a UserPreferencesProvider');
+  }
+  return context;
+};

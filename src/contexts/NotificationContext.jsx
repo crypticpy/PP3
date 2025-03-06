@@ -201,3 +201,119 @@ export function useNotifications() {
   }
   return context;
 } 
+import React, { createContext, useContext, useState, useEffect } from 'react';
+
+// Sample mock notifications for development
+const mockNotifications = [
+  {
+    id: 1,
+    title: 'Bill HB 123 Updated',
+    message: 'The status has changed to "In Committee"',
+    timestamp: new Date(Date.now() - 3600000).toISOString(),
+    read: false,
+    type: 'update'
+  },
+  {
+    id: 2,
+    title: 'New Analysis Available',
+    message: 'AI analysis completed for SB 456',
+    timestamp: new Date(Date.now() - 86400000).toISOString(),
+    read: true,
+    type: 'analysis'
+  },
+  {
+    id: 3,
+    title: 'Similar Bill Detected',
+    message: 'SB 789 is similar to bills you are tracking',
+    timestamp: new Date(Date.now() - 172800000).toISOString(),
+    read: false,
+    type: 'similarity'
+  }
+];
+
+const NotificationContext = createContext();
+
+export const NotificationProvider = ({ children }) => {
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // In production, this would fetch from the API
+    // For now, we'll use mock data
+    const fetchNotifications = async () => {
+      try {
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setNotifications(mockNotifications);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNotifications();
+  }, []);
+
+  const markAsRead = (id) => {
+    setNotifications(prevNotifications =>
+      prevNotifications.map(notification =>
+        notification.id === id
+          ? { ...notification, read: true }
+          : notification
+      )
+    );
+  };
+
+  const markAllAsRead = () => {
+    setNotifications(prevNotifications =>
+      prevNotifications.map(notification => ({
+        ...notification,
+        read: true
+      }))
+    );
+  };
+
+  const deleteNotification = (id) => {
+    setNotifications(prevNotifications =>
+      prevNotifications.filter(notification => notification.id !== id)
+    );
+  };
+
+  const getUnreadCount = () => {
+    return notifications.filter(notification => !notification.read).length;
+  };
+
+  // For development/testing, add a method to add a notification
+  const addNotification = (notification) => {
+    const newNotification = {
+      id: Date.now(),
+      timestamp: new Date().toISOString(),
+      read: false,
+      ...notification
+    };
+    setNotifications(prevNotifications => [newNotification, ...prevNotifications]);
+  };
+
+  return (
+    <NotificationContext.Provider value={{
+      notifications,
+      loading,
+      markAsRead,
+      markAllAsRead,
+      deleteNotification,
+      getUnreadCount,
+      addNotification
+    }}>
+      {children}
+    </NotificationContext.Provider>
+  );
+};
+
+export const useNotifications = () => {
+  const context = useContext(NotificationContext);
+  if (!context) {
+    throw new Error('useNotifications must be used within a NotificationProvider');
+  }
+  return context;
+};
