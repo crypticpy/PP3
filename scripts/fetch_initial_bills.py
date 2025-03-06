@@ -31,48 +31,6 @@ logging.basicConfig(level=logging.INFO,
                    format='%(asctime)s [%(levelname)s] %(name)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-def fetch_and_analyze_bills(limit=5, analyze=True):
-    """
-    Fetch and analyze bills.
-
-    Args:
-        limit: Maximum number of bills to fetch
-        analyze: Whether to run AI analysis on the bills
-    """
-    # Initialize database session
-    db_session_factory = init_db()
-    db_session = db_session_factory()
-
-    try:
-        # Initialize LegiScan API client
-        api = LegiScanAPI(db_session)
-
-        # Get some recent US Congress bills
-        logger.info("Fetching US Congress bills...")
-        us_bills = fetch_bills_for_jurisdiction(api, "US", limit // 2)
-
-        # Get some recent Texas bills
-        logger.info("Fetching Texas bills...")
-        tx_bills = fetch_bills_for_jurisdiction(api, "TX", limit // 2)
-
-        # Combine results
-        all_bills = us_bills + tx_bills
-        logger.info(f"Fetched {len(all_bills)} bills in total.")
-
-        # Run AI analysis if requested
-        if analyze and all_bills:
-            run_analysis(db_session, all_bills)
-
-        return all_bills
-
-    except Exception as e:
-        logger.error(f"Error fetching and analyzing bills: {e}", exc_info=True)
-        return []
-    finally:
-        db_session.close()
-
-
-
 def fetch_bills_for_jurisdiction(api, state_code, limit):
     """
     Fetch bills for a specific jurisdiction.
@@ -150,21 +108,60 @@ def fetch_bills_for_jurisdiction(api, state_code, limit):
         logger.error(f"Error fetching bills for {state_code}: {e}", exc_info=True)
         return []
 
+def fetch_and_analyze_bills(limit=5, analyze=True):
+    """
+    Fetch and analyze bills.
+    
+    Args:
+        limit: Maximum number of bills to fetch
+        analyze: Whether to run AI analysis on the bills
+    """
+    # Initialize database session
+    db_session_factory = init_db()
+    db_session = db_session_factory()
+    
+    try:
+        # Initialize LegiScan API client
+        api = LegiScanAPI(db_session)
+        
+        # Get some recent US Congress bills
+        logger.info("Fetching US Congress bills...")
+        us_bills = fetch_bills_for_jurisdiction(api, "US", limit // 2)
+        
+        # Get some recent Texas bills
+        logger.info("Fetching Texas bills...")
+        tx_bills = fetch_bills_for_jurisdiction(api, "TX", limit // 2)
+        
+        # Combine results
+        all_bills = us_bills + tx_bills
+        logger.info(f"Fetched {len(all_bills)} bills in total.")
+        
+        # Run AI analysis if requested
+        if analyze and all_bills:
+            run_analysis(db_session, all_bills)
+            
+        return all_bills
+        
+    except Exception as e:
+        logger.error(f"Error fetching and analyzing bills: {e}", exc_info=True)
+        return []
+    finally:
+        db_session.close()
 
 def run_analysis(db_session, bills):
     """
     Run AI analysis on a list of bills.
-
+    
     Args:
         db_session: SQLAlchemy session
         bills: List of Legislation objects to analyze
     """
     logger.info(f"Running AI analysis on {len(bills)} bills...")
-
+    
     try:
         # Initialize AI analysis
         analyzer = AIAnalysis(db_session)
-
+        
         for bill in bills:
             try:
                 logger.info(f"Analyzing bill: {bill.bill_number}")
@@ -179,9 +176,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Fetch and analyze initial bills.")
     parser.add_argument('--limit', type=int, default=6, help='Number of bills to fetch')
     parser.add_argument('--no-analysis', action='store_true', help='Skip AI analysis')
-
+    
     args = parser.parse_args()
-
+    
     logger.info(f"Starting bill fetch with limit={args.limit}, analyze={not args.no_analysis}")
     fetch_and_analyze_bills(limit=args.limit, analyze=not args.no_analysis)
     logger.info("Complete!")
