@@ -8,39 +8,16 @@ channel = "stable-24_05"
 run = ["sh", "-c", "npm run dev"]
 
 [workflows]
-runButton = "Full App"
+runButton = "Run"
 
 [[workflows.workflow]]
-name = "Run PolicyPulse API"
+name = "Run"
 author = 39522656
+mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python run.py"
-
-[[workflows.workflow]]
-name = "Frontend"
-author = 39522656
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev"
-
-[[workflows.workflow]]
-name = "Backend"
-author = 39522656
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python run.py"
-
-[[workflows.workflow]]
-name = "Full App"
-author = 39522656
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev & python run.py"
+args = "python app/api.py & npm run dev"
 
 [[ports]]
 localPort = 3000

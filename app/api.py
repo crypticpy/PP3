@@ -36,7 +36,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, Field, EmailStr, HttpUrl, field_validator, model_validator, constr, conint, confloat, AnyUrl
-from pydantic.error_wrappers import ErrorWrapper
+from pydantic import ValidationError as PydanticValidationError
 from contextlib import asynccontextmanager
 
 # 1) Import your custom modules
