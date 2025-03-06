@@ -12,8 +12,9 @@ const apiClient = axios.create({
   timeout: 10000, // 10 seconds timeout
 });
 
-// Health check service
+// API service object with methods for different endpoints
 const apiService = {
+  // Health check
   healthCheck: async () => {
     try {
       const response = await apiClient.get('/');
@@ -23,12 +24,13 @@ const apiService = {
       throw error;
     }
   },
+
   // Legislation endpoints
   getLegislation: (id) => apiClient.get(`/api/legislation/${id}`),
   searchLegislation: (params) => apiClient.get('/api/legislation/search', { params }),
   getTrendingLegislation: () => apiClient.get('/api/legislation/trending'),
   getRecentLegislation: () => apiClient.get('/api/legislation/recent'),
-  getRelevantLegislation: (type = 'health', minScore = 50, limit = 10) =>
+  getRelevantLegislation: (type = 'health', minScore = 50, limit = 10) => 
     apiClient.get('/api/legislation/relevant', { params: { type, min_score: minScore, limit } }),
 
   // Analysis endpoints
@@ -47,23 +49,12 @@ const apiService = {
   // Dashboard data
   getDashboardStats: () => apiClient.get('/api/dashboard/stats'),
 
-  // Mock data for development (will fall back to these if API calls fail)
+  // Mock data for development
   getMockLegislation: () => {
     console.warn('Using mock legislation data');
     return Promise.resolve({
       data: {
-        results: [
-          {
-            id: 1,
-            bill_number: 'HB 123',
-            title: 'Public Health Emergency Response Act',
-            description: 'An act relating to public health emergency response procedures',
-            status: 'In Committee',
-            last_updated: '2024-02-15',
-            relevance_score: 85
-          },
-          // Additional mock items...
-        ]
+        
       }
     });
   },
@@ -72,14 +63,7 @@ const apiService = {
     console.warn('Using mock analysis data');
     return Promise.resolve({
       data: {
-        legislation_id: 1,
-        summary: 'This bill establishes new protocols for public health emergencies.',
-        key_points: [
-          { point: 'Establishes emergency response protocols', impact_type: 'positive' },
-          { point: 'Requires county health departments to develop plans', impact_type: 'neutral' },
-          { point: 'Allocates funding for emergency supplies', impact_type: 'positive' }
-        ],
-        // Additional mock data...
+        
       }
     });
   }
@@ -119,3 +103,4 @@ const billService = {
 };
 
 export { apiService, billService };
+export default apiService;
