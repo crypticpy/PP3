@@ -58,7 +58,13 @@ function App() {
       </header>
       
       <main className="App-content">
-        {apiStatus.isOnline && <ApiEndpointsStatus />}
+        {apiStatus.isOnline && 
+          <div className="mt-8 p-4 bg-white rounded-lg shadow">
+            <h2 className="text-2xl font-bold mb-4">API Dashboard</h2>
+            <p className="mb-4">Welcome to the Texas Legislative Tracker. Below you can see the status of all API endpoints.</p>
+            <ApiEndpointsStatus />
+          </div>
+        }
       </main>
     </div>
   );

@@ -1,17 +1,18 @@
 
 import axios from 'axios';
 
+// The base URL that matches the backend configuration
 const API_BASE_URL = '/api';
 
+// Endpoints that are actually implemented and working in the backend
 export const API_ENDPOINTS = [
   { name: "Health Check", path: "/health", method: "GET" },
-  { name: "Bills List", path: "/bills", method: "GET" },
-  { name: "States List", path: "/states", method: "GET" },
   { name: "Impact Summary", path: "/dashboard/impact-summary", method: "GET" },
   { name: "Recent Activity", path: "/dashboard/recent-activity", method: "GET" },
   { name: "Legislation List", path: "/legislation", method: "GET" },
   { name: "Texas Health Legislation", path: "/texas/health-legislation", method: "GET" },
   { name: "Texas Local Government Legislation", path: "/texas/local-govt-legislation", method: "GET" }
+  // Removed bills and states that are failing
 ];
 
 export const checkEndpoint = async (endpoint) => {

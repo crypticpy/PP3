@@ -32,6 +32,7 @@ const ApiEndpointsStatus = () => {
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-gray-100">
+                <th className="text-left p-2 border">Name</th>
                 <th className="text-left p-2 border">Endpoint</th>
                 <th className="text-left p-2 border">Method</th>
                 <th className="text-left p-2 border">Status</th>
@@ -48,14 +49,21 @@ const ApiEndpointsStatus = () => {
                 
                 return (
                   <tr key={endpoint.path} className="border-b">
+                    <td className="p-2 border font-medium">{endpoint.name}</td>
                     <td className="p-2 border">{endpoint.path}</td>
                     <td className="p-2 border">{endpoint.method}</td>
                     <td className="p-2 border">
-                      <span className={`font-semibold ${status.isOnline ? 'text-green-600' : 'text-red-600'}`}>
+                      <span className={`font-semibold px-2 py-1 rounded ${status.isOnline ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                         {status.isOnline ? 'Online' : 'Offline'} {status.status > 0 && `(${status.status})`}
                       </span>
                     </td>
-                    <td className="p-2 border">{status.message}</td>
+                    <td className="p-2 border">
+                      {status.isOnline ? (
+                        <span className="text-gray-700">{status.message}</span>
+                      ) : (
+                        <span className="text-red-600">{status.message || 'Could not connect to endpoint'}</span>
+                      )}
+                    </td>
                   </tr>
                 );
               })}

@@ -18,36 +18,44 @@ body {
 }
 
 .App-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 40vh;
-  gap: 1rem;
+  background-color: #282c34;
+  padding: 1.5rem;
+  color: white;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-h1 {
-  color: #1e40af;
-  margin-bottom: 1rem;
+.App-header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
 }
 
 .api-status {
-  margin-top: 2rem;
-  padding: 1rem;
-  border-radius: 8px;
-  background-color: #f1f5f9;
+  margin-top: 0.75rem;
+  font-size: 1rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  display: inline-block;
 }
 
 .status-online {
-  color: green;
+  color: #4caf50;
   font-weight: bold;
   margin-left: 0.5rem;
+  padding: 0.1rem 0.5rem;
+  background-color: rgba(76, 175, 80, 0.2);
+  border-radius: 4px;
 }
 
 .status-offline {
-  color: red;
+  color: #f44336;
   font-weight: bold;
   margin-left: 0.5rem;
+  padding: 0.1rem 0.5rem;
+  background-color: rgba(244, 67, 54, 0.2);
+  border-radius: 4px;
 }
 
 .App-content {
