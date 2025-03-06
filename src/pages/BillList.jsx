@@ -86,3 +86,140 @@ function BillList() {
 }
 
 export default BillList; 
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { getTexasHealthLegislation, getTexasLocalGovtLegislation } from '../services/api';
+
+const BillList = () => {
+  const [bills, setBills] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [billType, setBillType] = useState('health'); // 'health' or 'localGovt'
+  
+  useEffect(() => {
+    const fetchBills = async () => {
+      setLoading(true);
+      try {
+        const response = billType === 'health' 
+          ? await getTexasHealthLegislation()
+          : await getTexasLocalGovtLegislation();
+        
+        setBills(response.data.items || []);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching bills:', err);
+        setError('Failed to load legislation data. Please try again later.');
+        setBills([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBills();
+  }, [billType]);
+
+  return (
+    <div>
+      <h1 className="text-3xl font-bold mb-6">Texas Legislation</h1>
+      
+      <div className="mb-6">
+        <div className="flex space-x-4 mb-4">
+          <button
+            onClick={() => setBillType('health')}
+            className={`px-4 py-2 rounded-md ${
+              billType === 'health' 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+            }`}
+          >
+            Public Health Bills
+          </button>
+          <button
+            onClick={() => setBillType('localGovt')}
+            className={`px-4 py-2 rounded-md ${
+              billType === 'localGovt' 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+            }`}
+          >
+            Local Government Bills
+          </button>
+        </div>
+      </div>
+      
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      ) : error ? (
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4" role="alert">
+          <p>{error}</p>
+        </div>
+      ) : bills.length === 0 ? (
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+          <p className="text-yellow-700">No bills found. Try changing your filter or check back later.</p>
+        </div>
+      ) : (
+        <div className="bg-white shadow-md rounded-lg overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bill Number</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Introduced</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Relevance</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {bills.map((bill) => (
+                <tr key={bill.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <Link to={`/bills/${bill.id}`} className="text-blue-600 hover:text-blue-800 font-medium">
+                      {bill.bill_number}
+                    </Link>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-900">{bill.title}</div>
+                    {bill.description && (
+                      <div className="text-xs text-gray-500 mt-1 truncate max-w-md">
+                        {bill.description}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      bill.status === 'PASSED' ? 'bg-green-100 text-green-800' :
+                      bill.status === 'FAILED' ? 'bg-red-100 text-red-800' :
+                      'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {bill.status || 'Unknown'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {bill.introduced_date ? new Date(bill.introduced_date).toLocaleDateString() : 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div 
+                          className="bg-blue-600 h-2.5 rounded-full" 
+                          style={{ width: `${billType === 'health' ? bill.health_relevance * 10 : bill.local_govt_relevance * 10}%` }}
+                        ></div>
+                      </div>
+                      <span className="ml-2 text-xs text-gray-600">
+                        {billType === 'health' ? bill.health_relevance : bill.local_govt_relevance}/10
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default BillList;
