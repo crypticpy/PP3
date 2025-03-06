@@ -101,22 +101,22 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     data_store = None
     ai_analyzer = None
     legiscan_api = None
-    
+
 # 3) Prepare the FastAPI application
 app = FastAPI(
     title="PolicyPulse API",
-    description="API for tracking and analyzing legislation with focus on Texas public health and local government impacts",
-    version="2.0.0",
+    description="Legislation tracking and analysis for public health and local government",
+    version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
     lifespan=lifespan
 )
 
-# 4) Allow requests from a React dev server or your domain
+# Add CORS middleware to allow frontend requests
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "https://yourdomain.com"],  # update if needed
+    allow_origins=["*"],  # For development, in production specify actual origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -1793,7 +1793,7 @@ async def analyze_legislation_ai_async(
         leg_id: Legislation ID to analyze
         options: Optional analysis parameters
         analyzer: AIAnalysis instance
-        store: DataStore instance
+        store: DataStore = Depends(get_data_store)
 
     Returns:
         Analysis status and results
