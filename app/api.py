@@ -1342,7 +1342,7 @@ def advanced_search(
 def analyze_legislation_ai(
     leg_id: int,
     options: Optional[AnalysisOptions] = None,
-    background_tasks: Optional[BackgroundTasks] = None,
+    background_tasks: BackgroundTasks, #Corrected
     analyzer: AIAnalysis = Depends(get_ai_analyzer),
     store: DataStore = Depends(get_data_store)
 ):
@@ -1391,7 +1391,7 @@ def analyze_legislation_ai(
             options = AnalysisOptions(deep_analysis=False, texas_focus=True, focus_areas=None, model_name=None)
 
         # Asynchronous processing if requested and background_tasks available
-        if background_tasks and options.deep_analysis:
+        if options.deep_analysis:
             async def run_analysis_task():
                 try:
                     analyzer.analyze_legislation(legislation_id=leg_id)
