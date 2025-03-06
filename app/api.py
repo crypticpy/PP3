@@ -243,23 +243,25 @@ def log_api_call(func: Callable):
         Wrapped function with logging
     """
     @wraps(func)
-    async def wrapper(*args, **kwargs):  # Removed request: Request = None
-        request = kwargs.get('request')  # Retrieve request from kwargs
+    async def wrapper(*args, **kwargs):
+        # Get request from args or kwargs
+        request = kwargs.get('request')
         if request is None:
             for arg in args:
                 if isinstance(arg, Request):
                     request = arg
                     break
-
-        if request is None:
-            raise ValueError("Request object must be provided to the `wrapper` function.")
-
-        # Get client IP and method+path
-        client_ip = request.client.host if request and hasattr(request, 'client') and request.client is not None else 'unknown'
-        endpoint = f"{request.method} {request.url.path}" if request else func.__name__
-
-        # Log the request
-        logger.info(f"API call from {client_ip}: {endpoint}")
+        
+        # For endpoints without request parameter (like health check)
+        func_name = func.__name__
+        
+        # Log info based on what we have
+        if request is not None:
+            client_ip = request.client.host if hasattr(request, 'client') and request.client is not None else 'unknown'
+            endpoint = f"{request.method} {request.url.path}"
+            logger.info(f"API call from {client_ip}: {endpoint}")
+        else:
+            logger.info(f"API call to function: {func_name}")
 
         # Track timing
         start_time = datetime.now()
@@ -268,12 +270,14 @@ def log_api_call(func: Callable):
             response = await func(*args, **kwargs) if asyncio.iscoroutinefunction(func) else func(*args, **kwargs)
             # Log successful completion with timing
             elapsed = (datetime.now() - start_time).total_seconds() * 1000
-            logger.info(f"API call completed: {endpoint} ({elapsed:.2f}ms)")
+            endpoint_name = endpoint if request else func_name
+            logger.info(f"API call completed: {endpoint_name} ({elapsed:.2f}ms)")
             return response
         except Exception as e:
             # Log exception with timing
             elapsed = (datetime.now() - start_time).total_seconds() * 1000
-            logger.error(f"API call failed: {endpoint} ({elapsed:.2f}ms) - {str(e)}")
+            endpoint_name = endpoint if request else func_name
+            logger.error(f"API call failed: {endpoint_name} ({elapsed:.2f}ms) - {str(e)}")
             raise
 
     return wrapper
@@ -738,10 +742,13 @@ def get_legiscan_api() -> LegiScanAPI:
 # -----------------------------------------------------------------------------
 @app.get("/health", tags=["Utility"], response_model=HealthResponse)
 @log_api_call
-def health_check():
+def health_check(request: Request = None):
     """
     Basic health endpoint to verify the API is alive.
 
+    Args:
+        request: FastAPI request object (optional)
+    
     Returns:
         Health status information
     """
