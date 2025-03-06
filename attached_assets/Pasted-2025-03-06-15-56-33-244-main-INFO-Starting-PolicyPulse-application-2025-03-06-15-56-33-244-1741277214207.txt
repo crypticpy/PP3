@@ -1,0 +1,69 @@
+2025-03-06 15:56:33,244 - __main__ - INFO - Starting PolicyPulse application
+2025-03-06 15:56:33,244 - __main__ - INFO - Port 5173 is available
+2025-03-06 15:56:33,244 - __main__ - INFO - Port 8000 is available
+2025-03-06 15:56:33,244 - __main__ - INFO - Using ports - Frontend: 5173, Backend: 8000
+2025-03-06 15:56:35,793 - __main__ - INFO - Starting backend on port 8000
+INFO:     Started server process [204]
+INFO:     Waiting for application startup.
+2025-03-06 15:56:36,245 - __main__ - INFO - Backend started, now starting frontend...
+2025-03-06 15:56:36,245 - __main__ - INFO - Starting frontend from project root: /home/runner/workspace on port 5173
+
+==== PolicyPulse Application Started ====
+  - Backend API: http://0.0.0.0:8000
+  - Frontend UI: http://0.0.0.0:5173
+For external access, use your Replit domain with these ports
+=========================================
+
+2025-03-06 15:56:36,797 - __main__ - INFO - FRONTEND: 
+2025-03-06 15:56:36,798 - __main__ - INFO - FRONTEND: > legiscan-frontend@0.1.0 dev
+2025-03-06 15:56:36,798 - __main__ - INFO - FRONTEND: > vite --port 5173 --host 0.0.0.0
+2025-03-06 15:56:36,798 - __main__ - INFO - FRONTEND: 
+2025-03-06 15:56:37,233 - __main__ - INFO - FRONTEND: Forced re-optimization of dependencies
+2025-03-06 15:56:37,315 - __main__ - INFO - FRONTEND: 
+2025-03-06 15:56:37,317 - __main__ - INFO - FRONTEND: VITE v4.5.9  ready in 440 ms
+2025-03-06 15:56:37,317 - __main__ - INFO - FRONTEND: 
+2025-03-06 15:56:37,321 - __main__ - INFO - FRONTEND: ➜  Local:   http://localhost:5173/
+2025-03-06 15:56:37,321 - __main__ - INFO - FRONTEND: ➜  Network: http://172.31.128.53:5173/
+2025-03-06 15:56:37,321 - __main__ - INFO - FRONTEND: ➜  press h to show help
+2025-03-06 15:56:37,589 - app.models - INFO - Database connection established successfully
+2025-03-06 15:56:38,631 - app.models - INFO - Database schema created or verified successfully
+2025-03-06 15:56:38,746 - app.data_store - INFO - Database session established successfully.
+2025-03-06 15:56:38,746 - app.api - INFO - Services initialized on startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2025-03-06 15:56:41,297 - __main__ - INFO - FRONTEND: Error:   Failed to scan for dependencies from entries:
+2025-03-06 15:56:41,297 - __main__ - INFO - FRONTEND: /home/runner/workspace/index.html
+2025-03-06 15:56:41,297 - __main__ - INFO - FRONTEND: 
+2025-03-06 15:56:41,297 - __main__ - INFO - FRONTEND: ✘ [ERROR] The symbol "axios" has already been declared
+2025-03-06 15:56:41,297 - __main__ - INFO - FRONTEND: 
+2025-03-06 15:56:41,297 - __main__ - INFO - FRONTEND: src/services/api.js:87:7:
+2025-03-06 15:56:41,297 - __main__ - INFO - FRONTEND:       87 │ import axios from 'axios';
+2025-03-06 15:56:41,297 - __main__ - INFO - FRONTEND: ╵        ~~~~~
+2025-03-06 15:56:41,297 - __main__ - INFO - FRONTEND: 
+2025-03-06 15:56:41,298 - __main__ - INFO - FRONTEND: The symbol "axios" was originally declared here:
+2025-03-06 15:56:41,298 - __main__ - INFO - FRONTEND: 
+2025-03-06 15:56:41,298 - __main__ - INFO - FRONTEND: src/services/api.js:2:7:
+2025-03-06 15:56:41,298 - __main__ - INFO - FRONTEND:       2 │ import axios from 'axios';
+2025-03-06 15:56:41,298 - __main__ - INFO - FRONTEND: ╵        ~~~~~
+2025-03-06 15:56:41,298 - __main__ - INFO - FRONTEND: 
+2025-03-06 15:56:41,298 - __main__ - INFO - FRONTEND: 
+2025-03-06 15:56:41,298 - __main__ - INFO - FRONTEND: ✘ [ERROR] The symbol "API_URL" has already been declared
+2025-03-06 15:56:41,298 - __main__ - INFO - FRONTEND: 
+2025-03-06 15:56:41,298 - __main__ - INFO - FRONTEND: src/services/api.js:90:6:
+2025-03-06 15:56:41,298 - __main__ - INFO - FRONTEND:       90 │ const API_URL = import.meta.env.VITE_API_URL || 'http://0.0.0.0:80...
+2025-03-06 15:56:41,298 - __main__ - INFO - FRONTEND: ╵       ~~~~~~~
+2025-03-06 15:56:41,298 - __main__ - INFO - FRONTEND: 
+2025-03-06 15:56:41,298 - __main__ - INFO - FRONTEND: The symbol "API_URL" was originally declared here:
+2025-03-06 15:56:41,298 - __main__ - INFO - FRONTEND: 
+2025-03-06 15:56:41,298 - __main__ - INFO - FRONTEND: src/services/api.js:5:6:
+2025-03-06 15:56:41,298 - __main__ - INFO - FRONTEND:       5 │ const API_URL = import.meta.env.VITE_API_URL || 'http://0.0.0.0:8002';
+2025-03-06 15:56:41,298 - __main__ - INFO - FRONTEND: ╵       ~~~~~~~
+2025-03-06 15:56:41,298 - __main__ - INFO - FRONTEND: 
+2025-03-06 15:56:41,298 - __main__ - INFO - FRONTEND: 
+2025-03-06 15:56:41,298 - __main__ - INFO - FRONTEND: ✘ [ERROR] Multiple exports with the same name "healthCheck"
+2025-03-06 15:56:41,298 - __main__ - INFO - FRONTEND: 
+2025-03-06 15:56:41,298 - __main__ - INFO - FRONTEND: src/services/api.js:111:13:
+2025-03-06 15:56:41,298 - __main__ - INFO - FRONTEND:       111 │ export const healthCheck = async () => {
+2025-03-06 15:56:41,299 - __main__ - INFO - FRONTEND: ╵              ~~~~~~~~~~~
+2025-03-06 15:56:41,299 - __main__ - INFO - FRONTEND: 
+2025-03-06 15:56:41,299 - __main__ - INFO - FRONTEND:...
