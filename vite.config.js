@@ -13,11 +13,16 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, ''),
-        onError: (err, req, res) => {
-          console.error('Proxy error:', err);
-        },
-        onProxyReq: (proxyReq, req, res) => {
-          console.log(`Proxying ${req.method} ${req.url} to ${proxyReq.path}`);
+        configure: (proxy, options) => {
+          proxy.on('error', (err, req, res) => {
+            console.error('Proxy error:', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            console.log(`Proxying ${req.method} ${req.url} to ${proxyReq.host}${proxyReq.path}`);
+          });
+          proxy.on('proxyRes', (proxyRes, req, res) => {
+            console.log(`Received response from proxy: ${proxyRes.statusCode}`);
+          });
         }
       },
     },

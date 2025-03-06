@@ -2,19 +2,42 @@ import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
+console.log('API URL configured as:', API_URL);
+
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 10000,
+  timeout: 15000, // Increased timeout
   headers: {
     'Content-Type': 'application/json',
   }
 });
 
+// Add request interceptor for logging
+api.interceptors.request.use(
+  config => {
+    console.log(`Requesting ${config.method?.toUpperCase()} ${config.url}`);
+    return config;
+  },
+  error => {
+    console.error('Request Error:', error);
+    return Promise.reject(error);
+  }
+);
+
 // Add response interceptor for better error handling
 api.interceptors.response.use(
-  response => response,
+  response => {
+    console.log(`Response from ${response.config.url}: Status ${response.status}`);
+    return response;
+  },
   error => {
     console.error('API Error:', error.message);
+    if (error.response) {
+      console.error('Response data:', error.response.data);
+      console.error('Response status:', error.response.status);
+    } else if (error.request) {
+      console.error('No response received:', error.request);
+    }
     return Promise.reject(error);
   }
 );
