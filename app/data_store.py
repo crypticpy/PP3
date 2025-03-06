@@ -2190,3 +2190,122 @@ def get_all_priorities(self) -> List[Dict[str, Any]]:
         error_msg = f"Unexpected error retrieving priorities: {e}"
         logger.error(error_msg, exc_info=True)
         return []
+class BillStore:
+    """
+    A simple store for bills data used in the API.
+    This class provides methods for storing and retrieving bills.
+    """
+    
+    def __init__(self):
+        """Initialize an empty bills store."""
+        self.bills = {}
+        self.next_id = 1
+    
+    def get_bills(self, state=None, keyword=None, limit=50, offset=0):
+        """
+        Get a list of bills with optional filtering.
+        
+        Args:
+            state: Filter by state (e.g., 'TX', 'CA')
+            keyword: Search by keyword in title or description
+            limit: Maximum number of bills to return
+            offset: Number of bills to skip
+            
+        Returns:
+            List of bill summary objects
+        """
+        filtered_bills = []
+        
+        for bill in self.bills.values():
+            # Apply filters
+            if state and bill.get('state', '').upper() != state.upper():
+                continue
+                
+            if keyword and keyword.lower() not in bill.get('title', '').lower() and keyword.lower() not in bill.get('description', '').lower():
+                continue
+                
+            filtered_bills.append(bill)
+        
+        # Apply pagination
+        paginated = filtered_bills[offset:offset + limit]
+        
+        return paginated
+    
+    def get_bill(self, bill_id):
+        """
+        Get detailed information about a specific bill.
+        
+        Args:
+            bill_id: ID of the bill to retrieve
+            
+        Returns:
+            Bill detail object or None if not found
+        """
+        return self.bills.get(bill_id)
+    
+    def add_bill(self, bill_data):
+        """
+        Add a new bill to the store.
+        
+        Args:
+            bill_data: Dictionary containing bill data
+            
+        Returns:
+            ID of the newly added bill
+        """
+        # Assign an ID if not present
+        if 'bill_id' not in bill_data:
+            bill_data['bill_id'] = self.next_id
+            self.next_id += 1
+        
+        # Add to the store
+        self.bills[bill_data['bill_id']] = bill_data
+        
+        return bill_data['bill_id']
+    
+    def update_bill(self, bill_data):
+        """
+        Update an existing bill in the store.
+        
+        Args:
+            bill_data: Dictionary containing bill data with bill_id
+            
+        Returns:
+            True if updated, False if bill not found
+        """
+        bill_id = bill_data.get('bill_id')
+        if not bill_id or bill_id not in self.bills:
+            return False
+        
+        self.bills[bill_id] = bill_data
+        return True
+    
+    def get_states(self):
+        """
+        Get a list of unique states in the store.
+        
+        Returns:
+            List of state abbreviations
+        """
+        states = set()
+        for bill in self.bills.values():
+            if 'state' in bill and bill['state']:
+                states.add(bill['state'].upper())
+        
+        return sorted(list(states))
+    
+    def refresh_from_legiscan(self, legiscan_api, state=None):
+        """
+        Refresh bill data from LegiScan API.
+        
+        Args:
+            legiscan_api: LegiScanAPI instance
+            state: Optional state to limit refresh
+            
+        Returns:
+            Number of bills refreshed
+        """
+        # This is a placeholder for actual implementation
+        # In a real implementation, this would call legiscan_api methods
+        # to fetch and update bills
+        return 0
