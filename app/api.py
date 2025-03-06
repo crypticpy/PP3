@@ -41,7 +41,7 @@ from pydantic import ValidationError as PydanticValidationError
 from contextlib import asynccontextmanager
 
 # 1) Import your custom modules
-from data_store import DataStore, ConnectionError, ValidationError, DatabaseOperationError, BillStore
+from app.data_store import DataStore, ConnectionError, ValidationError, DatabaseOperationError, BillStore
 from app.ai_analysis.analyzer import AIAnalysis # Changed import statement
 from legiscan_api import LegiScanAPI
 from models import (
