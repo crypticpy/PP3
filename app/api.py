@@ -1610,8 +1610,8 @@ def get_sync_status(
 @app.post("/sync/trigger", tags=["Sync"])
 @log_api_call
 def trigger_sync(
-    force: bool = False,
     background_tasks: BackgroundTasks,
+    force: bool = False,
     api: LegiScanAPI = Depends(get_legiscan_api)
 ):
     """
