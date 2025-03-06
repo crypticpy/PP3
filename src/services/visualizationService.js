@@ -1,125 +1,165 @@
+
 /**
  * Visualization Service
  * 
- * Provides utilities and data transformation functions for various
- * data visualizations throughout the application.
+ * This service contains utility functions for data transformation and preparation
+ * for various data visualizations used in the application.
  */
 
 /**
- * Transforms bill data into a format suitable for timeline visualization
- * @param {Object} bill - The bill data
- * @returns {Array} - Formatted data for timeline visualization
+ * Prepare data for word cloud visualization from bill analysis
+ * 
+ * @param {Object} analysis - Analysis data containing key terms
+ * @returns {Array} - Formatted data for react-d3-cloud
  */
-export const prepareBillTimelineData = (bill) => {
-  if (!bill || !Array.isArray(bill.history)) return [];
-
-  try {
-    return bill.history.map((event, index) => ({
-      id: index,
-      date: event.date ? new Date(event.date) : null,
-      title: event.action || 'Unknown action',
-      description: event.chamber || '',
-      status: event.importance || 'normal'
-    })).filter(item => item.date); // Filter out items with invalid dates
-  } catch (error) {
-    console.error('Error preparing bill timeline data:', error);
+export const prepareWordCloudData = (analysis) => {
+  // Handle case when analysis is undefined or doesn't have key_terms
+  if (!analysis || !analysis.key_terms) {
     return [];
+  }
+
+  let terms = [];
+
+  // Handle different possible formats of key_terms
+  if (Array.isArray(analysis.key_terms)) {
+    // If key_terms is already an array of objects with text/value properties
+    if (analysis.key_terms.length > 0 && typeof analysis.key_terms[0] === 'object') {
+      terms = analysis.key_terms.map(term => ({
+        text: term.text || term.term || term.word || '',
+        value: term.value || term.weight || term.score || term.frequency || 1
+      }));
+    } 
+    // If key_terms is an array of strings
+    else if (analysis.key_terms.length > 0 && typeof analysis.key_terms[0] === 'string') {
+      terms = analysis.key_terms.map((term, index) => ({
+        text: term,
+        value: 100 - (index * 5) // Assign decreasing importance based on array position
+      }));
+    }
+  } 
+  // If key_terms is an object with term:score pairs
+  else if (typeof analysis.key_terms === 'object') {
+    terms = Object.entries(analysis.key_terms).map(([term, value]) => ({
+      text: term,
+      value: typeof value === 'number' ? value : 1
+    }));
+  }
+
+  // Filter out any empty text values and sort by value
+  return terms
+    .filter(term => term.text && term.text.trim() !== '')
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 100); // Limit to top 100 terms for performance
+};
+
+/**
+ * Prepare data for timeline visualization
+ * 
+ * @param {Object} bill - Bill data containing history/events
+ * @returns {Array} - Formatted timeline data
+ */
+export const prepareTimelineData = (bill) => {
+  if (!bill || (!bill.history && !bill.events)) {
+    return [];
+  }
+
+  const events = bill.history || bill.events || [];
+  
+  return events.map((event, index) => ({
+    id: index,
+    date: new Date(event.date),
+    title: event.action || event.title || 'Event',
+    description: event.description || event.action || '',
+    icon: getEventIcon(event),
+    category: getEventCategory(event)
+  })).sort((a, b) => a.date - b.date);
+};
+
+/**
+ * Helper function to determine appropriate icon for timeline event
+ */
+const getEventIcon = (event) => {
+  const action = (event.action || '').toLowerCase();
+  
+  if (action.includes('introduc') || action.includes('filed')) {
+    return 'CREATE';
+  } else if (action.includes('committee') || action.includes('refer')) {
+    return 'COMMITTEE';
+  } else if (action.includes('pass') || action.includes('approve')) {
+    return 'PASS';
+  } else if (action.includes('fail') || action.includes('reject') || action.includes('veto')) {
+    return 'FAIL';
+  } else if (action.includes('amend')) {
+    return 'AMENDMENT';
+  } else if (action.includes('sign') && action.includes('governor')) {
+    return 'SIGN';
+  } else {
+    return 'EVENT';
   }
 };
 
 /**
- * Transforms analysis data into a format suitable for word cloud visualization
- * @param {Object} analysis - The bill analysis data
- * @returns {Array} - Formatted data for word cloud
+ * Helper function to categorize timeline events
  */
-export const prepareWordCloudData = (analysis) => {
-  if (!analysis || !analysis.keyTerms) return [];
+const getEventCategory = (event) => {
+  const action = (event.action || '').toLowerCase();
   
-  return analysis.keyTerms.map(term => ({
-    text: term.term,
-    value: term.relevance * 100
-  }));
+  if (action.includes('house')) {
+    return 'house';
+  } else if (action.includes('senate')) {
+    return 'senate';
+  } else if (action.includes('governor') || action.includes('executive')) {
+    return 'executive';
+  } else if (action.includes('committee')) {
+    return 'committee';
+  } else {
+    return 'other';
+  }
 };
 
 /**
- * Prepares data for geographic impact visualization
- * @param {Object} analysis - The bill analysis data
- * @returns {Object} - Formatted data for geographic visualization
+ * Format stakeholder data for network visualization
  */
-export const prepareGeographicData = (analysis) => {
-  if (!analysis || !analysis.regionalImpact) return {};
-  
-  return {
-    regions: analysis.regionalImpact.map(region => ({
-      id: region.region,
-      value: region.impactScore,
-      label: region.region,
-      description: region.description
-    }))
-  };
-};
+export const prepareStakeholderData = (analysis) => {
+  if (!analysis || !analysis.stakeholders) {
+    return { nodes: [], links: [] };
+  }
 
-/**
- * Transforms bill data for comparative analysis
- * @param {Array} bills - Array of similar bills
- * @returns {Array} - Formatted data for comparative visualization
- */
-export const prepareComparativeData = (bills) => {
-  if (!bills || !Array.isArray(bills)) return [];
-  
-  return bills.map(bill => ({
-    id: bill.id,
-    title: bill.title.substring(0, 30) + (bill.title.length > 30 ? '...' : ''),
-    progress: bill.progress || 0,
-    status: bill.status,
-    support: bill.analysis?.support || 0,
-    opposition: bill.analysis?.opposition || 0,
-    introduced: new Date(bill.introduced_date)
-  }));
-};
-
-/**
- * Prepares stakeholder network data
- * @param {Object} analysis - The bill analysis data
- * @returns {Object} - Nodes and links for network visualization
- */
-export const prepareNetworkData = (analysis) => {
-  if (!analysis || !analysis.stakeholders) return { nodes: [], links: [] };
-  
-  const nodes = analysis.stakeholders.map(stakeholder => ({
-    id: stakeholder.name,
-    group: stakeholder.type,
-    value: stakeholder.influence
-  }));
-  
+  const nodes = [];
   const links = [];
-  
-  // Create links between stakeholders based on relationships
-  if (analysis.stakeholderRelationships) {
-    analysis.stakeholderRelationships.forEach(rel => {
+  const billNode = { id: 'bill', name: 'Bill', type: 'bill', value: 100 };
+  nodes.push(billNode);
+
+  // Process stakeholders
+  if (Array.isArray(analysis.stakeholders)) {
+    analysis.stakeholders.forEach((stakeholder, index) => {
+      const id = `stakeholder-${index}`;
+      const name = stakeholder.name || stakeholder.organization || `Stakeholder ${index + 1}`;
+      const type = stakeholder.type || stakeholder.position || 'other';
+      const impact = stakeholder.impact || stakeholder.stance || 'neutral';
+      
+      nodes.push({
+        id,
+        name,
+        type,
+        impact,
+        value: 60
+      });
+      
       links.push({
-        source: rel.source,
-        target: rel.target,
-        value: rel.strength
+        source: 'bill',
+        target: id,
+        value: 10,
+        type: impact
       });
     });
   }
-  
+
   return { nodes, links };
 };
 
-/**
- * Prepares historical trend data
- * @param {Array} historicalData - Historical data for similar legislation
- * @returns {Array} - Formatted data for trend visualization
- */
-export const prepareHistoricalTrendData = (historicalData) => {
-  if (!historicalData || !Array.isArray(historicalData)) return [];
-  
-  return historicalData.map(point => ({
-    date: new Date(point.date),
-    passRate: point.passRate,
-    count: point.count,
-    averageTimeToPass: point.averageTimeToPass
-  }));
-}; 
+export default {
+  prepareWordCloudData,
+  prepareTimelineData,
+  prepareStakeholderData
+};

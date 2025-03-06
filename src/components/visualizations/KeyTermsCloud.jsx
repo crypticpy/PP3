@@ -20,18 +20,6 @@ const KeyTermsCloud = ({ analysis }) => {
 
   const fontSizeMapper = word => Math.log2(word.value) * 5 + 12; // Scale font size (12-60)
 
-  // Configure cloud options
-  const options = {
-    spiral: 'archimedean',
-    random: () => 0.5, // Deterministic layout if needed
-    padding: 5,
-    rotationAngles: [0, 90],
-    rotations: 3,
-    fontFamily: 'Inter, sans-serif',
-    fontWeight: 'normal',
-    fontStyle: 'normal',
-  };
-
   if (!wordCloudData.length) {
     return (
       <div className="p-4 text-center text-gray-500 dark:text-gray-400">
@@ -55,11 +43,8 @@ const KeyTermsCloud = ({ analysis }) => {
             return colors[Math.floor(Math.random() * colors.length)];
           }}
           rotate={(word) => (word.value % 2) * 90} // Alternate between 0 and 90 degrees
-          padding={1}
+          padding={2}
           font="Inter, sans-serif"
-          onWordClick={(word) => console.log(`Clicked on ${word.text}`)}
-          onWordMouseOver={(word) => console.log(`Mouse over ${word.text}`)}
-          onWordMouseOut={(word) => console.log(`Mouse out ${word.text}`)}
           width={500} // Set width of SVG
           height={250} // Set height of SVG
         />

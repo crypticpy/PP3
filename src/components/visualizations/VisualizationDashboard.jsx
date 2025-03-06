@@ -16,7 +16,7 @@ const VisualizationDashboard = ({ analysisData }) => {
   
   const tabs = [
     { name: 'Timeline', component: <BillTimeline data={analysisData} /> },
-    { name: 'Key Terms', component: <KeyTermsCloud data={analysisData} /> },
+    { name: 'Key Terms', component: <KeyTermsCloud analysis={analysisData} /> },
     { name: 'Comparative', component: <ComparativeAnalysis data={analysisData} /> },
     { name: 'Stakeholders', component: <StakeholderNetwork data={analysisData} /> }
   ];

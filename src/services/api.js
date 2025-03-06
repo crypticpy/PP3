@@ -1,139 +1,144 @@
 
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
-// Get the API base URL from environment variables or use the backend port from run.py
-const API_URL = import.meta.env.VITE_API_URL || 'http://0.0.0.0:8002';
+// Base URL for API requests
+const API_URL = import.meta.env.VITE_API_URL || 'http://0.0.0.0:8000';
 
-// Create axios instance with base configuration
+// Create axios instance with base URL
 const apiClient = axios.create({
   baseURL: API_URL,
-  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json'
-  }
+  },
 });
 
-// Add request interceptor for logging and debugging
+// Add request interceptor for authentication
 apiClient.interceptors.request.use(
-  config => {
-    console.log(`API Request: ${config.method.toUpperCase()} ${config.baseURL}${config.url}`);
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
-  error => {
-    console.error('API Request Error:', error);
+  (error) => {
     return Promise.reject(error);
   }
 );
 
-// Health check function
-const healthCheck = async () => {
-  try {
-    const response = await apiClient.get('/health');
+// Add response interceptor for error handling
+apiClient.interceptors.response.use(
+  (response) => {
     return response;
+  },
+  (error) => {
+    const { response } = error;
+    
+    if (response) {
+      // Handle specific error status codes
+      switch (response.status) {
+        case 401:
+          toast.error('Authentication required. Please log in.');
+          // Redirect to login if needed
+          break;
+        case 403:
+          toast.error('You do not have permission to perform this action.');
+          break;
+        case 404:
+          toast.error('Resource not found.');
+          break;
+        case 500:
+          toast.error('Server error. Please try again later.');
+          break;
+        default:
+          if (response.data && response.data.detail) {
+            toast.error(response.data.detail);
+          } else {
+            toast.error('An error occurred. Please try again.');
+          }
+      }
+    } else {
+      // Handle network errors
+      toast.error('Network error. Please check your connection.');
+    }
+    
+    return Promise.reject(error);
+  }
+);
+
+// Authentication API calls
+export const login = async (credentials) => {
+  try {
+    const response = await apiClient.post('/auth/login', credentials);
+    return response.data;
   } catch (error) {
-    console.error('Health check failed:', error);
     throw error;
   }
 };
 
-// Bill service functions
-const billService = {
-  // Get all bills
-  getBills: async () => {
-    try {
-      const response = await apiClient.get('/api/legislation');
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching bills:', error);
-      throw error;
-    }
-  },
-  
-  // Get a specific bill by ID
-  getBillById: async (id) => {
-    try {
-      const response = await apiClient.get(`/api/legislation/${id}`);
-      return response.data;
-    } catch (error) {
-      console.error(`Error fetching bill ${id}:`, error);
-      throw error;
-    }
-  },
-  
-  // Get bill analysis
-  getBillAnalysis: async (id) => {
-    try {
-      const response = await apiClient.get(`/api/legislation/${id}/analysis`);
-      return response.data;
-    } catch (error) {
-      console.error(`Error fetching analysis for bill ${id}:`, error);
-      throw error;
-    }
+export const register = async (userData) => {
+  try {
+    const response = await apiClient.post('/auth/register', userData);
+    return response.data;
+  } catch (error) {
+    throw error;
   }
 };
 
-// Export all services
-export { 
-  apiClient,
-  healthCheck,
-  billService
+export const logout = () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
 };
 
-export default {
-  healthCheck,
-  billService
+// Legislation API calls
+export const fetchLegislation = async (params) => {
+  try {
+    const response = await apiClient.get('/legislation', { params });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
-import axios from 'axios';
 
-// Get the API URL from environment variables or use a fallback
-const API_URL = import.meta.env.VITE_API_URL || 'http://0.0.0.0:8000';
-
-// Create axios instance with default configuration
-const api = axios.create({
-  baseURL: API_URL,
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
+export const fetchLegislationDetails = async (id) => {
+  try {
+    const response = await apiClient.get(`/legislation/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
   }
-});
+};
 
-// Add response interceptor for error handling
-api.interceptors.response.use(
-  response => response,
-  error => {
-    console.error('API Error:', error);
-    return Promise.reject(error);
+// User preferences and settings
+export const updateUserPreferences = async (preferences) => {
+  try {
+    const response = await apiClient.post('/users/preferences', preferences);
+    return response.data;
+  } catch (error) {
+    throw error;
   }
-);
+};
 
-// API health check
+export const fetchUserPreferences = async () => {
+  try {
+    const response = await apiClient.get('/users/preferences');
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Health check endpoint
 export const healthCheck = async () => {
   try {
-    const response = await api.get('/health');
-    return { status: 200, data: response.data };
+    const response = await apiClient.get('/health');
+    console.log('Health check response:', response.data);
+    return response.data;
   } catch (error) {
-    console.error('Health check failed:', error);
-    return { status: 'error', error };
+    console.log('Health check error:', error);
+    throw error;
   }
 };
 
-// Get bills list
-export const getBills = async (params = {}) => {
-  const response = await api.get('/bills', { params });
-  return response.data;
-};
-
-// Get single bill details
-export const getBillById = async (id) => {
-  const response = await api.get(`/bills/${id}`);
-  return response.data;
-};
-
-// Get bill analysis
-export const getBillAnalysis = async (id) => {
-  const response = await api.get(`/bills/${id}/analysis`);
-  return response.data;
-};
-
-export default api;
+export default apiClient;
