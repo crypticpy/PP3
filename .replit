@@ -17,7 +17,7 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python app/api.py & npm run dev"
+args = "python run.py & npm run dev"
 
 [[ports]]
 localPort = 3000
