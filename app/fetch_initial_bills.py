@@ -12,6 +12,7 @@ This script:
 
 import os
 import sys
+import json
 import logging
 import argparse
 from datetime import datetime
@@ -70,72 +71,85 @@ def fetch_and_analyze_bills(limit=5, analyze=True):
     finally:
         db_session.close()
 
+        
+
 def fetch_bills_for_jurisdiction(api, state_code, limit):
     """
     Fetch bills for a specific jurisdiction.
-    
+
     Args:
         api: LegiScanAPI instance
         state_code: Two-letter state code
         limit: Maximum number of bills to fetch
-        
+
     Returns:
         List of fetched bills
     """
     fetched_bills = []
-    
+
     try:
         # Get active sessions for this jurisdiction
         sessions = api.get_session_list(state_code)
         if not sessions:
             logger.warning(f"No sessions found for {state_code}")
             return []
-        
+
         # Use the most recent session
-        session = sessions[0]  # Assumes sessions are returned in chronological order
+        session = sessions[0]
         session_id = session.get("session_id")
-        
+
         if not session_id:
             logger.warning(f"No session ID found for {state_code}")
             return []
-            
+
         # Get bill list for this session
         master_list = api.get_master_list(session_id)
         if not master_list:
             logger.warning(f"No bills found for session {session_id}")
             return []
-            
+
         # Get most recent bills (skipping metadata at key "0")
         bill_ids = []
         items = [(k, v) for k, v in master_list.items() if k != "0"]
-        
+
         # Sort by last action date (most recent first)
         sorted_items = sorted(
             items,
             key=lambda x: x[1].get("last_action_date", "1900-01-01"),
             reverse=True
         )
-        
+
         # Take the top N bills
         for _, bill_info in sorted_items[:limit]:
             bill_id = bill_info.get("bill_id")
             if bill_id:
                 bill_ids.append(bill_id)
-                
+
         # Fetch full bill details and save to database
         for bill_id in bill_ids:
             bill_data = api.get_bill(bill_id)
             if bill_data:
+                # Save the raw bill data to a file for debugging (for US/Congress bills)
+                if bill_data.get("state") == "US":
+                    filename = f"debug_bill_{bill_id}.json"
+                    try:
+                        with open(filename, "w", encoding="utf-8") as f:
+                            json.dump(bill_data, f, ensure_ascii=False, indent=2)
+                        logger.info(f"Saved raw congressional bill data to {filename}")
+                    except Exception as e:
+                        logger.error(f"Error saving debug file for bill {bill_id}: {e}")
+
                 bill_obj = api.save_bill_to_db(bill_data, detect_relevance=True)
                 if bill_obj:
                     fetched_bills.append(bill_obj)
                     logger.info(f"Saved bill {bill_obj.bill_number} to database.")
-        
+
         return fetched_bills
-        
+
     except Exception as e:
         logger.error(f"Error fetching bills for {state_code}: {e}", exc_info=True)
         return []
+
 
 def run_analysis(db_session, bills):
     """

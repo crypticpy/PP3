@@ -7,9 +7,10 @@ import logging
 from pydantic import BaseModel, field_validator
 from typing import Optional
 
-
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 
@@ -63,7 +64,8 @@ class AIAnalysisConfig(BaseModel):
     def validate_log_level(cls, v):
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         if v not in valid_levels:
-            raise ValueError(f"log_level must be one of: {', '.join(valid_levels)}")
+            raise ValueError(
+                f"log_level must be one of: {', '.join(valid_levels)}")
         return v
 
     @field_validator('openai_api_key')
@@ -71,7 +73,9 @@ class AIAnalysisConfig(BaseModel):
     def validate_api_key(cls, v, info):
         # This validator needs to check the environment variable if v is None
         if v is None and not os.environ.get("OPENAI_API_KEY"):
-            raise ValueError("OpenAI API key must be provided or set in OPENAI_API_KEY environment variable")
+            raise ValueError(
+                "OpenAI API key must be provided or set in OPENAI_API_KEY environment variable"
+            )
         return v
 
 

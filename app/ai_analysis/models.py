@@ -10,8 +10,7 @@ class KeyPoint(BaseModel):
     """Model representing a key point in the legislation analysis."""
     point: str = Field(..., description="The text of the bullet point")
     impact_type: Literal["positive", "negative", "neutral"] = Field(
-        ..., description="The overall tone or impact of this point"
-    )
+        ..., description="The overall tone or impact of this point")
 
 
 class PublicHealthImpacts(BaseModel):
@@ -39,8 +38,8 @@ class EconomicImpacts(BaseModel):
 
 class ImpactSummary(BaseModel):
     """Model representing the overall impact summary."""
-    primary_category: Literal["public_health", "local_gov", "economic", 
-                             "environmental", "education", "infrastructure"]
+    primary_category: Literal["public_health", "local_gov", "economic",
+                              "environmental", "education", "infrastructure"]
     impact_level: Literal["low", "moderate", "high", "critical"]
     relevance_to_texas: Literal["low", "moderate", "high"]
 

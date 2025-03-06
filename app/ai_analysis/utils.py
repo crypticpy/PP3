@@ -8,6 +8,7 @@ from typing import Optional, Dict, Any, List, Tuple
 
 logger = logging.getLogger(__name__)
 
+
 def create_analysis_instructions(is_chunk: bool = False) -> str:
     """
     Create system instructions for analysis prompt.
@@ -37,13 +38,20 @@ def create_analysis_instructions(is_chunk: bool = False) -> str:
 
 def get_analysis_json_schema() -> Dict[str, Any]:
     """
-    Return the JSON schema for structured analysis output.
+    Return the JSON schema for structured analysis output for OpenAI's structured outputs.
 
-    Returns:
-        JSON schema for OpenAI's structured output format
+    This schema is wrapped with the required keys 'name' and 'strict' so that it conforms
+    to the API's expected format:
+
+        {
+          "name": "<your_schema_name>",
+          "strict": True,
+          "schema": { ... your original schema ... }
+        }
     """
-    return {
-        "type": "object",
+    base_schema = {
+        "type":
+        "object",
         "properties": {
             "summary": {
                 "type": "string",
@@ -60,9 +68,11 @@ def get_analysis_json_schema() -> Dict[str, Any]:
                             "description": "The text of the bullet point"
                         },
                         "impact_type": {
-                            "type": "string",
+                            "type":
+                            "string",
                             "enum": ["positive", "negative", "neutral"],
-                            "description": "The overall tone or impact of this point"
+                            "description":
+                            "The overall tone or impact of this point"
                         }
                     },
                     "required": ["point", "impact_type"],
@@ -70,101 +80,149 @@ def get_analysis_json_schema() -> Dict[str, Any]:
                 }
             },
             "public_health_impacts": {
-                "type": "object",
+                "type":
+                "object",
                 "properties": {
                     "direct_effects": {
                         "type": "array",
-                        "items": {"type": "string"}
+                        "items": {
+                            "type": "string"
+                        }
                     },
                     "indirect_effects": {
                         "type": "array",
-                        "items": {"type": "string"}
+                        "items": {
+                            "type": "string"
+                        }
                     },
                     "funding_impact": {
                         "type": "array",
-                        "items": {"type": "string"}
+                        "items": {
+                            "type": "string"
+                        }
                     },
                     "vulnerable_populations": {
                         "type": "array",
-                        "items": {"type": "string"}
+                        "items": {
+                            "type": "string"
+                        }
                     }
                 },
-                "required": ["direct_effects", "indirect_effects", "funding_impact", "vulnerable_populations"],
-                "additionalProperties": False
+                "required": [
+                    "direct_effects", "indirect_effects", "funding_impact",
+                    "vulnerable_populations"
+                ],
+                "additionalProperties":
+                False
             },
             "local_government_impacts": {
                 "type": "object",
                 "properties": {
                     "administrative": {
                         "type": "array",
-                        "items": {"type": "string"}
+                        "items": {
+                            "type": "string"
+                        }
                     },
                     "fiscal": {
                         "type": "array",
-                        "items": {"type": "string"}
+                        "items": {
+                            "type": "string"
+                        }
                     },
                     "implementation": {
                         "type": "array",
-                        "items": {"type": "string"}
+                        "items": {
+                            "type": "string"
+                        }
                     }
                 },
                 "required": ["administrative", "fiscal", "implementation"],
                 "additionalProperties": False
             },
             "economic_impacts": {
-                "type": "object",
+                "type":
+                "object",
                 "properties": {
                     "direct_costs": {
                         "type": "array",
-                        "items": {"type": "string"}
+                        "items": {
+                            "type": "string"
+                        }
                     },
                     "economic_effects": {
                         "type": "array",
-                        "items": {"type": "string"}
+                        "items": {
+                            "type": "string"
+                        }
                     },
                     "benefits": {
                         "type": "array",
-                        "items": {"type": "string"}
+                        "items": {
+                            "type": "string"
+                        }
                     },
                     "long_term_impact": {
                         "type": "array",
-                        "items": {"type": "string"}
+                        "items": {
+                            "type": "string"
+                        }
                     }
                 },
-                "required": ["direct_costs", "economic_effects", "benefits", "long_term_impact"],
-                "additionalProperties": False
+                "required": [
+                    "direct_costs", "economic_effects", "benefits",
+                    "long_term_impact"
+                ],
+                "additionalProperties":
+                False
             },
             "environmental_impacts": {
                 "type": "array",
-                "items": {"type": "string"}
+                "items": {
+                    "type": "string"
+                }
             },
             "education_impacts": {
                 "type": "array",
-                "items": {"type": "string"}
+                "items": {
+                    "type": "string"
+                }
             },
             "infrastructure_impacts": {
                 "type": "array",
-                "items": {"type": "string"}
+                "items": {
+                    "type": "string"
+                }
             },
             "recommended_actions": {
                 "type": "array",
-                "items": {"type": "string"}
+                "items": {
+                    "type": "string"
+                }
             },
             "immediate_actions": {
                 "type": "array",
-                "items": {"type": "string"}
+                "items": {
+                    "type": "string"
+                }
             },
             "resource_needs": {
                 "type": "array",
-                "items": {"type": "string"}
+                "items": {
+                    "type": "string"
+                }
             },
             "impact_summary": {
-                "type": "object",
+                "type":
+                "object",
                 "properties": {
                     "primary_category": {
-                        "type": "string",
-                        "enum": ["public_health", "local_gov", "economic", "environmental", 
-                                "education", "infrastructure"]
+                        "type":
+                        "string",
+                        "enum": [
+                            "public_health", "local_gov", "economic",
+                            "environmental", "education", "infrastructure"
+                        ]
                     },
                     "impact_level": {
                         "type": "string",
@@ -175,17 +233,28 @@ def get_analysis_json_schema() -> Dict[str, Any]:
                         "enum": ["low", "moderate", "high"]
                     }
                 },
-                "required": ["primary_category", "impact_level", "relevance_to_texas"],
-                "additionalProperties": False
+                "required":
+                ["primary_category", "impact_level", "relevance_to_texas"],
+                "additionalProperties":
+                False
             }
         },
         "required": [
-            "summary", "key_points", "public_health_impacts", "local_government_impacts",
-            "economic_impacts", "environmental_impacts", "education_impacts", 
-            "infrastructure_impacts", "recommended_actions", "immediate_actions", 
-            "resource_needs", "impact_summary"
+            "summary", "key_points", "public_health_impacts",
+            "local_government_impacts", "economic_impacts",
+            "environmental_impacts", "education_impacts",
+            "infrastructure_impacts", "recommended_actions",
+            "immediate_actions", "resource_needs", "impact_summary"
         ],
-        "additionalProperties": False
+        "additionalProperties":
+        False
+    }
+
+    # Wrap the schema with the required outer object
+    return {
+        "name": "bill_analysis_schema",  # a unique schema name
+        "strict": True,
+        "schema": base_schema
     }
 
 
@@ -213,8 +282,7 @@ def create_user_prompt(text: str, is_chunk: bool = False) -> str:
         "2. Local government impacts - administrative, fiscal, and implementation aspects\n"
         "3. Economic considerations - costs, benefits, and long-term effects\n"
         "4. Recommended actions for Texas Public Health and Government officials to prepare for this legislation\n"
-        "5. Overall impact assessment for Texas stakeholders"
-    )
+        "5. Overall impact assessment for Texas stakeholders")
 
 
 class TokenCounter:
@@ -246,7 +314,9 @@ class TokenCounter:
             else:
                 # Default encoding if no match
                 encoding_name = "cl100k_base"
-                logger.warning(f"No specific encoding found for {self.model_name}, using default encoding")
+                logger.warning(
+                    f"No specific encoding found for {self.model_name}, using default encoding"
+                )
 
             return tiktoken.get_encoding(encoding_name)
 
@@ -290,10 +360,8 @@ class TokenCounter:
         return len(text) // 4
 
 
-def calculate_priority_scores(
-    analysis_dict: Dict[str, Any], 
-    legislation_id: int
-) -> Dict[str, Any]:
+def calculate_priority_scores(analysis_dict: Dict[str, Any],
+                              legislation_id: int) -> Dict[str, Any]:
     """
     Calculate priority scores based on analysis results.
 
@@ -335,10 +403,12 @@ def calculate_priority_scores(
     # Adjust scores based on impact category
     if impact_category_str == "public_health":
         health_relevance = min(100, int(base_score * 1.5 * texas_multiplier))
-        local_govt_relevance = min(100, int(base_score * 0.8 * texas_multiplier))
+        local_govt_relevance = min(100,
+                                   int(base_score * 0.8 * texas_multiplier))
     elif impact_category_str == "local_gov":
         health_relevance = min(100, int(base_score * 0.8 * texas_multiplier))
-        local_govt_relevance = min(100, int(base_score * 1.5 * texas_multiplier))
+        local_govt_relevance = min(100,
+                                   int(base_score * 1.5 * texas_multiplier))
     else:
         # For other categories, calculate based on impact level and Texas relevance
         health_relevance = min(100, int(base_score * texas_multiplier))
@@ -348,7 +418,8 @@ def calculate_priority_scores(
     ph_impacts = analysis_dict.get("public_health_impacts", {})
     if ph_impacts:
         # Adjust score based on having detailed impacts
-        if ph_impacts.get("direct_effects") or ph_impacts.get("funding_impact"):
+        if ph_impacts.get("direct_effects") or ph_impacts.get(
+                "funding_impact"):
             health_relevance = min(100, health_relevance + 10)
 
     # Check if we have local government impacts detailed
@@ -377,7 +448,8 @@ def calculate_priority_scores(
     }
 
 
-def merge_analyses(base: Dict[str, Any], new: Dict[str, Any]) -> Dict[str, Any]:
+def merge_analyses(base: Dict[str, Any], new: Dict[str,
+                                                   Any]) -> Dict[str, Any]:
     """
     Merge two analysis dictionaries, intelligently handling different field types.
 
@@ -392,10 +464,7 @@ def merge_analyses(base: Dict[str, Any], new: Dict[str, Any]) -> Dict[str, Any]:
 
     # Merge summary with combination
     if "summary" in new:
-        merged["summary"] = (
-            base.get("summary", "") + " " + 
-            new["summary"]
-        )
+        merged["summary"] = (base.get("summary", "") + " " + new["summary"])
         # Trim if it's getting too long
         if len(merged["summary"]) > 2000:
             merged["summary"] = merged["summary"][:1997] + "..."
@@ -411,16 +480,23 @@ def merge_analyses(base: Dict[str, Any], new: Dict[str, Any]) -> Dict[str, Any]:
                     break
 
     # Merge impact lists (take most significant from both)
-    for impact_type in ["environmental_impacts", "education_impacts", "infrastructure_impacts"]:
+    for impact_type in [
+            "environmental_impacts", "education_impacts",
+            "infrastructure_impacts"
+    ]:
         if impact_type in new and impact_type in base:
             # Get unique impacts
             all_impacts = set(base[impact_type])
             for impact in new[impact_type]:
                 all_impacts.add(impact)
-            merged[impact_type] = list(all_impacts)[:10]  # Limit to 10 most important
+            merged[impact_type] = list(
+                all_impacts)[:10]  # Limit to 10 most important
 
     # Merge structured impact dictionaries
-    for impact_dict in ["public_health_impacts", "local_government_impacts", "economic_impacts"]:
+    for impact_dict in [
+            "public_health_impacts", "local_government_impacts",
+            "economic_impacts"
+    ]:
         if impact_dict in new and impact_dict in base:
             for category, items in new[impact_dict].items():
                 if category in base[impact_dict]:
@@ -434,7 +510,9 @@ def merge_analyses(base: Dict[str, Any], new: Dict[str, Any]) -> Dict[str, Any]:
                                 break
 
     # For actions, get the most relevant from both
-    for action_type in ["recommended_actions", "immediate_actions", "resource_needs"]:
+    for action_type in [
+            "recommended_actions", "immediate_actions", "resource_needs"
+    ]:
         if action_type in new and action_type in base:
             # Combine and deduplicate
             all_actions = set(base[action_type])
@@ -447,15 +525,12 @@ def merge_analyses(base: Dict[str, Any], new: Dict[str, Any]) -> Dict[str, Any]:
     # For impact_summary, keep the most severe assessment
     if "impact_summary" in new and "impact_summary" in base:
         # Impact level priority (higher = more severe)
-        impact_priority = {
-            "low": 1,
-            "moderate": 2,
-            "high": 3,
-            "critical": 4
-        }
+        impact_priority = {"low": 1, "moderate": 2, "high": 3, "critical": 4}
 
-        base_level = impact_priority.get(base["impact_summary"]["impact_level"], 0)
-        new_level = impact_priority.get(new["impact_summary"]["impact_level"], 0)
+        base_level = impact_priority.get(
+            base["impact_summary"]["impact_level"], 0)
+        new_level = impact_priority.get(new["impact_summary"]["impact_level"],
+                                        0)
 
         # Keep the more severe impact assessment
         if new_level > base_level:
@@ -464,14 +539,10 @@ def merge_analyses(base: Dict[str, Any], new: Dict[str, Any]) -> Dict[str, Any]:
     return merged
 
 
-def create_chunk_prompt(
-    chunk: str, 
-    chunk_index: int, 
-    total_chunks: int,
-    prev_summaries: List[str],
-    legislation_metadata: Dict[str, str],
-    is_structured: bool
-) -> str:
+def create_chunk_prompt(chunk: str, chunk_index: int, total_chunks: int,
+                        prev_summaries: List[str],
+                        legislation_metadata: Dict[str, str],
+                        is_structured: bool) -> str:
     """
     Create a prompt for analyzing a chunk of legislation with context preservation.
 
@@ -527,19 +598,15 @@ def create_chunk_prompt(
     if is_structured:
         instructions += (
             " This document has structured sections. Pay attention to section headers and "
-            "how they relate to previous parts of the bill."
-        )
+            "how they relate to previous parts of the bill.")
     else:
         instructions += (
             " This document was split by content size rather than by natural sections. "
-            "Be aware that some concepts might span across chunks."
-        )
+            "Be aware that some concepts might span across chunks.")
 
     # Full prompt assembly
-    full_prompt = (
-        f"{instructions}\n\n"
-        f"BILL CONTEXT:\n{context_text}\n\n"
-        f"CURRENT SECTION TEXT TO ANALYZE:\n{chunk}"
-    )
+    full_prompt = (f"{instructions}\n\n"
+                   f"BILL CONTEXT:\n{context_text}\n\n"
+                   f"CURRENT SECTION TEXT TO ANALYZE:\n{chunk}")
 
     return full_prompt

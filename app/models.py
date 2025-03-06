@@ -211,14 +211,14 @@ class BillStatusEnum(enum.Enum):
         ENACTED: Bill has become law
         PENDING: Bill is pending action
     """
-    NEW = "new"
-    INTRODUCED = "introduced"
-    UPDATED = "updated"
-    PASSED = "passed"
-    DEFEATED = "defeated"
-    VETOED = "vetoed"
-    ENACTED = "enacted"
-    PENDING = "pending"
+    new = "new"
+    introduced = "introduced"
+    updated = "updated"
+    passed = "passed"
+    defeated = "defeated"
+    vetoed = "vetoed"
+    enacted = "enacted"
+    pending = "pending"
 
 
 class ImpactLevelEnum(enum.Enum):
@@ -231,10 +231,10 @@ class ImpactLevelEnum(enum.Enum):
         HIGH: Significant impact
         CRITICAL: Critical impact requiring immediate attention
     """
-    LOW = "low"
-    MODERATE = "moderate"
-    HIGH = "high"
-    CRITICAL = "critical"
+    low = "low"
+    moderate = "moderate"
+    high = "high"
+    critical = "critical"
 
 
 class ImpactCategoryEnum(enum.Enum):
@@ -252,15 +252,15 @@ class ImpactCategoryEnum(enum.Enum):
         SOCIAL_SERVICES: Impact on social services
         JUSTICE: Impact on justice system
     """
-    PUBLIC_HEALTH = "public_health"
-    LOCAL_GOV = "local_gov"
-    ECONOMIC = "economic"
-    ENVIRONMENTAL = "environmental"
-    EDUCATION = "education"
-    INFRASTRUCTURE = "infrastructure"
-    HEALTHCARE = "healthcare"
-    SOCIAL_SERVICES = "social_services"
-    JUSTICE = "justice"
+    public_health = "public_health"
+    local_gov = "local_gov"
+    economic = "economic"
+    environmental = "environmental"
+    education = "education"
+    infrastructure = "infrastructure"
+    healthcare = "healthcare"
+    social_services = "social_services"
+    justice = "justice"
 
 
 class AmendmentStatusEnum(enum.Enum):
@@ -273,10 +273,10 @@ class AmendmentStatusEnum(enum.Enum):
         REJECTED: Amendment has been rejected
         WITHDRAWN: Amendment has been withdrawn by sponsor
     """
-    PROPOSED = "proposed"
-    ADOPTED = "adopted"
-    REJECTED = "rejected"
-    WITHDRAWN = "withdrawn"
+    proposed = "proposed"
+    adopted = "adopted"
+    rejected = "rejected"
+    withdrawn = "withdrawn"
 
 
 class NotificationTypeEnum(enum.Enum):
@@ -289,10 +289,10 @@ class NotificationTypeEnum(enum.Enum):
         STATUS_CHANGE: Notification for status changes to legislation
         ANALYSIS_COMPLETE: Notification when analysis is complete
     """
-    HIGH_PRIORITY = "high_priority"
-    NEW_BILL = "new_bill"
-    STATUS_CHANGE = "status_change"
-    ANALYSIS_COMPLETE = "analysis_complete"
+    high_priority = "high_priority"
+    new_bill = "new_bill"
+    status_change = "status_change"
+    analysis_complete = "analysis_complete"
 
 
 class SyncStatusEnum(enum.Enum):
@@ -306,11 +306,11 @@ class SyncStatusEnum(enum.Enum):
         FAILED: Sync operation failed
         PARTIAL: Sync operation completed with some errors
     """
-    PENDING = "pending"
-    IN_PROGRESS = "in_progress"
-    COMPLETED = "completed"
-    FAILED = "failed"
-    PARTIAL = "partial"
+    pending = "pending"
+    in_progress = "in_progress"
+    completed = "completed"
+    failed = "failed"
+    partial = "partial"
 
 
 # -----------------------------------------------------------------------------
@@ -609,7 +609,7 @@ class Legislation(BaseModel):
         SQLEnum(BillStatusEnum, 
                values_callable=lambda enum_cls: [e.value for e in enum_cls],
                native_enum=True),
-        default=BillStatusEnum.NEW
+        default=BillStatusEnum.new
     )
     url = Column(Text, nullable=True)
     state_link = Column(Text, nullable=True)
@@ -1064,7 +1064,7 @@ class Amendment(BaseModel):
 
     adopted = Column(Boolean, default=False)
     status = Column(SQLEnum(AmendmentStatusEnum),
-                    default=AmendmentStatusEnum.PROPOSED)
+                    default=AmendmentStatusEnum.proposed)
     amendment_date = Column(DateTime, nullable=True)
     title = Column(String(255), nullable=True)
     description = Column(Text, nullable=True)
@@ -1355,7 +1355,7 @@ class SyncMetadata(BaseModel):
     last_sync: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(timezone.utc), nullable=False)
     last_successful_sync: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     status: Mapped[SyncStatusEnum] = mapped_column(SQLEnum(SyncStatusEnum),
-                                                       default=SyncStatusEnum.PENDING,
+                                                       default=SyncStatusEnum.pending,
                                                        nullable=False)
     sync_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     new_bills: Mapped[int] = mapped_column(Integer, default=0)

@@ -13,6 +13,7 @@ This module:
 """
 
 import os
+import re
 import time
 import logging
 import requests
@@ -56,6 +57,18 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+def sanitize_text(text: str) -> str:
+    """
+    Sanitize the input text by removing NUL characters and other control characters
+    (if desired). In this example, we remove only the NUL character.
+    """
+    # Simple approach: remove only NUL characters.
+    # sanitized = text.replace('\x00', '')
+
+    
+    sanitized = re.sub(r'[\x00-\x08\x0b-\x0c\x0e-\x1f\x7f]', '' , text)
+
+    return sanitized
 
 class ApiError(Exception):
     """Custom exception for LegiScan API errors."""
@@ -396,17 +409,18 @@ class LegiScanAPI:
                     "external_id": external_id,
                     "data_source": DataSourceEnum.legiscan,
                     "govt_type": govt_type,
-                    "govt_source": bill_data.get("session", {}).get("session_name", "Unknown Session"),
-                    "bill_number": bill_data.get("bill_number", ""),
+                    "govt_source": sanitize_text(bill_data.get("session", {}).get("session_name", "Unknown Session")),
+                    "bill_number": sanitize_text(bill_data.get("bill_number", "")),
                     "bill_type": bill_data.get("bill_type"),
-                    "title": bill_data.get("title", ""),
-                    "description": bill_data.get("description", ""),
+                    "title": sanitize_text(bill_data.get("title", "")),
+                    "description": sanitize_text(bill_data.get("description", "")),
                     "bill_status": new_status,
                     "url": bill_data.get("url"),
                     "state_link": bill_data.get("state_link"),
                     "change_hash": bill_data.get("change_hash"),
                     "raw_api_response": bill_data,
                 }
+
 
                 # Convert date strings if available
                 introduced_str = bill_data.get("introduced_date", "")
@@ -625,9 +639,9 @@ class LegiScanAPI:
 
             # Add content if available
             if content is not None:
-                # Sanitize text content to remove any NUL characters if it's not binary
+                # Sanitize text content to remove NUL and other control characters if it's not binary
                 if not content_is_binary and isinstance(content, str):
-                    content = content.replace("\x00", "")
+                    content = sanitize_text(content)
                 attrs["text_content"] = content
                 # If binary content, store metadata about the content type
                 if content_is_binary:
@@ -657,19 +671,19 @@ class LegiScanAPI:
             Corresponding BillStatusEnum value
         """
         if not status_val:
-            return BillStatusEnum.NEW.value
+            return BillStatusEnum.new.value
 
         mapping = {
-            "1": BillStatusEnum.INTRODUCED.value,
-            "2": BillStatusEnum.UPDATED.value,
-            "3": BillStatusEnum.UPDATED.value,
-            "4": BillStatusEnum.PASSED.value,
-            "5": BillStatusEnum.VETOED.value,
-            "6": BillStatusEnum.DEFEATED.value,
-            "7": BillStatusEnum.ENACTED.value
+            "1": BillStatusEnum.introduced.value,
+            "2": BillStatusEnum.updated.value,
+            "3": BillStatusEnum.updated.value,
+            "4": BillStatusEnum.passed.value,
+            "5": BillStatusEnum.vetoed.value,
+            "6": BillStatusEnum.defeated.value,
+            "7": BillStatusEnum.enacted.value
         }
         status_str = str(status_val)
-        return mapping.get(status_str, BillStatusEnum.UPDATED.value)
+        return mapping.get(status_str, BillStatusEnum.updated.value)
 
     def _track_amendments(self, bill: Legislation, amendments: List[Dict[str, Any]]) -> int:
         """
@@ -716,7 +730,7 @@ class LegiScanAPI:
                     is_adopted = bool(amend_data.get("adopted", 0))
 
                     # Determine status enum value
-                    status_value = AmendmentStatusEnum.ADOPTED if is_adopted else AmendmentStatusEnum.PROPOSED
+                    status_value = AmendmentStatusEnum.adopted if is_adopted else AmendmentStatusEnum.proposed
 
                     if existing:
                         # Update existing record - use setattr to avoid type checking issues
@@ -804,12 +818,12 @@ class LegiScanAPI:
             - status: Final status of the sync operation
             - amendments_tracked: Number of amendments processed
         """
-        sync_start = datetime.utcnow()
+        sync_start = datetime.now(timezone.utc)
 
         # Create a sync metadata record
         sync_meta = SyncMetadata(
             last_sync=sync_start,
-            status=SyncStatusEnum.IN_PROGRESS,
+            status=SyncStatusEnum.in_progress,
             sync_type=sync_type
         )
         self.db_session.add(sync_meta)
@@ -886,19 +900,19 @@ class LegiScanAPI:
             setattr(sync_meta, "last_successful_sync", datetime.now(timezone.utc))
 
             if summary["errors"]:
-                setattr(sync_meta, 'status', SyncStatusEnum.PARTIAL)
+                setattr(sync_meta, 'status', SyncStatusEnum.partial)
                 setattr(sync_meta, 'errors', {"count": len(summary["errors"]), "samples": summary["errors"][:5]})
             else:
-                setattr(sync_meta, "status", SyncStatusEnum.COMPLETED)
+                setattr(sync_meta, "status", SyncStatusEnum.completed)
             summary["status"] = str(sync_meta.status)
-            summary["end_time"] = datetime.utcnow()
+            summary["end_time"] = datetime.now()
 
         except Exception as e:
             # Handle critical errors
             error_msg = f"Fatal error in sync operation: {str(e)}"
             logger.error(error_msg, exc_info=True)
 
-            setattr(sync_meta, "status", SyncStatusEnum.FAILED)
+            setattr(sync_meta, "status", SyncStatusEnum.failed)
             setattr(sync_meta, 'errors', {"critical_error": error_msg})
 
             sync_error = SyncError(

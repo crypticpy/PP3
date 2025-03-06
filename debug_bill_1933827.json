@@ -1,0 +1,227 @@
+{
+  "bill_id": 1933827,
+  "change_hash": "9e0f19fefd9131d40d13cd3ccc32ac78",
+  "session_id": 2199,
+  "session": {
+    "session_id": 2199,
+    "state_id": 52,
+    "year_start": 2025,
+    "year_end": 2026,
+    "prefile": 0,
+    "sine_die": 0,
+    "prior": 0,
+    "special": 0,
+    "session_tag": "Regular Session",
+    "session_title": "2025-2026 Regular Session",
+    "session_name": "119th Congress"
+  },
+  "url": "https://legiscan.com/US/bill/HB579/2025",
+  "state_link": "https://www.congress.gov/bill/119th-congress/house-bill/579/all-info",
+  "completed": 0,
+  "status": 1,
+  "status_date": "2025-01-21",
+  "progress": [
+    {
+      "date": "2025-01-21",
+      "event": 1
+    },
+    {
+      "date": "2025-01-21",
+      "event": 9
+    }
+  ],
+  "state": "US",
+  "state_id": 52,
+  "bill_number": "HB579",
+  "bill_type": "B",
+  "bill_type_id": "1",
+  "body": "H",
+  "body_id": 114,
+  "current_body": "H",
+  "current_body_id": 114,
+  "title": "Recruiting Families Using Data Act of 2025",
+  "description": "To amend parts B and E of title IV of the Social Security Act to improve foster and adoptive parent recruitment and retention, and for other purposes.",
+  "pending_committee_id": 0,
+  "committee": [],
+  "referrals": [
+    {
+      "date": "2025-01-21",
+      "committee_id": 2317,
+      "chamber": "H",
+      "chamber_id": 114,
+      "name": "Ways And Means"
+    }
+  ],
+  "history": [
+    {
+      "date": "2025-01-21",
+      "action": "Introduced in House",
+      "chamber": "H",
+      "chamber_id": 114,
+      "importance": 0
+    },
+    {
+      "date": "2025-01-21",
+      "action": "Referred to the House Committee on Ways and Means.",
+      "chamber": "H",
+      "chamber_id": 114,
+      "importance": 1
+    },
+    {
+      "date": "2025-03-04",
+      "action": "Mr. Smith (MO) moved to suspend the rules and pass the bill.",
+      "chamber": "H",
+      "chamber_id": 114,
+      "importance": 0
+    },
+    {
+      "date": "2025-03-04",
+      "action": "Considered under suspension of the rules. (consideration: CR H962-964)",
+      "chamber": "H",
+      "chamber_id": 114,
+      "importance": 0
+    },
+    {
+      "date": "2025-03-04",
+      "action": "DEBATE - The House proceeded with forty minutes of debate on H.R. 579.",
+      "chamber": "H",
+      "chamber_id": 114,
+      "importance": 0
+    },
+    {
+      "date": "2025-03-04",
+      "action": "On motion to suspend the rules and pass the bill Agreed to by voice vote. (text: CR H962-963)",
+      "chamber": "H",
+      "chamber_id": 114,
+      "importance": 0
+    },
+    {
+      "date": "2025-03-04",
+      "action": "Motion to reconsider laid on the table Agreed to without objection.",
+      "chamber": "H",
+      "chamber_id": 114,
+      "importance": 0
+    }
+  ],
+  "sponsors": [
+    {
+      "people_id": 21938,
+      "person_hash": "hesujqm7",
+      "party_id": "2",
+      "state_id": 52,
+      "party": "R",
+      "role_id": 1,
+      "role": "Rep",
+      "name": "Randy Feenstra",
+      "first_name": "Randy",
+      "middle_name": "L.",
+      "last_name": "Feenstra",
+      "suffix": "",
+      "nickname": "",
+      "district": "HD-IA-4",
+      "ftm_eid": 6079832,
+      "votesmart_id": 103301,
+      "opensecrets_id": "N00044011",
+      "knowwho_pid": 271911,
+      "ballotpedia": "Randy_Feenstra",
+      "bioguide_id": "F000446",
+      "sponsor_type_id": 1,
+      "sponsor_order": 1,
+      "committee_sponsor": 0,
+      "committee_id": 0,
+      "state_federal": 7148
+    },
+    {
+      "people_id": 16487,
+      "person_hash": "yd02ug7m",
+      "party_id": "1",
+      "state_id": 52,
+      "party": "D",
+      "role_id": 1,
+      "role": "Rep",
+      "name": "Brendan Boyle",
+      "first_name": "Brendan",
+      "middle_name": "F.",
+      "last_name": "Boyle",
+      "suffix": "",
+      "nickname": "",
+      "district": "HD-PA-2",
+      "ftm_eid": 13006066,
+      "votesmart_id": 47357,
+      "opensecrets_id": "N00035307",
+      "knowwho_pid": 269627,
+      "ballotpedia": "Brendan_Boyle",
+      "bioguide_id": "B001296",
+      "sponsor_type_id": 2,
+      "sponsor_order": 2,
+      "committee_sponsor": 0,
+      "committee_id": 0,
+      "state_federal": 905
+    },
+    {
+      "people_id": 24053,
+      "person_hash": "d6p4ilmt",
+      "party_id": "2",
+      "state_id": 52,
+      "party": "R",
+      "role_id": 1,
+      "role": "Rep",
+      "name": "Zachary Nunn",
+      "first_name": "Zachary",
+      "middle_name": "",
+      "last_name": "Nunn",
+      "suffix": "",
+      "nickname": "Zach",
+      "district": "HD-IA-3",
+      "ftm_eid": 0,
+      "votesmart_id": 151170,
+      "opensecrets_id": "",
+      "knowwho_pid": 0,
+      "ballotpedia": "Zach_Nunn",
+      "bioguide_id": "N000193",
+      "sponsor_type_id": 2,
+      "sponsor_order": 3,
+      "committee_sponsor": 0,
+      "committee_id": 0,
+      "state_federal": 17395
+    }
+  ],
+  "sasts": [
+    {
+      "type_id": 1,
+      "type": "Same As",
+      "sast_bill_number": "SB162",
+      "sast_bill_id": 1934470
+    }
+  ],
+  "subjects": [
+    {
+      "subject_id": 13700,
+      "subject_name": "Families"
+    }
+  ],
+  "texts": [
+    {
+      "doc_id": 3135093,
+      "date": "2025-02-20",
+      "type": "Introduced",
+      "type_id": 1,
+      "mime": "application/pdf",
+      "mime_id": 2,
+      "url": "https://legiscan.com/US/text/HB579/id/3135093",
+      "state_link": "https://www.congress.gov/119/bills/hr579/BILLS-119hr579ih.pdf",
+      "text_size": 237949,
+      "text_hash": "109782392dc28af1f4bae7f90845b20c",
+      "alt_bill_text": 0,
+      "alt_mime": "",
+      "alt_mime_id": 0,
+      "alt_state_link": "",
+      "alt_text_size": 0,
+      "alt_text_hash": ""
+    }
+  ],
+  "votes": [],
+  "amendments": [],
+  "supplements": [],
+  "calendar": []
+}

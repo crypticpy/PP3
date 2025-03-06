@@ -10,6 +10,7 @@ from .errors import ContentProcessingError
 
 logger = logging.getLogger(__name__)
 
+
 class TextChunker:
     """
     Handles intelligent splitting of large text documents into manageable chunks.
@@ -61,7 +62,9 @@ class TextChunker:
             # Detect if document has clear structure
             has_structure = False
             for pattern in section_patterns:
-                if len(re.findall(pattern, text)) > 3:  # At least 3 matches indicate structure
+                if len(re.findall(
+                        pattern,
+                        text)) > 3:  # At least 3 matches indicate structure
                     has_structure = True
                     break
 
@@ -69,11 +72,14 @@ class TextChunker:
 
             if has_structure:
                 # Split based on document structure
-                logger.info("Document has clear structure, splitting by sections")
-                chunks = self._split_by_structure(text, max_tokens, section_patterns)
+                logger.info(
+                    "Document has clear structure, splitting by sections")
+                chunks = self._split_by_structure(text, max_tokens,
+                                                  section_patterns)
             else:
                 # Fallback to paragraph-based splitting
-                logger.info("Document lacks clear structure, splitting by paragraphs")
+                logger.info(
+                    "Document lacks clear structure, splitting by paragraphs")
                 chunks = self._split_by_paragraphs(text, max_tokens)
 
             # If we still don't have any chunks (rare case), use basic splitting
@@ -83,12 +89,17 @@ class TextChunker:
 
             # Validate the chunks
             if not chunks:
-                raise ContentProcessingError("Failed to split text into chunks")
+                raise ContentProcessingError(
+                    "Failed to split text into chunks")
 
             # Log split information
-            logger.info(f"Split text into {len(chunks)} chunks, has_structure={has_structure}")
+            logger.info(
+                f"Split text into {len(chunks)} chunks, has_structure={has_structure}"
+            )
             for i, chunk in enumerate(chunks):
-                logger.debug(f"Chunk {i+1}: ~{self.token_counter.count_tokens(chunk)} tokens")
+                logger.debug(
+                    f"Chunk {i+1}: ~{self.token_counter.count_tokens(chunk)} tokens"
+                )
 
             return (chunks, has_structure)
 
@@ -97,7 +108,8 @@ class TextChunker:
             logger.error(error_msg, exc_info=True)
             raise ContentProcessingError(error_msg) from e
 
-    def _split_by_structure(self, text: str, max_tokens: int, patterns: List[str]) -> List[str]:
+    def _split_by_structure(self, text: str, max_tokens: int,
+                            patterns: List[str]) -> List[str]:
         """
         Split text based on document structure using section patterns.
 
@@ -163,7 +175,8 @@ class TextChunker:
                 continue
 
             # Calculate tokens in current chunk + new paragraph
-            temp_chunk = current_chunk + ("\n\n" if current_chunk else "") + para
+            temp_chunk = current_chunk + ("\n\n"
+                                          if current_chunk else "") + para
             tokens = self.token_counter.count_tokens(temp_chunk)
 
             if tokens <= max_tokens:
@@ -173,8 +186,11 @@ class TextChunker:
                 # Check if this single paragraph is too big
                 if not current_chunk:
                     # Single paragraph is too large, split by sentences
-                    logger.warning("Found paragraph exceeding token limit, splitting by sentences")
-                    para_chunks = self._split_paragraph_by_sentences(para, max_tokens)
+                    logger.warning(
+                        "Found paragraph exceeding token limit, splitting by sentences"
+                    )
+                    para_chunks = self._split_paragraph_by_sentences(
+                        para, max_tokens)
                     chunks.extend(para_chunks)
                     current_chunk = ""
                     continue
@@ -190,7 +206,8 @@ class TextChunker:
 
         return chunks
 
-    def _split_paragraph_by_sentences(self, paragraph: str, max_tokens: int) -> List[str]:
+    def _split_paragraph_by_sentences(self, paragraph: str,
+                                      max_tokens: int) -> List[str]:
         """
         Split a large paragraph by sentences when needed.
 
@@ -221,18 +238,22 @@ class TextChunker:
                     chunks.append(current_chunk)
                     current_chunk = ""
 
-                logger.warning(f"Found extremely long sentence ({sentence_tokens} tokens), splitting by character count")
+                logger.warning(
+                    f"Found extremely long sentence ({sentence_tokens} tokens), splitting by character count"
+                )
 
                 # Approximately how many characters per token
                 chars_per_token = len(sentence) / sentence_tokens
-                max_chars = int(max_tokens * chars_per_token) * 0.9  # 90% to be safe
+                max_chars = int(
+                    max_tokens * chars_per_token) * 0.9  # 90% to be safe
 
                 # Split into roughly equal parts
                 for i in range(0, len(sentence), int(max_chars)):
-                    chunks.append(sentence[i:i+int(max_chars)])
+                    chunks.append(sentence[i:i + int(max_chars)])
             else:
                 # Calculate tokens in current chunk + new sentence
-                temp_chunk = current_chunk + (" " if current_chunk else "") + sentence
+                temp_chunk = current_chunk + (" " if current_chunk else
+                                              "") + sentence
                 tokens = self.token_counter.count_tokens(temp_chunk)
 
                 if tokens <= max_tokens:
@@ -272,11 +293,12 @@ class TextChunker:
 
         # Estimate characters per chunk (approximate)
         chars_per_token = len(text) / total_tokens
-        chars_per_chunk = int(max_tokens * chars_per_token) * 0.9  # 90% to be safe
+        chars_per_chunk = int(
+            max_tokens * chars_per_token) * 0.9  # 90% to be safe
 
         chunks = []
         # Split into roughly equal parts
         for i in range(0, len(text), int(chars_per_chunk)):
-            chunks.append(text[i:i+int(chars_per_chunk)])
+            chunks.append(text[i:i + int(chars_per_chunk)])
 
         return chunks

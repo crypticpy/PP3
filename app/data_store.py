@@ -1309,15 +1309,15 @@ class DataStore:
             if hasattr(LegislationAnalysis, 'impact') and hasattr(LegislationAnalysis, 'impact_category'):
                 # Map impact_type string to impact category enum
                 if impact_type == "public_health":
-                    impact_category = ImpactCategoryEnum.PUBLIC_HEALTH
+                    impact_category = ImpactCategoryEnum.public_health
                 elif impact_type == "local_gov":
-                    impact_category = ImpactCategoryEnum.LOCAL_GOV
+                    impact_category = ImpactCategoryEnum.local_gov
                 elif impact_type == "economic":
-                    impact_category = ImpactCategoryEnum.ECONOMIC
+                    impact_category = ImpactCategoryEnum.economic
                 elif impact_type == "environmental":
-                    impact_category = ImpactCategoryEnum.ENVIRONMENTAL
+                    impact_category = ImpactCategoryEnum.environmental
                 elif impact_type == "education":
-                    impact_category = ImpactCategoryEnum.EDUCATION
+                    impact_category = ImpactCategoryEnum.education
 
                 if impact_category:
                     # Get counts for each impact level within the specified category

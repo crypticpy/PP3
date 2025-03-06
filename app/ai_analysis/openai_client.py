@@ -16,7 +16,9 @@ try:
     HAS_NEW_OPENAI = hasattr(openai, 'OpenAI')
     HAS_ASYNC_OPENAI = hasattr(openai, 'AsyncOpenAI')
 except ImportError:
-    raise ImportError("Failed to import OpenAI package. Please install with: pip install openai")
+    raise ImportError(
+        "Failed to import OpenAI package. Please install with: pip install openai"
+    )
 
 try:
     from sqlalchemy.orm import Session
@@ -29,12 +31,13 @@ from app.ai_analysis.errors import APIError, RateLimitError, AIAnalysisError, Da
 
 logger = logging.getLogger(__name__)
 
+
 class OpenAIClient:
     """ Wrapper for OpenAI API client with retry logic and error handling. """
 
     def __init__(
-        self, 
-        api_key: Optional[str] = None, 
+        self,
+        api_key: Optional[str] = None,
         model_name: str = "gpt-4o-2024-08-06",
         max_retries: int = 3,
         retry_base_delay: float = 1.0,
@@ -52,7 +55,9 @@ class OpenAIClient:
         """
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
         if not self.api_key:
-            raise ValueError("OpenAI API key must be provided or set as OPENAI_API_KEY environment variable")
+            raise ValueError(
+                "OpenAI API key must be provided or set as OPENAI_API_KEY environment variable"
+            )
 
         self.model_name = model_name
         self.max_retries = max_retries
@@ -118,15 +123,14 @@ class OpenAIClient:
                 raise
 
     def call_structured_analysis(
-        self, 
-        messages: List[Dict[str, str]], 
-        json_schema: Dict[str, Any],
-        temperature: float = 0.2,
-        reasoning_effort: Optional[str] = None,
-        max_completion_tokens: Optional[int] = None,
-        store: bool = True,
-        transaction_ctx: Optional[Any] = None
-    ) -> Dict[str, Any]:
+            self,
+            messages: List[Dict[str, str]],
+            json_schema: Dict[str, Any],
+            temperature: float = 0.2,
+            reasoning_effort: Optional[str] = None,
+            max_completion_tokens: Optional[int] = None,
+            store: bool = True,
+            transaction_ctx: Optional[Any] = None) -> Dict[str, Any]:
         """
         Call OpenAI API with retry logic and structured output validation.
 
@@ -158,10 +162,11 @@ class OpenAIClient:
                         "messages": messages,
                         "temperature": temperature,
                         "response_format": {
-                            "type": "json_schema", 
+                            "type": "json_schema",
                             "json_schema": json_schema
                         },
-                        "max_tokens": 8000,  # Legacy parameter but keeping for compatibility
+                        "max_tokens":
+                        8000,  # Legacy parameter but keeping for compatibility
                         "store": store
                     }
 
@@ -200,7 +205,7 @@ class OpenAIClient:
                 # Parse the JSON response
                 result = self._safe_json_load(content)
 
-                # If we're using a transaction and inside a database operation, we could 
+                # If we're using a transaction and inside a database operation, we could
                 # record the API call here if needed
                 if HAS_SQLALCHEMY and self.db_session and transaction_ctx:
                     try:
@@ -209,7 +214,8 @@ class OpenAIClient:
                         # self.db_session.add(api_log)
                         pass
                     except Exception as e:
-                        logger.error(f"Failed to record API call in database: {e}")
+                        logger.error(
+                            f"Failed to record API call in database: {e}")
                         # We don't raise here because the API call itself succeeded
 
                 return result
@@ -220,7 +226,8 @@ class OpenAIClient:
                 error_msg = str(e)
 
                 # Check for rate limit errors
-                if "rate limit" in error_msg.lower() or "rate_limit" in error_msg.lower():
+                if "rate limit" in error_msg.lower(
+                ) or "rate_limit" in error_msg.lower():
                     error_type = "Rate limit"
                     should_retry = True
                 # Check for timeout errors
@@ -228,41 +235,51 @@ class OpenAIClient:
                     error_type = "Timeout"
                     should_retry = True
                 # Check for server errors
-                elif "server error" in error_msg.lower() or "5xx" in error_msg.lower():
+                elif "server error" in error_msg.lower(
+                ) or "5xx" in error_msg.lower():
                     error_type = "Server"
                     should_retry = True
                 # Check for connection errors
                 elif "connection" in error_msg.lower():
-                    error_type = "Connection" 
+                    error_type = "Connection"
                     should_retry = True
                 else:
                     error_type = "API"
 
                 if should_retry and attempt < self.max_retries:
-                    delay = self.retry_base_delay * (2 ** attempt)  # Exponential backoff
-                    logger.warning(f"{error_type} error: {e}. Retrying in {delay:.2f}s (attempt {attempt+1}/{self.max_retries})")
+                    delay = self.retry_base_delay * (2**attempt
+                                                     )  # Exponential backoff
+                    logger.warning(
+                        f"{error_type} error: {e}. Retrying in {delay:.2f}s (attempt {attempt+1}/{self.max_retries})"
+                    )
                     time.sleep(delay)
                 else:
-                    logger.error(f"{error_type} error after {attempt} attempts: {e}")
+                    logger.error(
+                        f"{error_type} error after {attempt} attempts: {e}")
 
-                    if "rate limit" in error_msg.lower() or "rate_limit" in error_msg.lower():
-                        raise RateLimitError(f"OpenAI rate limit exceeded after {attempt} attempts: {str(e)}") from e
+                    if "rate limit" in error_msg.lower(
+                    ) or "rate_limit" in error_msg.lower():
+                        raise RateLimitError(
+                            f"OpenAI rate limit exceeded after {attempt} attempts: {str(e)}"
+                        ) from e
                     else:
-                        raise APIError(f"OpenAI API error after {attempt} attempts: {str(e)}") from e
+                        raise APIError(
+                            f"OpenAI API error after {attempt} attempts: {str(e)}"
+                        ) from e
 
         # This should never be reached due to the raises in the loop
-        raise AIAnalysisError("Failed to get a valid response after all retries")
+        raise AIAnalysisError(
+            "Failed to get a valid response after all retries")
 
     async def call_structured_analysis_async(
-        self, 
-        messages: List[Dict[str, str]], 
-        json_schema: Dict[str, Any],
-        temperature: float = 0.2,
-        reasoning_effort: Optional[str] = None,
-        max_completion_tokens: Optional[int] = None,
-        store: bool = True,
-        transaction_ctx: Optional[Any] = None
-    ) -> Dict[str, Any]:
+            self,
+            messages: List[Dict[str, str]],
+            json_schema: Dict[str, Any],
+            temperature: float = 0.2,
+            reasoning_effort: Optional[str] = None,
+            max_completion_tokens: Optional[int] = None,
+            store: bool = True,
+            transaction_ctx: Optional[Any] = None) -> Dict[str, Any]:
         """
         Async version of call_structured_analysis. Call OpenAI API with retry logic and structured output validation.
 
@@ -284,7 +301,9 @@ class OpenAIClient:
             ValueError: If async client is not available
         """
         if not HAS_ASYNC_OPENAI or not self.async_client:
-            raise ValueError("Async OpenAI client not available. Please update your openai package.")
+            raise ValueError(
+                "Async OpenAI client not available. Please update your openai package."
+            )
 
         for attempt in range(self.max_retries + 1):
             try:
@@ -296,10 +315,11 @@ class OpenAIClient:
                     "messages": messages,
                     "temperature": temperature,
                     "response_format": {
-                        "type": "json_schema", 
+                        "type": "json_schema",
                         "json_schema": json_schema
                     },
-                    "max_tokens": 8000,  # Legacy parameter but keeping for compatibility
+                    "max_tokens":
+                    8000,  # Legacy parameter but keeping for compatibility
                     "store": store
                 }
 
@@ -309,13 +329,15 @@ class OpenAIClient:
                 if max_completion_tokens is not None:
                     params["max_completion_tokens"] = max_completion_tokens
 
-                response = await self.async_client.chat.completions.create(**params)
+                response = await self.async_client.chat.completions.create(
+                    **params)
                 response_message = response.choices[0].message
                 content = response_message.content or ""
 
                 # Calculate and log API call time
                 elapsed_time = time.time() - start_time
-                logger.debug(f"Async API call completed in {elapsed_time:.2f}s")
+                logger.debug(
+                    f"Async API call completed in {elapsed_time:.2f}s")
 
                 # Check for empty response
                 if not content:
@@ -327,7 +349,7 @@ class OpenAIClient:
                 # Parse the JSON response
                 result = self._safe_json_load(content)
 
-                # If we're using a transaction and inside a database operation, we could 
+                # If we're using a transaction and inside a database operation, we could
                 # record the API call here if needed
                 if HAS_SQLALCHEMY and self.db_session and transaction_ctx:
                     try:
@@ -336,7 +358,8 @@ class OpenAIClient:
                         # self.db_session.add(api_log)
                         pass
                     except Exception as e:
-                        logger.error(f"Failed to record API call in database: {e}")
+                        logger.error(
+                            f"Failed to record API call in database: {e}")
                         # We don't raise here because the API call itself succeeded
 
                 return result
@@ -347,7 +370,8 @@ class OpenAIClient:
                 error_msg = str(e)
 
                 # Check for rate limit errors
-                if "rate limit" in error_msg.lower() or "rate_limit" in error_msg.lower():
+                if "rate limit" in error_msg.lower(
+                ) or "rate_limit" in error_msg.lower():
                     error_type = "Rate limit"
                     should_retry = True
                 # Check for timeout errors
@@ -355,42 +379,52 @@ class OpenAIClient:
                     error_type = "Timeout"
                     should_retry = True
                 # Check for server errors
-                elif "server error" in error_msg.lower() or "5xx" in error_msg.lower():
+                elif "server error" in error_msg.lower(
+                ) or "5xx" in error_msg.lower():
                     error_type = "Server"
                     should_retry = True
                 # Check for connection errors
                 elif "connection" in error_msg.lower():
-                    error_type = "Connection" 
+                    error_type = "Connection"
                     should_retry = True
                 else:
                     error_type = "API"
 
                 if should_retry and attempt < self.max_retries:
-                    delay = self.retry_base_delay * (2 ** attempt)  # Exponential backoff
-                    logger.warning(f"{error_type} error: {e}. Retrying in {delay:.2f}s (attempt {attempt+1}/{self.max_retries})")
+                    delay = self.retry_base_delay * (2**attempt
+                                                     )  # Exponential backoff
+                    logger.warning(
+                        f"{error_type} error: {e}. Retrying in {delay:.2f}s (attempt {attempt+1}/{self.max_retries})"
+                    )
                     await asyncio.sleep(delay)
                 else:
-                    logger.error(f"{error_type} error after {attempt} attempts: {e}")
+                    logger.error(
+                        f"{error_type} error after {attempt} attempts: {e}")
 
-                    if "rate limit" in error_msg.lower() or "rate_limit" in error_msg.lower():
-                        raise RateLimitError(f"OpenAI rate limit exceeded after {attempt} attempts: {str(e)}") from e
+                    if "rate limit" in error_msg.lower(
+                    ) or "rate_limit" in error_msg.lower():
+                        raise RateLimitError(
+                            f"OpenAI rate limit exceeded after {attempt} attempts: {str(e)}"
+                        ) from e
                     else:
-                        raise APIError(f"OpenAI API error after {attempt} attempts: {str(e)}") from e
+                        raise APIError(
+                            f"OpenAI API error after {attempt} attempts: {str(e)}"
+                        ) from e
 
         # This should never be reached due to the raises in the loop
-        raise AIAnalysisError("Failed to get a valid response after all retries")
+        raise AIAnalysisError(
+            "Failed to get a valid response after all retries")
 
     async def batch_structured_analysis_async(
-        self,
-        batch_messages: List[List[Dict[str, str]]],
-        json_schema: Dict[str, Any],
-        temperature: float = 0.2,
-        reasoning_effort: Optional[str] = None,
-        max_completion_tokens: Optional[int] = None,
-        store: bool = True,
-        max_concurrent: int = 5,
-        use_transaction: bool = True
-    ) -> List[Dict[str, Any]]:
+            self,
+            batch_messages: List[List[Dict[str, str]]],
+            json_schema: Dict[str, Any],
+            temperature: float = 0.2,
+            reasoning_effort: Optional[str] = None,
+            max_completion_tokens: Optional[int] = None,
+            store: bool = True,
+            max_concurrent: int = 5,
+            use_transaction: bool = True) -> List[Dict[str, Any]]:
         """
         Process multiple structured analysis requests concurrently.
         If use_transaction is True and a database session is available, all operations
@@ -413,37 +447,31 @@ class OpenAIClient:
             ValueError: If async client is not available
         """
         if not HAS_ASYNC_OPENAI or not self.async_client:
-            raise ValueError("Async OpenAI client not available. Please update your openai package.")
+            raise ValueError(
+                "Async OpenAI client not available. Please update your openai package."
+            )
 
         # If using a transaction and we have a database session
         if use_transaction and HAS_SQLALCHEMY and self.db_session:
             with self.transaction() as transaction:
                 results = await self._execute_batch_requests(
-                    batch_messages, json_schema, temperature, 
-                    reasoning_effort, max_completion_tokens, 
-                    store, max_concurrent, transaction
-                )
+                    batch_messages, json_schema, temperature, reasoning_effort,
+                    max_completion_tokens, store, max_concurrent, transaction)
                 return results
         else:
             # Execute without transaction
             results = await self._execute_batch_requests(
-                batch_messages, json_schema, temperature, 
-                reasoning_effort, max_completion_tokens, 
-                store, max_concurrent, None
-            )
+                batch_messages, json_schema, temperature, reasoning_effort,
+                max_completion_tokens, store, max_concurrent, None)
             return results
 
     async def _execute_batch_requests(
-        self, 
-        batch_messages: List[List[Dict[str, str]]], 
-        json_schema: Dict[str, Any],
-        temperature: float,
-        reasoning_effort: Optional[str],
-        max_completion_tokens: Optional[int],
-        store: bool,
-        max_concurrent: int,
-        transaction: Optional[Any]
-    ) -> List[Dict[str, Any]]:
+            self, batch_messages: List[List[Dict[str, str]]],
+            json_schema: Dict[str, Any], temperature: float,
+            reasoning_effort: Optional[str],
+            max_completion_tokens: Optional[int], store: bool,
+            max_concurrent: int,
+            transaction: Optional[Any]) -> List[Dict[str, Any]]:
         """
         Execute a batch of requests with concurrency control.
 
@@ -472,11 +500,12 @@ class OpenAIClient:
                     reasoning_effort=reasoning_effort,
                     max_completion_tokens=max_completion_tokens,
                     store=store,
-                    transaction_ctx=transaction
-                )
+                    transaction_ctx=transaction)
 
         # Create tasks for all message sets
-        tasks = [process_with_semaphore(messages) for messages in batch_messages]
+        tasks = [
+            process_with_semaphore(messages) for messages in batch_messages
+        ]
 
         # Execute all tasks concurrently and gather results
         results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -486,7 +515,10 @@ class OpenAIClient:
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 logger.error(f"Error in batch request {i}: {str(result)}")
-                processed_results.append({"error": str(result), "error_type": type(result).__name__})
+                processed_results.append({
+                    "error": str(result),
+                    "error_type": type(result).__name__
+                })
             else:
                 processed_results.append(result)
 
@@ -503,7 +535,8 @@ class OpenAIClient:
             Parsed JSON as a dictionary, or empty dict on error
         """
         if not content or not isinstance(content, str):
-            logger.warning("Empty or non-string content provided to JSON parser")
+            logger.warning(
+                "Empty or non-string content provided to JSON parser")
             return {}
 
         try:

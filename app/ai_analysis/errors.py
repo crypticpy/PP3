@@ -2,6 +2,7 @@
 Custom exceptions for AI analysis error handling.
 """
 
+
 class AIAnalysisError(Exception):
     """Base exception class for AI analysis errors."""
     pass
