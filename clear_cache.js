@@ -3,30 +3,35 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-// Paths to clean
-const cacheDirs = [
-  '.vite',
-  'node_modules/.vite'
-];
-
 console.log('Clearing Vite cache directories...');
-cacheDirs.forEach(dir => {
-  const fullPath = path.join(__dirname, dir);
-  if (fs.existsSync(fullPath)) {
-    console.log(`Removing ${dir}...`);
-    try {
-      if (process.platform === 'win32') {
-        execSync(`rmdir /s /q "${fullPath}"`);
-      } else {
-        execSync(`rm -rf "${fullPath}"`);
-      }
-      console.log(`Successfully removed ${dir}`);
-    } catch (err) {
-      console.error(`Error removing ${dir}:`, err);
-    }
-  } else {
-    console.log(`${dir} does not exist, skipping`);
-  }
-});
+
+// Clear .vite cache directory if it exists
+const viteDir = path.join(__dirname, '.vite');
+if (fs.existsSync(viteDir)) {
+  console.log(`Removing ${viteDir}...`);
+  fs.rmSync(viteDir, { recursive: true, force: true });
+  console.log(`Successfully removed ${viteDir}`);
+} else {
+  console.log('.vite does not exist, skipping');
+}
+
+// Clear node_modules/.vite cache if it exists
+const nodeModulesVite = path.join(__dirname, 'node_modules', '.vite');
+if (fs.existsSync(nodeModulesVite)) {
+  console.log(`Removing node_modules/.vite...`);
+  fs.rmSync(nodeModulesVite, { recursive: true, force: true });
+  console.log(`Successfully removed node_modules/.vite`);
+} else {
+  console.log('node_modules/.vite does not exist, skipping');
+}
+
+// Clean node_modules cache for React-related packages
+try {
+  console.log('Cleaning npm cache for React packages...');
+  execSync('npm cache clean --force react react-dom react-router-dom');
+  console.log('React cache cleaned');
+} catch (error) {
+  console.log('Error cleaning npm cache:', error.message);
+}
 
 console.log('Cache clearing complete!');

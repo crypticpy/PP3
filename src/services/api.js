@@ -1,100 +1,98 @@
 
-// API service for handling all backend requests
-const API_URL = '/api';
+import axios from 'axios';
 
-/**
- * Check the health/status of the API
- * @returns {Promise<Object>} Response data with message
- */
-export const checkApiHealth = async () => {
-  try {
-    const response = await fetch(`${API_URL}/`);
-    
-    if (!response.ok) {
-      throw new Error(`API responded with status: ${response.status}`);
+// Get the API URL from environment variables if available or use a default
+const API_URL = import.meta.env.VITE_API_URL || 'http://0.0.0.0:8000';
+
+// Create an axios instance with the API URL and common headers
+const apiClient = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 20000, // 20 seconds
+});
+
+// Add request interceptor for handling auth tokens if needed
+apiClient.interceptors.request.use(
+  (config) => {
+    // Add authorization token from local storage if available
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('API health check failed:', error);
-    throw error;
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
-};
+);
 
-/**
- * Get a list of bills with optional filters
- * @param {Object} filters - Optional filters for the query
- * @returns {Promise<Array>} Array of bill objects
- */
-export const getBills = async (filters = {}) => {
-  try {
-    // Build query string from filters
-    const queryParams = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        queryParams.append(key, value);
+// API service object with methods for different endpoints
+const apiService = {
+  // Health check
+  healthCheck: () => apiClient.get('/api/health'),
+
+  // Legislation endpoints
+  getLegislation: (id) => apiClient.get(`/api/legislation/${id}`),
+  searchLegislation: (params) => apiClient.get('/api/legislation/search', { params }),
+  getTrendingLegislation: () => apiClient.get('/api/legislation/trending'),
+  getRecentLegislation: () => apiClient.get('/api/legislation/recent'),
+  getRelevantLegislation: (type = 'health', minScore = 50, limit = 10) => 
+    apiClient.get('/api/legislation/relevant', { params: { type, min_score: minScore, limit } }),
+
+  // Analysis endpoints
+  getLegislationAnalysis: (id) => apiClient.get(`/api/analysis/${id}`),
+  requestAnalysis: (id) => apiClient.post(`/api/analysis/request/${id}`),
+  
+  // User preferences
+  getUserPreferences: () => apiClient.get('/api/user/preferences'),
+  updateUserPreferences: (preferences) => apiClient.post('/api/user/preferences', preferences),
+  
+  // Notifications
+  getNotifications: () => apiClient.get('/api/notifications'),
+  markNotificationRead: (id) => apiClient.post(`/api/notifications/${id}/read`),
+  markAllNotificationsRead: () => apiClient.post('/api/notifications/read-all'),
+  
+  // Dashboard data
+  getDashboardStats: () => apiClient.get('/api/dashboard/stats'),
+  
+  // Mock data for development (will fall back to these if API calls fail)
+  getMockLegislation: () => {
+    console.warn('Using mock legislation data');
+    return Promise.resolve({
+      data: {
+        results: [
+          {
+            id: 1,
+            bill_number: 'HB 123',
+            title: 'Public Health Emergency Response Act',
+            description: 'An act relating to public health emergency response procedures',
+            status: 'In Committee',
+            last_updated: '2024-02-15',
+            relevance_score: 85
+          },
+          // Additional mock items...
+        ]
       }
     });
-    
-    const queryString = queryParams.toString();
-    const endpoint = `${API_URL}/bills${queryString ? `?${queryString}` : ''}`;
-    
-    const response = await fetch(endpoint);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch bills: ${response.status}`);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching bills:', error);
-    throw error;
+  },
+  
+  getMockAnalysis: () => {
+    console.warn('Using mock analysis data');
+    return Promise.resolve({
+      data: {
+        legislation_id: 1,
+        summary: 'This bill establishes new protocols for public health emergencies.',
+        key_points: [
+          { point: 'Establishes emergency response protocols', impact_type: 'positive' },
+          { point: 'Requires county health departments to develop plans', impact_type: 'neutral' },
+          { point: 'Allocates funding for emergency supplies', impact_type: 'positive' }
+        ],
+        // Additional mock data...
+      }
+    });
   }
 };
 
-/**
- * Get detailed information about a specific bill
- * @param {string|number} billId - ID of the bill to retrieve
- * @returns {Promise<Object>} Bill data
- */
-export const getBillDetails = async (billId) => {
-  try {
-    const response = await fetch(`${API_URL}/bills/${billId}`);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch bill details: ${response.status}`);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error(`Error fetching bill ${billId}:`, error);
-    throw error;
-  }
-};
-
-/**
- * Get analysis for a specific bill
- * @param {string|number} billId - ID of the bill
- * @returns {Promise<Object>} Analysis data
- */
-export const getBillAnalysis = async (billId) => {
-  try {
-    const response = await fetch(`${API_URL}/analysis/${billId}`);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch analysis: ${response.status}`);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error(`Error fetching analysis for bill ${billId}:`, error);
-    throw error;
-  }
-};
-
-export default {
-  checkApiHealth,
-  getBills,
-  getBillDetails,
-  getBillAnalysis
-};
+export default apiService;
