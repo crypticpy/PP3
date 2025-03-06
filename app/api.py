@@ -43,8 +43,8 @@ from contextlib import asynccontextmanager
 # 1) Import your custom modules
 from app.data_store import DataStore, ConnectionError, ValidationError, DatabaseOperationError, BillStore
 from app.ai_analysis.analyzer import AIAnalysis # Changed import statement
-from legiscan_api import LegiScanAPI
-from models import (
+from app.legiscan_api import LegiScanAPI
+from app.models import (
     BillStatusEnum,
     ImpactLevelEnum,
     ImpactCategoryEnum,
@@ -71,7 +71,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """
     Lifecycle event handler for setup and teardown of application resources.
     """
-    global data_store, ai_analyzer, legiscan_api
+    global data_store, ai_analyzer, legiscan_api, bill_store
 
     # Startup: Initialize resources
     try:
@@ -82,6 +82,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
         # ai_analyzer = AIAnalysis(db_session=data_store.db_session)  Commented out to make AIAnalysis on-demand
         legiscan_api = LegiScanAPI(db_session=data_store.db_session, api_key=os.getenv("LEGISCAN_API_KEY"))
+        bill_store = BillStore(data_store.db_session)
         logger.info("Services initialized on startup.")
     except Exception as e:
         logger.critical(f"Failed to initialize services: {e}", exc_info=True)
@@ -128,8 +129,22 @@ data_store: Optional[DataStore] = None
 ai_analyzer: Optional[AIAnalysis] = None
 legiscan_api: Optional[LegiScanAPI] = None
 
-# Initialize data store
-bill_store = BillStore()
+# Initialize data store - will be properly initialized when data_store is ready
+bill_store = None
+
+def get_bill_store():
+    """
+    Dependency that yields the bill_store with the global data_store.
+    """
+    global bill_store, data_store
+    if bill_store is None and data_store is not None:
+        bill_store = BillStore(data_store.db_session)
+    if bill_store is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Bill store is not initialized. Database service unavailable."
+        )
+    return bill_store
 
 # Models
 class BillSummary(BaseModel):
@@ -1678,13 +1693,14 @@ async def get_bills(
     state: Optional[str] = Query(None, description="Filter by state (e.g., 'CA', 'NY')"),
     keyword: Optional[str] = Query(None, description="Search by keyword in title or description"),
     limit: int = Query(50, ge=1, le=100, description="Maximum number of bills to return"),
-    offset: int = Query(0, ge=0, description="Number of bills to skip")
+    offset: int = Query(0, ge=0, description="Number of bills to skip"),
+    store: BillStore = Depends(get_bill_store)
 ):
     """
     Get a list of bills with optional filtering.
     """
     try:
-        bills = bill_store.get_bills(state=state, keyword=keyword, limit=limit, offset=offset)
+        bills = store.get_bills(state=state, keyword=keyword, limit=limit, offset=offset)
         return bills
     except Exception as e:
         logger.error(f"Error retrieving bills: {str(e)}")
